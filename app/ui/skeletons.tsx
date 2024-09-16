@@ -59,6 +59,21 @@ export function InvoiceSkeleton() {
   );
 }
 
+export function OrderSkeleton() {
+  return (
+    <div className="flex flex-row items-center justify-between border-b border-gray-100 py-4">
+      <div className="flex items-center">
+        <div className="mr-2 h-8 w-8 rounded-full bg-gray-200" />
+        <div className="min-w-0">
+          <div className="h-5 w-40 rounded-md bg-gray-200" />
+          <div className="mt-2 h-4 w-12 rounded-md bg-gray-200" />
+        </div>
+      </div>
+      <div className="mt-2 h-4 w-12 rounded-md bg-gray-200" />
+    </div>
+  );
+}
+
 export function LatestInvoicesSkeleton() {
   return (
     <div
@@ -211,6 +226,56 @@ export function InvoicesTableSkeleton() {
               <TableRowSkeleton />
             </tbody>
           </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+export function OrderDetailSkeleton() {
+  const SkeletonLine = ({ width }: { width: string }) => (
+    <div className={`h-4 bg-gray-200 rounded ${width}`}></div>
+  );
+
+  return (
+    <div className="animate-pulse mt-6 p-4 bg-gray-50 rounded-lg">
+      <SkeletonLine width="w-1/2 mb-4" /> {/* Placeholder for Order Number */}
+      <div className="flex flex-wrap -mx-3">
+        {/* Skeleton for Canal */}
+        <div className="w-full md:w-1/3 px-3 mb-6">
+          <SkeletonLine width="w-1/4 mb-2" /> {/* Label */}
+          <SkeletonLine width="w-full" /> {/* Value */}
+        </div>
+        
+        {/* Conditional Skeleton for Shopify Number, shown if needed */}
+        {/* <div className="w-full md:w-1/3 px-3 mb-6">
+          <SkeletonLine width="w-1/4 mb-2" /> {/* Label */}
+          {/* <SkeletonLine width="w-full" /> {/* Value */}
+        {/* </div> */}
+        
+        {/* Skeleton for Invoice Date */}
+        <div className="w-full md:w-1/3 px-3 mb-6">
+          <SkeletonLine width="w-1/4 mb-2" /> {/* Label */}
+          <SkeletonLine width="w-full" /> {/* Value */}
+        </div>
+        
+        {/* Skeleton for Customer ID */}
+        <div className="w-full md:w-1/3 px-3 mb-6">
+          <SkeletonLine width="w-1/4 mb-2" /> {/* Label */}
+          <SkeletonLine width="w-full" /> {/* Value */}
+        </div>
+        
+        {/* Skeleton for Customer Name */}
+        <div className="w-full md:w-1/3 px-3 mb-6">
+          <SkeletonLine width="w-1/4 mb-2" /> {/* Label */}
+          <SkeletonLine width="w-full" /> {/* Value */}
+        </div>
+        
+        {/* Skeleton for Total Sales Price */}
+        <div className="w-full md:w-1/3 px-3 mb-6">
+          <SkeletonLine width="w-1/4 mb-2" /> {/* Label */}
+          <SkeletonLine width="w-full" /> {/* Value */}
         </div>
       </div>
     </div>

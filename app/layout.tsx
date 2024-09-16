@@ -1,3 +1,24 @@
+// import '@/app/ui/global.css';
+// import { inter } from '@/app/ui/fonts';
+
+// export default function RootLayout({
+//   children,
+// }: {
+//   children: React.ReactNode;
+// }) {
+//   return (
+//     <html lang="en">
+//       <body className={`${inter.className} antialiased`}>{children}</body>
+//     </html>
+//   );
+// }
+
+
+'use client';
+import '@/app/ui/global.css';
+import { inter } from '@/app/ui/fonts';
+import { SessionProvider } from 'next-auth/react';
+
 export default function RootLayout({
   children,
 }: {
@@ -5,7 +26,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className={`${inter.className} antialiased`}>
+        <SessionProvider>{children}</SessionProvider>
+      </body>
     </html>
   );
 }
