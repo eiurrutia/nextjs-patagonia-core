@@ -2,7 +2,6 @@ import { fetchOpenedIncidences } from '@/app/lib/incidences/data';
 
 export default async function handler(req, res) {
     try {
-        console.log('### va a llamar la api ahora sii')
         let { startDate, endDate } = req.query;
         startDate = startDate.replace(/\//g, '-');
         endDate = endDate.replace(/\//g, '-');

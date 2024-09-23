@@ -114,15 +114,21 @@ export type ZendeskTicket = {
   requester_id: string;
 }
 
+export type SimilarImage = {
+  item_color: string;
+  image_src: string;
+  distance: number;
+};
+
 export type TrackingStatus = {
   code: string;
-}
+};
 
 export type TrackingInfo = {
   data: {
     status: TrackingStatus;
   } | null;
-}
+};
 
 export type Invoice = {
   id: string;
