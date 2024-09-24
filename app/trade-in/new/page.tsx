@@ -3,7 +3,8 @@ import { useState, useRef, useEffect } from 'react';
 import { SimilarImage } from '@/app/lib/definitions';
 import { Button } from '@/app/ui/button';
 import TradeInForm from '@/app/ui/trade-in/trade-in-form';
-import { ChevronRightIcon, ChevronDownIcon } from '@heroicons/react/24/outline'; // Import icons for collapsible arrow
+import AddressAutocomplete from '@/app/ui/address-autocomplete';
+import { ChevronRightIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 
 const ImageUpload = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -15,7 +16,9 @@ const ImageUpload = () => {
   const [processing, setProcessing] = useState(false);
   const [itemColorSuggestions, setItemColorSuggestions] = useState<{ itemColor: string, imageSrc: string }[]>([]);
   const [matchedImageUrl, setMatchedImageUrl] = useState<string | null>(null);
-  const [isImageSectionCollapsed, setImageSectionCollapsed] = useState(false); // Manage collapsible state
+  const [isImageSectionCollapsed, setImageSectionCollapsed] = useState(false);
+  const [address, setAddress] = useState<string>('');
+  const [houseDetails, setHouseDetails] = useState<string>('');
   const firstNameInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch ITEM_COLOR suggestions for autocomplete along with IMAGE_SRC on page load
@@ -116,12 +119,23 @@ const ImageUpload = () => {
     }
   };
 
+  // Handle address selection from Google Maps Autocomplete
+  const handleAddressSelect = (place: google.maps.places.PlaceResult) => {
+    if (place.formatted_address) {
+      setAddress(place.formatted_address); // Save the selected address in state
+    }
+  };
+
+  const handleHouseDetailsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setHouseDetails(e.target.value); // Save optional house details
+  };
+
   // Focus on first name field after the form is shown
   useEffect(() => {
     if (processing && firstNameInputRef.current) {
       firstNameInputRef.current.focus(); // Set focus on first name
     }
-  }, [processing]); // Run this effect when `processing` changes
+  }, [processing]);
 
   return (
     <div className="flex flex-col items-center justify-center w-full h-full">
@@ -130,16 +144,14 @@ const ImageUpload = () => {
         {/* Left section: Image upload and similar products */}
         <div className="w-1/2">
           <div className="mb-4 flex items-center cursor-pointer" onClick={toggleImageSection}>
-            {/* Collapse title with arrow */}
             {isImageSectionCollapsed ? <ChevronRightIcon className="h-6 w-6 text-gray-600" /> : <ChevronDownIcon className="h-6 w-6 text-gray-600" />}
             <h2 className="text-xl font-medium ml-2">Load your product image</h2>
           </div>
 
           {/* Collapsible Image Upload Section */}
           {!isImageSectionCollapsed && (
-            <form onSubmit={handleSubmit}>
-              <div className="rounded-md bg-gray-50 p-4 md:p-6">
-                {/* File Upload */}
+            <div className="rounded-md bg-gray-50 p-4 md:p-6">
+              <form onSubmit={handleSubmit}>
                 <div className="mb-4">
                   <label htmlFor="image" className="mb-2 block text-sm font-medium">
                     Upload Image
@@ -154,7 +166,6 @@ const ImageUpload = () => {
                   />
                 </div>
 
-                {/* Image Preview */}
                 {previewUrl && (
                   <div className="mb-4">
                     <h3 className="text-sm font-medium">Image Preview:</h3>
@@ -162,21 +173,16 @@ const ImageUpload = () => {
                   </div>
                 )}
 
-                {/* Loading Indicator */}
                 {loading && <p className="text-sm text-gray-600">Processing image...</p>}
-
-                {/* Error Message */}
                 {error && <p className="text-sm text-red-500">{error}</p>}
 
-                {/* Submit Button */}
                 <div className="mt-6">
                   <Button type="submit" disabled={loading}>
                     {loading ? 'Processing...' : 'Upload Image'}
                   </Button>
                 </div>
-              </div>
+              </form>
 
-              {/* Similar Products Display */}
               {similarImages.length > 0 && (
                 <div className="mt-8">
                   <h3 className="text-lg font-medium">Similar Products:</h3>
@@ -198,11 +204,11 @@ const ImageUpload = () => {
                   </div>
                 </div>
               )}
-            </form>
+            </div>
           )}
 
           {/* ITEM_COLOR Field (always visible on the left side) */}
-          <div className="mt-8">
+          <div className="rounded-md bg-gray-50 p-4 md:p-6 mt-8">
             <label htmlFor="itemColor" className="block text-lg font-bold mb-2">
               Product Code (ITEM_COLOR)
             </label>
@@ -211,7 +217,7 @@ const ImageUpload = () => {
               id="itemColor"
               name="itemColor"
               value={selectedItemColor}
-              onChange={handleItemColorChange} // Handle typing in the ITEM_COLOR field
+              onChange={handleItemColorChange}
               className="block w-full rounded-md border border-gray-400 py-3 text-lg"
               placeholder="Enter or select product code"
               list="itemColorSuggestions"
@@ -224,7 +230,6 @@ const ImageUpload = () => {
               ))}
             </datalist>
 
-            {/* Display the matched product image if available */}
             {matchedImageUrl && (
               <div className="mt-4">
                 <img src={matchedImageUrl} alt="Matched Product" className="w-48 h-48 object-cover" />
@@ -235,14 +240,40 @@ const ImageUpload = () => {
 
         {/* Right section: TradeIn form */}
         <div className="w-1/2">
-          {/* Show the form immediately after the button is pressed */}
           {processing && (
-            <TradeInForm
-              onSubmit={handleFormSubmit}
-              firstNameRef={firstNameInputRef} // Pass reference for first input field focus
-            />
+            <>
+              <TradeInForm
+                onSubmit={handleFormSubmit}
+                firstNameRef={firstNameInputRef}
+              />
+
+              {/* Address Autocomplete Field */}
+              <div className="rounded-md bg-gray-50 p-4 md:p-6 mt-8">
+                <label htmlFor="address" className="block text-sm font-medium font-bold mb-2">
+                  Address
+                </label>
+                <AddressAutocomplete onPlaceSelected={handleAddressSelect} />
+
+                <input
+                  type="text"
+                  id="houseDetails"
+                  name="houseDetails"
+                  value={houseDetails}
+                  onChange={handleHouseDetailsChange}
+                  className="block w-full rounded-md border border-gray-400 font-medium py-3 text-sm mt-4"
+                  placeholder="House number, apto, etc. (optional)"
+                />
+              </div>
+            </>
           )}
         </div>
+      </div>
+
+      {/* Submit Button for the entire page */}
+      <div className="mt-8">
+        <Button type="submit" onClick={() => console.log('Submit the entire form')}>
+          Submit Trade-In Form
+        </Button>
       </div>
     </div>
   );
