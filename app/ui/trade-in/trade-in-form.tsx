@@ -1,21 +1,16 @@
 'use client';
-import { useState } from 'react';
 
 export default function TradeInForm({
-  onSubmit,
+  formData,
+  setFormData,
+  errors,
   firstNameRef,
 }: {
-  onSubmit: (formData: any) => void;
+  formData: any;
+  setFormData: React.Dispatch<React.SetStateAction<any>>;
+  errors: any;
   firstNameRef: React.RefObject<HTMLInputElement>;
 }) {
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    rut: '',
-    email: '',
-    phone: '',
-  });
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
@@ -23,18 +18,16 @@ export default function TradeInForm({
     });
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="rounded-md bg-gray-50 p-4 md:p-6">
+    <form className="rounded-md bg-gray-50 p-4 md:p-6">
       <h2 className="text-lg font-medium mb-4">Basic Information</h2>
-      
+
       {/* First Name */}
       <div className="mb-4">
-        <label htmlFor="firstName" className="mb-2 block text-sm font-medium">
+        <label
+          htmlFor="firstName"
+          className="mb-2 block text-sm font-medium"
+        >
           First Name
         </label>
         <input
@@ -43,7 +36,9 @@ export default function TradeInForm({
           name="firstName"
           value={formData.firstName}
           onChange={handleInputChange}
-          className="block w-full rounded-md border border-gray-200 py-2 text-sm"
+          className={`block w-full rounded-md border py-2 text-sm ${
+            errors.firstName ? 'border-red-500' : 'border-gray-200'
+          }`}
           ref={firstNameRef}
           required
         />
@@ -51,7 +46,10 @@ export default function TradeInForm({
 
       {/* Last Name */}
       <div className="mb-4">
-        <label htmlFor="lastName" className="mb-2 block text-sm font-medium">
+        <label
+          htmlFor="lastName"
+          className="mb-2 block text-sm font-medium"
+        >
           Last Name
         </label>
         <input
@@ -60,7 +58,9 @@ export default function TradeInForm({
           name="lastName"
           value={formData.lastName}
           onChange={handleInputChange}
-          className="block w-full rounded-md border border-gray-200 py-2 text-sm"
+          className={`block w-full rounded-md border py-2 text-sm ${
+            errors.lastName ? 'border-red-500' : 'border-gray-200'
+          }`}
           required
         />
       </div>
@@ -76,7 +76,9 @@ export default function TradeInForm({
           name="rut"
           value={formData.rut}
           onChange={handleInputChange}
-          className="block w-full rounded-md border border-gray-200 py-2 text-sm"
+          className={`block w-full rounded-md border py-2 text-sm ${
+            errors.rut ? 'border-red-500' : 'border-gray-200'
+          }`}
           required
         />
       </div>
@@ -92,7 +94,9 @@ export default function TradeInForm({
           name="email"
           value={formData.email}
           onChange={handleInputChange}
-          className="block w-full rounded-md border border-gray-200 py-2 text-sm"
+          className={`block w-full rounded-md border py-2 text-sm ${
+            errors.email ? 'border-red-500' : 'border-gray-200'
+          }`}
           required
         />
       </div>
@@ -108,7 +112,9 @@ export default function TradeInForm({
           name="phone"
           value={formData.phone}
           onChange={handleInputChange}
-          className="block w-full rounded-md border border-gray-200 py-2 text-sm"
+          className={`block w-full rounded-md border py-2 text-sm ${
+            errors.phone ? 'border-red-500' : 'border-gray-200'
+          }`}
           required
         />
       </div>
