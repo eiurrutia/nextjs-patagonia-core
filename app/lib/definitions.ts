@@ -130,6 +130,23 @@ export type TrackingInfo = {
   } | null;
 };
 
+export type TradeInRecord = {
+  ID: string;
+  FIRST_NAME: string;
+  LAST_NAME: string;
+  RUT: string;
+  EMAIL: string;
+  PHONE: string;
+  SELECTED_ITEM_COLOR: string;
+  ADDRESS: string;
+  HOUSE_DETAILS?: string;
+  CLIENT_COMMENT?: string;
+  ADMIN_COMMENT?: string;
+  STATUS: string;
+  SNOWFLAKE_CREATED_AT: string;
+  SNOWFLAKE_UPDATED_AT: string;
+}
+
 export type Invoice = {
   id: string;
   customer_id: string;
