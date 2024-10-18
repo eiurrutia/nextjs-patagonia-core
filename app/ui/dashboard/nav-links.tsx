@@ -4,6 +4,7 @@ import {
   HomeIcon,
   DocumentDuplicateIcon,
   BellAlertIcon,
+  ArrowPathIcon,
   UserIcon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
@@ -36,6 +37,12 @@ const links = [
     href: '/dashboard/incidences',
     icon: BellAlertIcon,
     roles: ['admin', 'user'], // Roles permitidos
+  },
+  { 
+    name: 'Trade-In',
+    href: '/trade-in',
+    icon: ArrowPathIcon,
+    roles: ['admin'], // Roles permitidos
   },
   { 
     name: 'Users',
