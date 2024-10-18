@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@headlessui/react": "^2.1.10",
     "@heroicons/react": "^2.0.18",
     "@tailwindcss/forms": "^0.5.7",
     "@types/googlemaps": "^3.43.3",
@@ -18,11 +19,12 @@
     "autoprefixer": "10.4.15",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.0.0",
+    "cookie": "^0.7.0",
     "date-fns": "^3.6.0",
     "formidable": "^3.5.1",
     "jose": "^5.8.0",
     "next": "^14.2.5",
-    "next-auth": "^4.24.7",
+    "next-auth": "^4.24.8",
     "node-fetch": "^3.3.2",
     "postcss": "8.4.31",
     "react": "18.2.0",
@@ -51,5 +53,8 @@
   },
   "engines": {
     "node": ">=18.17.0"
+  },
+  "resolutions": {
+    "cookie": "0.7.0"
   }
 }
