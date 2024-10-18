@@ -13,4 +13,5 @@ services:
       - .:/app
       - /app/node_modules
       - /app/.next
+      - ./public:/app/public
     command: npm run dev
