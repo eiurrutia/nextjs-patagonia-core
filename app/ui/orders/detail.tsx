@@ -9,9 +9,6 @@ export default async function OrderDetail({
   
   const orders = await fetchOrderById(sale_id);
   const order = orders[0];
-  console.log('### Order detail');
-  console.log(order);
-
 
   return (
       <div className="mt-6 p-4 bg-gray-50 rounded-lg">
