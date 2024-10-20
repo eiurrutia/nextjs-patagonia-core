@@ -1,8 +1,16 @@
 import { db } from '@vercel/postgres';
 import bcryptjs from 'bcryptjs';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/pages/api/auth/[...nextauth]';
+
 
 export default async function handler(req, res) {
-  const { id } = req.query; // Obtener el ID del usuario desde la URL
+  const { id } = req.query;
+  const session = await getServerSession(req, res, authOptions);
+  if (!session) {
+    console.log('No autorizado. Debes iniciar sesión.');
+    return res.status(401).json({ message: 'No autorizado. Debes iniciar sesión.' });
+  }
 
   if (req.method === 'GET') {
     try {
@@ -20,7 +28,7 @@ export default async function handler(req, res) {
         return res.status(404).json({ message: 'User not found' });
       }
 
-      return res.status(200).json(rows[0]); // Devolver el usuario encontrado
+      return res.status(200).json(rows[0]);
     } catch (error) {
       console.error('Error fetching user:', error);
       return res.status(500).json({ message: 'Internal server error' });

@@ -1,4 +1,6 @@
 import { insertTradeInRecord } from '@/app/lib/trade-in/data';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/pages/api/auth/[...nextauth]';
 
 /**
  * API route handler for creating a new Trade-In record
@@ -6,6 +8,13 @@ import { insertTradeInRecord } from '@/app/lib/trade-in/data';
  * @param res - The HTTP response object
  */
 export default async function handler(req, res) {
+  // Check if the request is authenticated
+  const session = await getServerSession(req, res, authOptions);
+  if (!session) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }

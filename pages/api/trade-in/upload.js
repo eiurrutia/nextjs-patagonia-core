@@ -1,6 +1,8 @@
 import formidable from 'formidable';
 import { exec } from 'child_process';
 import { executeQuery } from '@/app/lib/snowflakeClient';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/pages/api/auth/[...nextauth]';
 
 export const config = {
   api: {
@@ -15,11 +17,6 @@ const getSimilarImages = async (embedding) => {
     WHERE ITEM_COLOR NOT LIKE 'W%'
     
   `;
-  // AND (
-  //   ITEM_COLOR LIKE '22980-BLYB'
-  //   OR ITEM_COLOR LIKE '65572-BLAM'
-  // )
-  // WHERE ITEM_COLOR = '20385-BSNG'
   console.log('# Gettings images');
   const results = await executeQuery(query);
   console.log('# Images obtained');
@@ -54,6 +51,12 @@ const cosineSimilarity = (a, b) => {
 };
 
 const handler = async (req, res) => {
+  const session = await getServerSession(req, res, authOptions);
+  if (!session) {
+    console.log('No autorizado. Debes iniciar sesión.');
+    return res.status(401).json({ message: 'No autorizado. Debes iniciar sesión.' });
+  }
+
   const form = formidable();
   form.parse(req, (err, fields, files) => {
     if (err) {
