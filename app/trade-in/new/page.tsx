@@ -1,6 +1,7 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { SimilarImage } from '@/app/lib/definitions';
 import { Button } from '@/app/ui/button';
 import { RadioGroup, Radio } from '@headlessui/react';
@@ -292,7 +293,10 @@ const TradeInFormPage = () => {
 
             {matchedImageUrl && (
               <div className="mt-4">
-                <img
+                <Image
+                  layout="intrinsic"
+                  width={300}
+                  height={300}
                   src={matchedImageUrl}
                   alt="Matched Product"
                   className="w-48 h-48 object-cover"
@@ -339,7 +343,10 @@ const TradeInFormPage = () => {
                 {previewUrl && (
                   <div className="mb-4">
                     <h3 className="text-sm font-medium">Image Preview:</h3>
-                    <img
+                    <Image
+                      layout="intrinsic"
+                      width={200}
+                      height={200}
                       src={previewUrl}
                       alt="Image Preview"
                       className="w-32 h-32 object-cover mt-2"
@@ -373,7 +380,10 @@ const TradeInFormPage = () => {
                         }`}
                         onClick={() => handleImageSelect(image.item_color)}
                       >
-                        <img
+                        <Image
+                          layout="intrinsic"
+                          width={400}
+                          height={400}
                           src={image.image_src}
                           alt={`Similar image ${index + 1}`}
                           className="w-32 h-32 object-cover mb-2"

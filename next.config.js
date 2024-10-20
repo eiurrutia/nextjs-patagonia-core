@@ -10,6 +10,9 @@ const nextConfig = {
     env: {
         TRANSFORMERS_OFFLINE: '1',
       },
+    images: {
+      domains: ['cdn.shopify.com'],
+    },
   };
 
 module.exports = nextConfig;
