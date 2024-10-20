@@ -14,7 +14,6 @@ export default function InvoiceIcon({ tradeInId }: InvoiceIconProps) {
   useEffect(() => {
     const fetchInvoiceUrl = async () => {
       try {
-        console.log('##### Fetching invoice URL for trade-in)');
         const res = await fetch(`/api/trade-in/${tradeInId}`);
         const data = await res.json();
         console.log('Invoice URL:', data.INVOICE_URL);
@@ -32,11 +31,9 @@ export default function InvoiceIcon({ tradeInId }: InvoiceIconProps) {
     setIsGenerating(true);
 
     try {
-        console.log('##### Getting folio for trade-in');
         const folioRes = await fetch(`/api/trade-in/${tradeInId}/folio`);
         const { folio } = await folioRes.json();
 
-        console.log('##### Generating invoice for trade-in');
         const invoiceRes = await fetch(`/api/trade-in/${tradeInId}/generate-invoice`, {
             method: 'POST',
             headers: {
@@ -48,12 +45,10 @@ export default function InvoiceIcon({ tradeInId }: InvoiceIconProps) {
         const { invoiceUrl } = await invoiceRes.json();
         setInvoiceUrl(invoiceUrl); // Update state with the new URL
 
-        console.log('##### Saving invoice URL in Snowflake');
         // Save the invoice URL in Snowflake
         await fetch(`/api/trade-in/${tradeInId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
             body: JSON.stringify({ INVOICE_URL: invoiceUrl }),
         });
         } catch (error) {
