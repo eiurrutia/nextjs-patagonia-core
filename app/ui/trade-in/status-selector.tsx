@@ -1,82 +1,58 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { CheckCircleIcon } from '@heroicons/react/24/solid';
-import { TruckIcon, ReceiptRefundIcon } from '@heroicons/react/24/outline';
+import { useState } from 'react';
 
-export default function StatusSelector({ tradeInId }: { tradeInId: string }) {
-  const [status, setStatus] = useState<string>('Etiqueta Enviada');
-  const [isSaving, setIsSaving] = useState(false);
+type TradeInStatus = 'Etiqueta Enviada' | 'Producto Entregado' | 'Crédito Entregado';
+const statuses: TradeInStatus[] = ['Etiqueta Enviada', 'Producto Entregado', 'Crédito Entregado'];
 
-  // Fetch the current status when the component loads
-  useEffect(() => {
-    const fetchStatus = async () => {
-      try {
-        const res = await fetch(`/api/trade-in/${tradeInId}/status`);
-        const data = await res.json();
-        setStatus(data.status || 'Etiqueta Enviada');
-      } catch (error) {
-        console.error('Error fetching status:', error);
-      }
+interface StatusSelectorProps {
+    tradeInId: string;
+    status: string;
+    setStatus: (status: TradeInStatus) => void;
+}
+
+export default function StatusSelector({ tradeInId, status, setStatus }: StatusSelectorProps) {
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newStatus = e.target.value as TradeInStatus;
+        setStatus(newStatus);
+        setIsSaving(true);
+
+        try {
+            const res = await fetch(`/api/trade-in/${tradeInId}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus }),
+            });
+
+            if (!res.ok) throw new Error('Failed to update status');
+        } catch (error) {
+            console.error('Error updating status:', error);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
-    fetchStatus();
-  }, [tradeInId]);
-
-  // Handle status change and send the update to the server
-  const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newStatus = e.target.value;
-    setStatus(newStatus);
-    setIsSaving(true);
-
-    try {
-      const res = await fetch(`/api/trade-in/${tradeInId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to update status');
-      }
-
-      setIsSaving(false);
-    } catch (error) {
-      console.error('Error updating status:', error);
-      setIsSaving(false);
-    }
-  };
-
-  // Get the icon style based on the current status
-  const getIconStyle = (currentStatus: string) => {
-    return status === currentStatus ? 'text-blue-500' : 'text-gray-300';
-  };
-
-  return (
-    <div className="w-full flex justify-between items-center mb-6">
-      {/* Status selector */}
-      <div className="w-1/3 px-3">
-        <h2 className="text-lg font-semibold">Estado del Trade-In</h2>
-        <select
-          className="block w-full rounded-md border py-2 px-3 text-sm"
-          value={status}
-          onChange={handleStatusChange}
-          disabled={isSaving} // Disable during save
-        >
-          <option value="Etiqueta Enviada">Etiqueta Enviada</option>
-          <option value="Producto Entregado">Producto Entregado</option>
-          <option value="Crédito Entregado">Crédito Entregado</option>
-        </select>
-        {isSaving && <p className="text-sm text-gray-500">Guardando...</p>}
+    return (
+      <div className="flex items-center justify-between w-full">
+          <div className="flex items-center space-x-2">
+              <h2 className="text-base font-semibold">Modificar Estado</h2>
+          </div>
+          <select
+              className="w-1/3 rounded-md border py-2 px-3 text-sm"
+              value={status}
+              onChange={handleStatusChange}
+              disabled={isSaving}
+          >
+              {statuses.map((s) => (
+                  <option key={s} value={s}>
+                      {s}
+                  </option>
+              ))}
+          </select>
+          {isSaving && (
+              <p className="text-sm text-gray-500 ml-4">Guardando...</p>
+          )}
       </div>
-
-      {/* Status icons */}
-      <div className="flex space-x-4 justify-end w-2/3">
-        <CheckCircleIcon className={`h-8 w-8 ${getIconStyle('Etiqueta Enviada')}`} />
-        <TruckIcon className={`h-8 w-8 ${getIconStyle('Producto Entregado')}`} />
-        <ReceiptRefundIcon className={`h-8 w-8 ${getIconStyle('Crédito Entregado')}`} />
-      </div>
-    </div>
   );
 }
