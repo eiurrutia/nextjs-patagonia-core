@@ -51,7 +51,7 @@ export default async function IncidencesTable({
                 <td className="whitespace-nowrap px-3 py-3">{incidence.LAST_REGISTER_DATE}</td>
                 <td className="whitespace-wrap px-3 py-3">{incidence.STATE}</td>
                 <td className="whitespace-nowrap px-3 py-3">
-                  <Link href={`orders/${encodeURIComponent(incidence.ECOMMERCE_NAME_CHILD)}/detail`}>
+                  <Link href={`incidences/${encodeURIComponent(incidence.ECOMMERCE_NAME_CHILD)}/detail`}>
                     <PlusIcon className="h-5 w-5 text-blue-500 hover:text-blue-600" />
                   </Link>
                 </td>

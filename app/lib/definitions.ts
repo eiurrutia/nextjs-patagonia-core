@@ -105,6 +105,24 @@ export type Incidence = {
   PARTNER_NAME: string;
 };
 
+export type IncidenceHistory = {
+  PRIMARY_KEY: string;
+  ECOMMERCE_NAME_CHILD: string;
+  CREATE_DATE: string;
+  LAST_REGISTER_DATE: string;
+  DESCRIPTION: number;
+  NAME: number;
+  STATE: string;
+  USER: string;
+  SUBORDER_ID: string;
+  WAREHOUSE: string;
+  TRANSFER_WAREHOUSE: string;
+  DELIVERY_METHOD: string;
+  OMS_STATE: string;
+  PARTNER_VAT: string;
+  PARTNER_NAME: string;
+};
+
 export type ZendeskTicket = {
   id: string;
   subject: string;
