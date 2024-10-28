@@ -20,8 +20,8 @@ export default function Page() {
         <h1 className={`${lusitana.className} mb-4 text-xl md:text-2xl`}>
             Patagonia Core
         </h1>
-        <div className="flex gap-4 mb-4">
-            <div>
+        <div className="flex flex-wrap gap-4 mb-4">
+            <div className="w-full sm:w-auto">
                 <label htmlFor="start-date" className="block text-sm font-medium text-gray-700">Fecha Inicio</label>
                 <DatePicker
                     id="start-date"
@@ -34,7 +34,7 @@ export default function Page() {
                     endDate={endDate}
                 />
             </div>
-            <div>
+            <div className="w-full sm:w-auto">
                 <label htmlFor="end-date" className="block text-sm font-medium text-gray-700">Fecha Término</label>
                 <DatePicker
                     id="end-date"
