@@ -3,9 +3,22 @@ const withPWA = require('next-pwa')({
   register: false,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
+  workboxOptions: {
+    exclude: [
+      ({ url }) => {
+        // Exclude app-build-manifest.json from being precached
+        return url.pathname.includes('app-build-manifest.json') ||
+               url.pathname.includes('middleware-manifest.json') ||
+               url.pathname.includes('react-loadable-manifest.json') ||
+               url.pathname.includes('_buildManifest.js') ||
+               url.pathname.includes('_ssgManifest.js');
+      },
+    ],
+  },
 });
 
-const nextConfig = withPWA({
+module.exports = withPWA({
+  // Your existing Next.js configuration
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.externals = config.externals || [];
@@ -20,5 +33,3 @@ const nextConfig = withPWA({
     domains: ['cdn.shopify.com'],
   },
 });
-
-module.exports = nextConfig;

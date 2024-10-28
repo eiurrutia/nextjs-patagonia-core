@@ -8,15 +8,14 @@
     "theme_color": "#0070f3",
     "icons": [
       {
-        "src": "patagonia-core-icon.png",
+        "src": "/icons/patagonia-core-icon.png",
         "sizes": "192x192",
         "type": "image/png"
       },
       {
-        "src": "patagonia-core-icon.png",
+        "src": "/icons/patagonia-core-icon.png",
         "sizes": "512x512",
         "type": "image/png"
       }
     ]
-  }
-  
+}  
