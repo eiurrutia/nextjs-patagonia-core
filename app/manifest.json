@@ -1,11 +1,11 @@
 {
     "name": "Patagonia Core",
-    "short_name": "Patagonia",
+    "short_name": "PatCore",
     "description": "A custom solution to centralize Patagonia's platform data.",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#0070f3",
+    "background_color": "#4682B4",
+    "theme_color": "#4682B4",
     "icons": [
       {
         "src": "/icons/patagonia-core-icon-192x192.png",
