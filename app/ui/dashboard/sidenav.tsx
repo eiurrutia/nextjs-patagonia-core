@@ -14,11 +14,11 @@ export default function SideNav() {
   return (
     <div className="flex h-full flex-col px-3 py-4 md:px-2">
       <Link
-        className="mb-2 flex h-20 items-center justify-center overflow-hidden rounded-md bg-steelblue p-4 md:h-40"
+        className="mb-2 flex items-center justify-center rounded-md bg-steelblue p-4"
         href="/"
       >
-        <div className="relative h-full w-auto max-w-[160px] md:max-w-[200px]">
-          <PatagoniaLogo className="h-full w-auto object-contain" />
+        <div className="relative w-full max-w-xs">
+          <PatagoniaLogo />
         </div>
       </Link>
       <div className="flex grow flex-row justify-between space-x-2 md:flex-col md:space-x-0 md:space-y-2">
