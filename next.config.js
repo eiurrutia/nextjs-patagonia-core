@@ -1,25 +1,19 @@
 const withPWA = require('next-pwa')({
   dest: 'public',
-  register: false, // Since we're registering manually
+  register: false, // Registraremos el service worker manualmente
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
-  workboxOpts: {
-    // Corrected property name
-    exclude: [
-      ({ url }) => {
-        // Exclude app-build-manifest.json and other files from being precached
-        return url.pathname.includes('app-build-manifest.json') ||
-               url.pathname.includes('middleware-manifest.json') ||
-               url.pathname.includes('react-loadable-manifest.json') ||
-               url.pathname.includes('_buildManifest.js') ||
-               url.pathname.includes('_ssgManifest.js');
-      },
-    ],
-  },
+  buildExcludes: [
+    /middleware-manifest\.json$/,
+    /_middlewareManifest\.js$/,
+    /_buildManifest\.js$/,
+    /_ssgManifest\.js$/,
+    /app-build-manifest\.json$/,
+  ],
 });
 
 module.exports = withPWA({
-  // Your existing Next.js configuration
+  // Tu configuración existente de Next.js
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.externals = config.externals || [];
