@@ -1,12 +1,13 @@
 const withPWA = require('next-pwa')({
   dest: 'public',
-  register: false,
+  register: false, // Since we're registering manually
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
-  workboxOptions: {
+  workboxOpts: {
+    // Corrected property name
     exclude: [
       ({ url }) => {
-        // Exclude app-build-manifest.json from being precached
+        // Exclude app-build-manifest.json and other files from being precached
         return url.pathname.includes('app-build-manifest.json') ||
                url.pathname.includes('middleware-manifest.json') ||
                url.pathname.includes('react-loadable-manifest.json') ||
