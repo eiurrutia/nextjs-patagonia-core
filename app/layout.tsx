@@ -3,26 +3,12 @@ import '@/app/ui/global.css';
 import { inter } from '@/app/ui/fonts';
 import { SessionProvider } from 'next-auth/react';
 import Head from 'next/head';
-import { useEffect } from 'react';
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/sw.js')
-        .then((registration) => {
-          console.log('Service Worker registered: ', registration);
-        })
-        .catch((registrationError) => {
-          console.error('Service Worker registration failed: ', registrationError);
-        });
-    }
-  }, []);
-
   return (
     <html lang="en">
       <Head>

@@ -72,14 +72,14 @@ define(['./workbox-e43f5367'], function (workbox) {
     'GET'
   );
 
-  // Avoid caching problematic files, like 'app-build-manifest.json'
+  // Exclude problematic files like 'app-build-manifest.json' and '_next/static/'
   workbox.registerRoute(
     ({ url }) => !url.pathname.includes('app-build-manifest.json') && !url.pathname.includes('_next/static/'),
     new workbox.NetworkOnly({ cacheName: 'network-only' }),
     'GET'
   );
 
-  // Cache static assets such as images
+  // Cache images with CacheFirst strategy
   workbox.registerRoute(
     ({ request }) => request.destination === 'image',
     new workbox.CacheFirst({
@@ -94,7 +94,7 @@ define(['./workbox-e43f5367'], function (workbox) {
     'GET'
   );
 
-  // Cache CSS and JS files
+  // Cache CSS and JS files with StaleWhileRevalidate strategy
   workbox.registerRoute(
     ({ request }) =>
       request.destination === 'script' || request.destination === 'style',
@@ -103,9 +103,23 @@ define(['./workbox-e43f5367'], function (workbox) {
       plugins: [
         new workbox.expiration.ExpirationPlugin({
           maxEntries: 30,
+          maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
         }),
       ],
     }),
     'GET'
+  );
+
+  // Offline fallback for navigation requests
+  workbox.registerRoute(
+    ({ request }) => request.mode === 'navigate',
+    new workbox.NetworkFirst({
+      cacheName: 'pages',
+      plugins: [
+        new workbox.expiration.ExpirationPlugin({
+          maxEntries: 20,
+        }),
+      ],
+    })
   );
 });
