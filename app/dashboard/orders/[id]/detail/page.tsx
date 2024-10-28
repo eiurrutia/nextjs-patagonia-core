@@ -3,7 +3,7 @@ import OderLinesTable from '@/app/ui/orders/order_lines/table';
 import TrackingInfo from '@/app/ui/orders/order_lines/tracking-info';
 import Detail from '@/app/ui/orders/detail';
 import { Suspense } from 'react';
-import { OrderDetailSkeleton, InvoicesTableSkeleton } from '@/app/ui/skeletons';
+import { OrderDetailSkeleton, CardSkeleton } from '@/app/ui/skeletons';
  
 export default async function Page({
   params,
@@ -30,12 +30,12 @@ return (
       <Detail sale_id={id} />
     </Suspense>
     <div className="p-4">
-      <Suspense key={id} fallback={<InvoicesTableSkeleton />}>
+      <Suspense key={id} fallback={<CardSkeleton />}>
         <OderLinesTable sale_id={id} />
       </Suspense>
     </div>
     <div className="p-4">
-      <Suspense key={id} fallback={<InvoicesTableSkeleton />}>
+      <Suspense key={id} fallback={<CardSkeleton />}>
         <TrackingInfo sale_id={id} />
       </Suspense>
     </div>
