@@ -10,22 +10,28 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@headlessui/react": "^2.1.10",
     "@heroicons/react": "^2.0.18",
     "@tailwindcss/forms": "^0.5.7",
+    "@types/googlemaps": "^3.43.3",
     "@types/node": "20.5.7",
     "@vercel/postgres": "^0.10.0",
     "autoprefixer": "10.4.15",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.0.0",
+    "cookie": "^0.7.0",
     "date-fns": "^3.6.0",
+    "formidable": "^3.5.1",
     "jose": "^5.8.0",
     "next": "^14.2.5",
-    "next-auth": "^4.24.7",
+    "next-auth": "^4.24.10",
+    "next-pwa": "^5.6.0",
     "node-fetch": "^3.3.2",
     "postcss": "8.4.31",
     "react": "18.2.0",
     "react-datepicker": "^6.9.0",
     "react-dom": "18.2.0",
+    "sharp": "^0.33.5",
     "snowflake-sdk": "^1.10.0",
     "tailwindcss": "3.3.3",
     "typescript": "5.2.2",
@@ -35,6 +41,7 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
+    "@types/next-auth": "^3.15.0",
     "@types/react": "18.2.21",
     "@types/react-dom": "18.2.14",
     "@types/snowflake-sdk": "^1.6.20",
@@ -48,5 +55,8 @@
   },
   "engines": {
     "node": ">=18.17.0"
+  },
+  "resolutions": {
+    "cookie": "0.7.0"
   }
 }

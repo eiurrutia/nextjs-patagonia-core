@@ -1,4 +1,4 @@
-import NextAuth from 'next-auth';
+import NextAuth, { NextAuthOptions } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { sql } from '@vercel/postgres';
 import bcryptjs from 'bcryptjs';
@@ -14,7 +14,7 @@ async function getUser(email: string): Promise<User | null> {
   }
 }
 
-export default NextAuth({
+export const authOptions: NextAuthOptions = {
   providers: [
     Credentials({
       credentials: {
@@ -66,17 +66,17 @@ export default NextAuth({
   },
   callbacks: {
     async session({ session, token }) {
-        if (session.user) {
-          session.user.id = token.sub as string;
-          session.user.role = token.role as string;
-        } else {
-          session.user = {
-            id: token.sub as string,
-            role: token.role as string,
-          };
-        }
-        return session;
-      },
+      if (session.user) {
+        session.user.id = token.sub as string;
+        session.user.role = token.role as string;
+      } else {
+        session.user = {
+          id: token.sub as string,
+          role: token.role as string,
+        };
+      }
+      return session;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
@@ -85,4 +85,6 @@ export default NextAuth({
       return token;
     }
   },
-});
+};
+
+export default NextAuth(authOptions);

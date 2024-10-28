@@ -9,14 +9,11 @@ export default async function OrderDetail({
   
   const orders = await fetchOrderById(sale_id);
   const order = orders[0];
-  console.log('### Order detail');
-  console.log(order);
-
 
   return (
       <div className="mt-6 p-4 bg-gray-50 rounded-lg">
         <h1 className="text-2xl font-bold mb-4">{order.SALESID}</h1>
-        <div className="flex flex-wrap -mx-3">
+        <div className="flex flex-wrap mx-3 bg-white border-b p-2 pt-6 rounded-lg">
           <div className="w-full md:w-1/3 px-3 mb-6">
             <h2 className="text-lg font-semibold">Canal</h2>
             <p>{order.CANAL}</p>

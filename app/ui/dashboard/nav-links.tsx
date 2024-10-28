@@ -4,6 +4,7 @@ import {
   HomeIcon,
   DocumentDuplicateIcon,
   BellAlertIcon,
+  ArrowPathIcon,
   UserIcon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
@@ -17,31 +18,37 @@ const links = [
     name: 'Home',
     href: '/dashboard',
     icon: HomeIcon,
-    roles: ['admin', 'user'], // Roles permitidos
+    roles: ['admin', 'user'],
   },
   {
     name: 'Orders',
     href: '/dashboard/orders',
     icon: DocumentDuplicateIcon,
-    roles: ['admin', 'user'], // Roles permitidos
+    roles: ['admin', 'user'],
   },
   { 
     name: 'Customers',
     href: '/dashboard/customers',
     icon: UserGroupIcon,
-    roles: ['admin', 'user'], // Roles permitidos
+    roles: ['admin', 'user'],
   },
   { 
     name: 'Incidences',
     href: '/dashboard/incidences',
     icon: BellAlertIcon,
-    roles: ['admin', 'user'], // Roles permitidos
+    roles: ['admin', 'user'],
+  },
+  { 
+    name: 'Trade-In',
+    href: '/trade-in',
+    icon: ArrowPathIcon,
+    roles: ['admin'],
   },
   { 
     name: 'Users',
     href: '/dashboard/users',
     icon: UserIcon,
-    roles: ['admin'], // Solo admin
+    roles: ['admin'],
   },
 ];
 

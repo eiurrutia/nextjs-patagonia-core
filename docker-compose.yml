@@ -1,11 +1,17 @@
 version: '3.9'
 services:
   app:
-    build: .
+    platform: linux/amd64
+    build:
+      context: .
+      target: dev
     ports:
       - '3000:3000'
     env_file:
       - .env
     volumes:
       - .:/app
+      - /app/node_modules
+      - /app/.next
+      - ./public:/app/public
     command: npm run dev
