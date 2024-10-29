@@ -13,10 +13,8 @@ import {
     IdentificationIcon, 
     ArrowTopRightOnSquareIcon 
   } from '@heroicons/react/24/outline';
-  import { format, toZonedTime } from 'date-fns-tz';
   import { OMSOrderLine } from '@/app/lib/definitions';
-  
-  const TIME_ZONE = 'America/Santiago';
+  import { formatDate } from '@/app/utils/dateUtils';
   
   const fieldIcons = {
     warehouse: <HomeIcon className="h-6 w-6 text-gray-500" />,
@@ -27,14 +25,6 @@ import {
     ecommerceName: <IdentificationIcon className="h-6 w-6 text-gray-500" />,
     deliveryMethod: <TruckIcon className="h-6 w-6 text-gray-500" />,
     orderDate: <CalendarIcon className="h-6 w-6 text-gray-500" />,
-  };
-  
-  const formatDate = (dateString: string, withTime = false, applyTimeZone = true) => {
-    let date = new Date(dateString);
-    if (applyTimeZone) {
-      date = toZonedTime(date, TIME_ZONE);
-    }
-    return format(date, withTime ? 'dd-MM-yyyy HH:mm' : 'dd-MM-yyyy');
   };
   
   export default async function IncidenceDetail({ id }: { id: string }) {
@@ -161,7 +151,8 @@ import {
             </thead>
             <tbody className="bg-white">
               {orderLines.map((line) => (
-                <tr key={line.ECOMMERCE_NAME_CHILD} className="border-b text-sm">
+                <tr key={`${line.ECOMMERCE_NAME_CHILD}-${line.DEFAULT_CODE}`}
+                    className="border-b text-sm">
                   <td className="px-2 py-3">{line.ECOMMERCE_NAME_CHILD}</td>
                   <td className="px-2 py-3">{line.DEFAULT_CODE}</td>
                   <td className="px-2 py-3">{line.PRODUCT_NAME}</td>
