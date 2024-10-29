@@ -9,6 +9,8 @@ import { lusitana } from '@/app/ui/fonts';
 import { useEffect, useState } from 'react';
 import { Incidence } from '@/app/lib/definitions';
 import { CardSkeleton } from '@/app/ui/skeletons';
+import { formatDate } from '@/app/utils/dateUtils';
+
 
 export default function OpenedIncidencesCard({
   startDate,
@@ -104,11 +106,11 @@ export default function OpenedIncidencesCard({
               </div>
               <div className="flex items-center space-x-2 text-sm">
                 <ClockIcon className="h-5 w-5 text-gray-500" />
-                <p><strong>Fecha Creación:</strong> {incidence.INCIDENCE_CREATE_DATE}</p>
+                <p><strong>Fecha Creación:</strong> {formatDate(incidence.INCIDENCE_CREATE_DATE, true, true)}</p>
               </div>
               <div className="flex items-center space-x-2 text-sm">
                 <ClockIcon className="h-5 w-5 text-gray-500" />
-                <p><strong>Último Registro:</strong> {incidence.LAST_REGISTER_DATE}</p>
+                <p><strong>Último Registro:</strong> {formatDate(incidence.LAST_REGISTER_DATE, true, true)}</p>
               </div>
             </div>
           ))}
