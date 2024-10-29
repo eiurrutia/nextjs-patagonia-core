@@ -7,7 +7,7 @@ export default function IncidenceDetailPage({ params }: { params: { id: string }
   const { id } = params;
 
   return (
-    <div className="w-full p-10">
+    <div className="w-full">
       <Breadcrumbs
         breadcrumbs={[
           { label: 'Incidencias', href: '/dashboard/incidences' },
