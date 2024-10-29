@@ -1,12 +1,20 @@
-import { ClockIcon } from '@heroicons/react/24/outline';
+import { 
+  ClockIcon, 
+  UserIcon,
+  UserCircleIcon,
+  DocumentTextIcon, 
+  IdentificationIcon 
+} from '@heroicons/react/24/outline';
 import { lusitana } from '@/app/ui/fonts';
 import { useEffect, useState } from 'react';
 import { Incidence } from '@/app/lib/definitions';
 import { CardSkeleton } from '@/app/ui/skeletons';
+import { formatDate } from '@/app/utils/dateUtils';
+
 
 export default function OpenedIncidencesCard({
   startDate,
-  endDate
+  endDate,
 }: {
   startDate: string;
   endDate: string;
@@ -15,11 +23,13 @@ export default function OpenedIncidencesCard({
   const [incidences, setIncidences] = useState<Incidence[]>([]);
   const [isVisible, setIsVisible] = useState(false);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     async function fetchIncidences() {
       setLoading(true);
-      const response = await fetch(`/api/opened-incidences-card?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`);
+      const response = await fetch(
+        `/api/opened-incidences-card?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`
+      );
       const data = await response.json();
       setIncidences(data);
       setLoading(false);
@@ -51,35 +61,61 @@ export default function OpenedIncidencesCard({
       </div>
       <div className="flex justify-end pt-4 px-4">
         <button
-            onClick={toggleVisibility}
-            className="bg-steelblue hover:bg-blue-300 text-white text-xs font-bold py-2 px-4 rounded"
-          >
-            {isVisible ? 'Ocultar' : 'Ver Mas'}
+          onClick={toggleVisibility}
+          className="bg-steelblue hover:bg-blue-300 text-white text-xs font-bold py-2 px-4 rounded"
+        >
+          {isVisible ? 'Ocultar' : 'Ver Más'}
         </button>
       </div>
       {isVisible && (
-        <div className="px-4 py-2">
-          <ul className="list-disc">
-            <p>Números de orden hija:</p>
-            {incidences.map((incidence, index) => (
-              <li key={index} className="text-gray-700 text-sm">
-                <a href={`https://patagonia.omni.pro/orders/${encodeURIComponent(incidence.SUBORDER_ID)}`}
-                          className="text-blue-500 hover:text-blue-600 underline"
-                          target="_blank" rel="noopener noreferrer">
+        <div className="space-y-4 px-4 py-2">
+          {incidences.map((incidence) => (
+            <div
+              key={incidence.SUBORDER_ID}
+              className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col space-y-2"
+            >
+              <div className="flex items-center space-x-2 text-sm font-semibold">
+                <IdentificationIcon className="h-5 w-5 text-gray-500" />
+                <a
+                  href={`https://patagonia.omni.pro/orders/${encodeURIComponent(incidence.SUBORDER_ID)}`}
+                  className="text-blue-500 hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   {incidence.ECOMMERCE_NAME_CHILD}
                 </a>
-                -
-                <a href={`/dashboard/customers/${encodeURIComponent(incidence.PARTNER_VAT)}/detail`}
-                          className="text-blue-500 hover:text-blue-600 underline"
-                          target="_blank" rel="noopener noreferrer">
+              </div>
+              <div className="flex items-center space-x-2 text-sm">
+                <UserIcon className="h-5 w-5 text-gray-500" />
+                <a
+                  href={`/dashboard/customers/${encodeURIComponent(incidence.PARTNER_VAT)}/detail`}
+                  className="text-blue-500 hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   {incidence.PARTNER_NAME}
                 </a>
-              </li>
-            ))}
-          </ul>
+              </div>
+              <div className="flex items-center space-x-2 text-sm">
+                <DocumentTextIcon className="h-5 w-5 text-gray-500" />
+                <p>{incidence.DESCRIPTION}</p>
+              </div>
+              <div className="flex items-center space-x-2 text-sm">
+                <UserCircleIcon className="h-5 w-5 text-gray-500" />
+                <p>{incidence.USER}</p>
+              </div>
+              <div className="flex items-center space-x-2 text-sm">
+                <ClockIcon className="h-5 w-5 text-gray-500" />
+                <p><strong>Fecha Creación:</strong> {formatDate(incidence.INCIDENCE_CREATE_DATE, true, true)}</p>
+              </div>
+              <div className="flex items-center space-x-2 text-sm">
+                <ClockIcon className="h-5 w-5 text-gray-500" />
+                <p><strong>Último Registro:</strong> {formatDate(incidence.LAST_REGISTER_DATE, true, true)}</p>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
-    
   );
 }
