@@ -89,6 +89,9 @@ export type OrderLine = {
 };
 
 export type OMSOrderLine = {
+  SUBORDER_ID: string;
+  ORDER_ID: string;
+  SHOPIFY_ORDER_ID: string;
   ECOMMERCE_NAME: string;
   DELIVERY_METHOD_NAME: string;
   DATE_ORDER: string;
