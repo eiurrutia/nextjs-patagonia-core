@@ -88,6 +88,19 @@ export type OrderLine = {
   TRACKINGINFO: string;
 };
 
+export type OMSOrderLine = {
+  ECOMMERCE_NAME: string;
+  DELIVERY_METHOD_NAME: string;
+  DATE_ORDER: string;
+  ECOMMERCE_NAME_CHILD: string;
+  DEFAULT_CODE: string;
+  PRODUCT_NAME: string;
+  PRODUCT_UOM_QTY: number;
+  WAREHOUSE: string;
+  TRANSFER_WAREHOUSE: string;
+  STATE_OPTION_NAME: string;
+}
+
 export type Incidence = {
   ECOMMERCE_NAME_CHILD: string;
   INCIDENCE_CREATE_DATE: string;

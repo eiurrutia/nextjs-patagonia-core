@@ -13,6 +13,7 @@ import {
     IdentificationIcon 
   } from '@heroicons/react/24/outline';
   import { format, toDate, toZonedTime } from 'date-fns-tz';
+  import { OMSOrderLine } from '@/app/lib/definitions';
   
   const TIME_ZONE = 'America/Santiago';
   
@@ -45,7 +46,11 @@ import {
     const incidence = await fetchIncidenceById(id);
     const history = await fetchIncidenceHistoryById(id);
     const orderLines = await fetchOrderLinesByIncidence(id);
-    const firstOrderLine = orderLines.find(line => line.ECOMMERCE_NAME) || {};
+    const firstOrderLine: OMSOrderLine | null = orderLines.find(
+        (line): line is OMSOrderLine => !!line?.ECOMMERCE_NAME
+      ) || null;
+      
+
   
     if (!incidence) return <div>No se encontró la incidencia.</div>;
   
@@ -104,15 +109,15 @@ import {
           <div className="space-y-4 bg-white p-4 rounded-lg">
             <div className="flex items-center space-x-4">
               {fieldIcons.ecommerceName}
-              <p>{firstOrderLine.ECOMMERCE_NAME}</p>
+              <p>{firstOrderLine?.ECOMMERCE_NAME}</p>
             </div>
             <div className="flex items-center space-x-4">
               {fieldIcons.deliveryMethod}
-              <p>{firstOrderLine.DELIVERY_METHOD_NAME}</p>
+              <p>{firstOrderLine?.DELIVERY_METHOD_NAME}</p>
             </div>
             <div className="flex items-center space-x-4">
               {fieldIcons.orderDate}
-              <p>{formatDate(firstOrderLine.DATE_ORDER, true, false)}</p>
+              <p>{firstOrderLine ? formatDate(firstOrderLine.DATE_ORDER, true, false) : 'No disponible'}</p>
             </div>
           </div>
           <table className="min-w-full text-gray-900">

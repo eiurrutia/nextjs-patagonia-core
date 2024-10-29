@@ -1,5 +1,5 @@
 import { executeQuery } from '@/app/lib/snowflakeClient';  // Importa la función reutilizable
-import { Incidence, IncidenceHistory } from './../definitions';
+import { Incidence, IncidenceHistory, OMSOrderLine } from './../definitions';
 
 export async function fetchFilteredIncidences(
   query: string,
@@ -147,7 +147,9 @@ export async function fetchIncidenceHistoryById(
   return await executeQuery<IncidenceHistory>(sqlText, binds);
 }
 
-export async function fetchOrderLinesByIncidence(incidenceId: string) {
+export async function fetchOrderLinesByIncidence(
+  incidenceId: string
+): Promise<OMSOrderLine[]> {
   const sqlText = `
     SELECT 
       ECOMMERCE_NAME_CHILD,
@@ -169,6 +171,5 @@ export async function fetchOrderLinesByIncidence(incidenceId: string) {
     )
   `;
 
-  const result = await executeQuery(sqlText, [incidenceId]);
-  return result;
+  return await executeQuery<OMSOrderLine>(sqlText, [incidenceId]);
 }
