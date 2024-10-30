@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { uploadStockSegments } from '@/app/lib/stock-planning/data';
+import { uploadStockSegments, truncateSegmentationTable } from '@/app/lib/stock-planning/data';
 
 export const config = {
   api: {
@@ -16,6 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const data = req.body;
+    await truncateSegmentationTable();
     await uploadStockSegments(data);
     res.status(200).json({ message: 'Upload successful' });
   } catch (error) {

@@ -2,6 +2,14 @@ import { executeQuery } from '@/app/lib/snowflakeClient';
 import { unstable_noStore as noStore } from 'next/cache';
 import { StockSegment } from './../definitions';
 
+/**
+ * Function to truncate the segmentation table.
+ */
+export async function truncateSegmentationTable(): Promise<void> {
+  const sqlText = `TRUNCATE TABLE PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION`;
+  await executeQuery(sqlText, []);
+}
+
 
 /**
  * Function to upload stock segments to the database.
@@ -15,7 +23,6 @@ export async function uploadStockSegments(data: StockSegment[]): Promise<void> {
   noStore();
 
   const sqlText = `
-    TRUNCATE TABLE PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION;
     INSERT INTO PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION (
       SKU, COYHAIQUE, LASCONDES, MALLSPORT, COSTANERA, CONCEPCION, 
       PTOVARAS, LADEHESA, PUCON, TEMUCO, OSORNO, ALERCE, BNAVENTURA
