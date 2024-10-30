@@ -35,27 +35,29 @@ export default function SegmentationTable({ query, currentPage }: StockTableProp
   }, [query, currentPage]);
 
   return (
-    <table className="min-w-full border-collapse border border-gray-300 mt-4">
-      <thead>
-        <tr>
-          {columns.map((column) => (
-            <th key={column} className="border px-4 py-2">
-              {column}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {segments.map((segment, index) => (
-          <tr key={index}>
+    <div className="w-full overflow-auto mt-4">
+      <table className="min-w-full border-collapse border border-gray-300">
+        <thead>
+          <tr>
             {columns.map((column) => (
-              <td key={column} className="border px-4 py-2">
-                {segment[column as keyof StockSegment]}
-              </td>
+              <th key={column} className="border px-4 py-2">
+                {column}
+              </th>
             ))}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {segments.map((segment, index) => (
+            <tr key={index}>
+              {columns.map((column) => (
+                <td key={column} className="border px-4 py-2">
+                  {segment[column as keyof StockSegment]}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
