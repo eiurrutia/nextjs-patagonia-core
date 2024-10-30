@@ -5,6 +5,7 @@ import {
   DocumentDuplicateIcon,
   BellAlertIcon,
   ArrowPathIcon,
+  AdjustmentsVerticalIcon,
   UserIcon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
@@ -42,6 +43,12 @@ const links = [
     name: 'Trade-In',
     href: '/trade-in',
     icon: ArrowPathIcon,
+    roles: ['admin'],
+  },
+  { 
+    name: 'Stock Planning',
+    href: '/dashboard/stock-planning',
+    icon: AdjustmentsVerticalIcon,
     roles: ['admin'],
   },
   { 

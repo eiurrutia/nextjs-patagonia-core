@@ -251,3 +251,19 @@ export type InvoiceForm = {
   amount: number;
   status: 'pending' | 'paid';
 };
+
+export type StockSegment = {
+  SKU: string;
+  COYHAIQUE: number;
+  LASCONDES: number;
+  MALLSPORT: number;
+  COSTANERA: number;
+  CONCEPCION: number;
+  PTOVARAS: number;
+  LADEHESA: number;
+  PUCON: number;
+  TEMUCO: number;
+  OSORNO: number;
+  ALERCE: number;
+  BNAVENTURA: number;
+}
