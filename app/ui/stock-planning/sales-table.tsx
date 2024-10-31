@@ -23,18 +23,20 @@ interface SalesTableProps {
   startDate: string;
   endDate: string;
   query: string;
+  currentPage: number;
 }
 
-export default function SalesTable({ startDate, endDate, query }: SalesTableProps) {
+export default function SalesTable({ startDate, endDate, query, currentPage }: SalesTableProps) {
   const [salesData, setSalesData] = useState<SalesData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(currentPage);
 
   useEffect(() => {
     async function fetchSalesData() {
       setLoading(true);
       try {
         const response = await fetch(
-          `/api/stock-planning/sales?startDate=${startDate}&endDate=${endDate}&query=${encodeURIComponent(query)}`
+          `/api/stock-planning/sales?startDate=${startDate}&endDate=${endDate}&query=${encodeURIComponent(query)}&page=${page}`
         );
         const data: SalesData[] = await response.json();
         setSalesData(data);
@@ -46,7 +48,7 @@ export default function SalesTable({ startDate, endDate, query }: SalesTableProp
     }
 
     fetchSalesData();
-  }, [startDate, endDate, query]);
+  }, [startDate, endDate, query, page]);
 
   if (loading) return <CardSkeleton />;
 

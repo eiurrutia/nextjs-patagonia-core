@@ -68,7 +68,11 @@ export async function fetchStockSegments(query: string, page: number): Promise<S
 /**
  * Function to fetch sales data from the database with pivot.
  */
-export async function fetchSalesData(startDate: string, endDate: string) {
+export async function fetchSalesData(
+    query: string, startDate: string, endDate: string, page: number
+  ) {
+  const limit = 10;
+  const offset = (page - 1) * limit;
   const sqlText = `
     SELECT 
       SKU,
@@ -87,12 +91,14 @@ export async function fetchSalesData(startDate: string, endDate: string) {
       SUM(CASE WHEN INVENTLOCATIONID = 'BNAVENTURA' THEN QTY ELSE 0 END) AS BNAVENTURA
     FROM PATAGONIA.CORE_TEST.ERP_PROCESSED_SALESLINE
     WHERE INVOICEDATE BETWEEN ? AND ?
+      AND UPPER(SKU) LIKE ?
       AND INVOICEID LIKE '39-%'
     GROUP BY SKU
     ORDER BY SKU
+    LIMIT ${limit} OFFSET ${offset}
   `;
 
-  const binds = [startDate, endDate];
+  const binds = [startDate, endDate, `%${query.toUpperCase()}%`];
   return await executeQuery(sqlText, binds);
 }
 

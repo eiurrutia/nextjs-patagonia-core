@@ -67,6 +67,7 @@ export default function NewStockPlanning({
 
       <div className="mt-8">
         <Suspense fallback={<InvoicesTableSkeleton />}>
+          <SalesTable startDate={startDate} endDate={endDate} query={query} currentPage={currentPage} />
         </Suspense>
       </div>
 
