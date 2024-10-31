@@ -267,3 +267,10 @@ export type StockSegment = {
   ALERCE: number;
   BNAVENTURA: number;
 }
+
+export type StockData = {
+  SKU: string;
+  STOCKERP: number;
+  STOCKWMS: number;
+  MINSTOCK: number;
+}

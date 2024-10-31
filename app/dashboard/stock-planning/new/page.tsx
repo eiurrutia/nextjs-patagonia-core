@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import SegmentationTable from '@/app/ui/stock-planning/segmentation-table';
 import SalesTable from '@/app/ui/stock-planning/sales-table';
+import StockTable from '@/app/ui/stock-planning/stock-table';
 import Search from '@/app/ui/search';
 import { lusitana } from '@/app/ui/fonts';
 import { Suspense } from 'react';
@@ -66,7 +67,13 @@ export default function NewStockPlanning({
 
       <div className="mt-8">
         <Suspense fallback={<InvoicesTableSkeleton />}>
-          <SalesTable startDate={startDate} endDate={endDate} query={query} />
+        </Suspense>
+      </div>
+
+      <div className="mt-8">
+        <h2 className={`${lusitana.className} text-2xl mt-8`}>Stock</h2>
+        <Suspense fallback={<InvoicesTableSkeleton />}>
+          <StockTable query={query} currentPage={currentPage} />
         </Suspense>
       </div>
     </div>

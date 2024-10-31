@@ -1,6 +1,6 @@
 import { executeQuery } from '@/app/lib/snowflakeClient';
 import { unstable_noStore as noStore } from 'next/cache';
-import { StockSegment } from './../definitions';
+import { StockSegment, StockData } from './../definitions';
 
 /**
  * Function to truncate the segmentation table.
@@ -94,4 +94,36 @@ export async function fetchSalesData(startDate: string, endDate: string) {
 
   const binds = [startDate, endDate];
   return await executeQuery(sqlText, binds);
+}
+
+/**
+ * Function to fetch stock data from the database with pagination.
+ * @param query - The search query.
+ * @param page - The page number.
+ * @returns A promise with the stock data.
+ */
+export async function fetchStockData(query: string = '', page: number = 1): Promise<StockData[]> {
+  const limit = 10;
+  const offset = (page - 1) * limit;
+
+  const sqlText = `
+    SELECT
+      REPLACE(erp.SKU, '-', '') AS SKU,
+      SUM(erp.AVAILABLEONHANDQUANTITY) AS StockERP,
+      COALESCE(SUM(wms.QTYSTOCK - wms.QTYPENDINGPICKING), 0) AS StockWMS,
+      LEAST(SUM(erp.AVAILABLEONHANDQUANTITY), COALESCE(SUM(wms.QTYSTOCK - wms.QTYPENDINGPICKING), 0)) AS MinStock
+    FROM PATAGONIA.CORE_TEST.ERP_INVENTORY AS erp
+    LEFT JOIN PATAGONIA.CORE_TEST.WMS_INVENTORY AS wms 
+      ON REPLACE(erp.SKU, '-', '') = wms.ITEMCODE
+    WHERE REPLACE(erp.SKU, '-', '') LIKE ?
+      AND erp.INVENTORYWAREHOUSEID = 'CD'
+      AND UPPER(erp.INVENTORYSTATUSID) = 'DISPONIBLE'
+    GROUP BY erp.SKU
+    ORDER BY erp.SKU
+    LIMIT ${limit} OFFSET ${offset};
+  `;
+
+  const binds = [`%${query.toUpperCase()}%`];
+
+  return await executeQuery<StockData>(sqlText, binds);
 }
