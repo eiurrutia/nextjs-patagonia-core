@@ -38,7 +38,7 @@ export default function NewStockPlanning({
       </div>
 
       <Suspense key={query + currentPage} fallback={<InvoicesTableSkeleton />}>
-        <h2 className={`${lusitana.className} text-2xl mt-8`}>Segementación</h2>
+        <h2 className={`${lusitana.className} text-2xl mt-8`}>Segmentación</h2>
         <SegmentationTable query={query} currentPage={currentPage} />
       </Suspense>
 
