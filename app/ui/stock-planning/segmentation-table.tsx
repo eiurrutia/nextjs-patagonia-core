@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { StockSegment } from '@/app/lib/definitions';
+import { CardSkeleton } from '../skeletons';
 
 interface StockTableProps {
   query: string;
@@ -10,9 +11,11 @@ interface StockTableProps {
 export default function SegmentationTable({ query, currentPage }: StockTableProps) {
   const [segments, setSegments] = useState<StockSegment[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function loadSegments() {
+      setLoading(true);
       try {
         const response = await fetch(
           `/api/stock-planning/stock-segments?query=${encodeURIComponent(query)}&currentPage=${currentPage}`
@@ -28,11 +31,15 @@ export default function SegmentationTable({ query, currentPage }: StockTableProp
         setSegments(data);
       } catch (error) {
         console.error('Error loading segments:', error);
+      } finally {
+        setLoading(false);
       }
     }
 
     loadSegments();
   }, [query, currentPage]);
+
+  if (loading) return <CardSkeleton />;
 
   return (
     <div className="w-full overflow-auto mt-4">
