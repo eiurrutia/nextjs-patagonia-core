@@ -52,11 +52,13 @@ export async function fetchStockSegments(query: string, page: number): Promise<S
       SELECT * 
       FROM PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION
       WHERE UPPER(SKU) LIKE ?
+      ORDER BY SKU
       LIMIT ${limit} OFFSET ${offset}
     `
     : `
       SELECT * 
       FROM PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION
+      ORDER BY SKU
       LIMIT ${limit} OFFSET ${offset}
     `;
 
