@@ -97,7 +97,7 @@ export default function UploadSegmentation() {
       />
       <label
         htmlFor="file-upload"
-        className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 cursor-pointer"
+        className="bg-steelblue text-white px-4 py-2 rounded-lg hover:bg-steelblue cursor-pointer"
       >
         {isUploading ? 'Uploading...' : 'Actualizar Segmentación'}
       </label>
