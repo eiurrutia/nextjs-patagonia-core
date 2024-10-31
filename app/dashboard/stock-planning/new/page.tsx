@@ -45,7 +45,7 @@ export default function NewStockPlanning({
       <div className="mt-12 flex gap-4">
         <h2 className={`${lusitana.className} text-2xl`}>Ventas</h2>
         <div>
-          <label>Fecha Inicio:</label>
+          <label className='mx-4'>Fecha Inicio:</label>
           <input
             type="date"
             value={startDate}
@@ -55,7 +55,7 @@ export default function NewStockPlanning({
         </div>
 
         <div>
-          <label>Fecha Fin:</label>
+          <label className='mx-4'>Fecha Fin:</label>
           <input
             type="date"
             value={endDate}
