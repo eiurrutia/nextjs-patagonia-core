@@ -268,7 +268,7 @@ export type StockSegment = {
   BNAVENTURA: number;
 }
 
-export type StockData = {
+export type CDStockData = {
   SKU: string;
   STOCKERP: number;
   STOCKWMS: number;

@@ -1,6 +1,6 @@
 import { executeQuery } from '@/app/lib/snowflakeClient';
 import { unstable_noStore as noStore } from 'next/cache';
-import { StockSegment, StockData } from './../definitions';
+import { StockSegment, CDStockData } from './../definitions';
 
 /**
  * Function to truncate the segmentation table.
@@ -110,7 +110,7 @@ export async function fetchSalesData(
  * @param page - The page number.
  * @returns A promise with the stock data.
  */
-export async function fetchStockData(query: string = '', page: number = 1): Promise<StockData[]> {
+export async function fetchCDStockData(query: string = '', page: number = 1): Promise<CDStockData[]> {
   const limit = 10;
   const offset = (page - 1) * limit;
 
@@ -133,5 +133,5 @@ export async function fetchStockData(query: string = '', page: number = 1): Prom
 
   const binds = [`%${query.toUpperCase()}%`];
 
-  return await executeQuery<StockData>(sqlText, binds);
+  return await executeQuery<CDStockData>(sqlText, binds);
 }

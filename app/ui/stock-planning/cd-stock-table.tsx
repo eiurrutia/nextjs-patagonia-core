@@ -1,26 +1,26 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { CardSkeleton } from '../skeletons';
-import { StockData } from '@/app/lib/definitions';
+import { CDStockData } from '@/app/lib/definitions';
 
 interface StockTableProps {
   query: string;
   currentPage: number;
 }
 
-export default function StockTable({ query, currentPage }: StockTableProps) {
-  const [stockData, setStockData] = useState<StockData[]>([]);
+export default function CDStockTable({ query, currentPage }: StockTableProps) {
+  const [stockData, setStockData] = useState<CDStockData[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(currentPage);
 
   useEffect(() => {
-    async function fetchStockData() {
+    async function fetchCDStockData() {
       setLoading(true);
       try {
         const response = await fetch(
-          `/api/stock-planning/stock?query=${encodeURIComponent(query)}&page=${page}`
+          `/api/stock-planning/stock-cd?query=${encodeURIComponent(query)}&page=${page}`
         );
-        const data: StockData[] = await response.json();
+        const data: CDStockData[] = await response.json();
         setStockData(data);
       } catch (error) {
         console.error('Error fetching stock data:', error);
@@ -29,7 +29,7 @@ export default function StockTable({ query, currentPage }: StockTableProps) {
       }
     }
 
-    fetchStockData();
+    fetchCDStockData();
   }, [query, page]);
 
   if (loading) return <CardSkeleton />;
