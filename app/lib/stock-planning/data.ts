@@ -198,6 +198,30 @@ export async function fetchCDStockData(query: string = '', page: number = 1): Pr
 
 
 /**
+ * Function to fetch the total count of CD stock data from the database.
+ * @param query - The search query.
+ * @returns A promise with the total count of CD stock data.
+ * @throws An error if the query fails.
+ * @example
+ * const totalCount = await fetchCDStockCount('sku');
+ */
+export async function fetchCDStockCount(query: string): Promise<number> {
+  const sqlText = `
+    SELECT COUNT(DISTINCT REPLACE(SKU, '-', '')) AS TOTALCOUNT 
+    FROM PATAGONIA.CORE_TEST.ERP_INVENTORY
+    WHERE REPLACE(SKU, '-', '') LIKE ?
+      AND INVENTORYWAREHOUSEID = 'CD'
+      AND UPPER(INVENTORYSTATUSID) = 'DISPONIBLE'
+  `;
+  
+  const binds = [`%${query.toUpperCase()}%`];
+  const result = await executeQuery<{ TOTALCOUNT: number }>(sqlText, binds);
+  
+  return result[0].TOTALCOUNT;
+}
+
+
+/**
  * Function to fetch stores stock data from the database.
  * @param query - The search query.
  * @param page - The page number.

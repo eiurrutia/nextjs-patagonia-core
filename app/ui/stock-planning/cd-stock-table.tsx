@@ -1,24 +1,28 @@
+// app/ui/stock-planning/cd-stock-table.tsx
 'use client';
 import { useEffect, useState } from 'react';
 import { CardSkeleton } from '../skeletons';
 import { CDStockData } from '@/app/lib/definitions';
+import Pagination from '@/app/ui/pagination';
 
-interface StockTableProps {
+interface CDStockTableProps {
   query: string;
   currentPage: number;
+  setPage: (page: number) => void;
 }
 
-export default function CDStockTable({ query, currentPage }: StockTableProps) {
+export default function CDStockTable({ query, currentPage, setPage }: CDStockTableProps) {
   const [stockData, setStockData] = useState<CDStockData[]>([]);
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(currentPage);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 10;
 
   useEffect(() => {
     async function fetchCDStockData() {
       setLoading(true);
       try {
         const response = await fetch(
-          `/api/stock-planning/stock-cd?query=${encodeURIComponent(query)}&page=${page}`
+          `/api/stock-planning/stock-cd?query=${encodeURIComponent(query)}&page=${currentPage}`
         );
         const data: CDStockData[] = await response.json();
         setStockData(data);
@@ -29,8 +33,19 @@ export default function CDStockTable({ query, currentPage }: StockTableProps) {
       }
     }
 
+    async function fetchTotalPages() {
+      try {
+        const response = await fetch(`/api/stock-planning/stock-cd-count?query=${encodeURIComponent(query)}`);
+        const { totalCount } = await response.json();
+        setTotalPages(Math.ceil(totalCount / limit));
+      } catch (error) {
+        console.error('Error fetching total pages:', error);
+      }
+    }
+
     fetchCDStockData();
-  }, [query, page]);
+    fetchTotalPages();
+  }, [query, currentPage]);
 
   if (loading) return <CardSkeleton />;
 
@@ -56,6 +71,9 @@ export default function CDStockTable({ query, currentPage }: StockTableProps) {
           ))}
         </tbody>
       </table>
+      <div className="mt-5 flex w-full justify-center">
+        <Pagination totalPages={totalPages} currentPage={currentPage} setPage={setPage} />
+      </div>
     </div>
   );
 }
