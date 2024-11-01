@@ -274,3 +274,32 @@ export type CDStockData = {
   STOCKWMS: number;
   MINSTOCK: number;
 }
+
+
+export type StoresStockData = {
+  SKU: string;
+  COYHAIQUE_AVAILABLE: number;
+  COYHAIQUE_ORDERED: number;
+  LASCONDES_AVAILABLE: number;
+  LASCONDES_ORDERED: number;
+  MALLSPORT_AVAILABLE: number;
+  MALLSPORT_ORDERED: number;
+  COSTANERA_AVAILABLE: number;
+  COSTANERA_ORDERED: number;
+  CONCEPCION_AVAILABLE: number;
+  CONCEPCION_ORDERED: number;
+  PTOVARAS_AVAILABLE: number;
+  PTOVARAS_ORDERED: number;
+  LADEHESA_AVAILABLE: number;
+  LADEHESA_ORDERED: number;
+  PUCON_AVAILABLE: number;
+  PUCON_ORDERED: number;
+  TEMUCO_AVAILABLE: number;
+  TEMUCO_ORDERED: number;
+  OSORNO_AVAILABLE: number;
+  OSORNO_ORDERED: number;
+  ALERCE_AVAILABLE: number;
+  ALERCE_ORDERED: number;
+  BNAVENTURA_AVAILABLE: number;
+  BNAVENTURA_ORDERED: number;
+};
