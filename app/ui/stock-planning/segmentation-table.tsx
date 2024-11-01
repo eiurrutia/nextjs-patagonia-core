@@ -4,12 +4,13 @@ import { StockSegment } from '@/app/lib/definitions';
 import { CardSkeleton } from '../skeletons';
 import Pagination from '@/app/ui/pagination';
 
-interface StockTableProps {
+interface SegmentationTableProps {
   query: string;
   currentPage: number;
+  setPage: (page: number) => void;
 }
 
-export default function SegmentationTable({ query, currentPage }: StockTableProps) {
+export default function SegmentationTable({ query, currentPage, setPage }: SegmentationTableProps) {
   const [segments, setSegments] = useState<StockSegment[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -80,7 +81,7 @@ export default function SegmentationTable({ query, currentPage }: StockTableProp
         </tbody>
       </table>
       <div className="mt-5 flex w-full justify-center">
-        <Pagination totalPages={totalPages} />
+        <Pagination totalPages={totalPages} currentPage={currentPage} setPage={setPage} />
       </div>
     </div>
   );

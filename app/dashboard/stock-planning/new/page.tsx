@@ -14,11 +14,13 @@ export default function NewStockPlanning({
 }: {
   searchParams?: {
     query?: string;
-    page?: string;
   };
 }) {
   const query = searchParams?.query || '';
-  const currentPage = Number(searchParams?.page) || 1;
+  const [segmentationPage, setSegmentationPage] = useState(1);
+  const [salesPage, setSalesPage] = useState(1);
+  const [cdStockPage, setCDStockPage] = useState(1);
+  const [storesStockPage, setStoresStockPage] = useState(1);
 
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
@@ -38,11 +40,13 @@ export default function NewStockPlanning({
         <Search placeholder="Buscar SKU..." />
       </div>
 
-      <Suspense key={query + currentPage} fallback={<InvoicesTableSkeleton />}>
+      {/* Segmentación */}
+      <Suspense key={query + segmentationPage} fallback={<InvoicesTableSkeleton />}>
         <h2 className={`${lusitana.className} text-2xl mt-8`}>Segmentación</h2>
-        <SegmentationTable query={query} currentPage={currentPage} />
+        <SegmentationTable query={query} currentPage={segmentationPage} setPage={setSegmentationPage} />
       </Suspense>
 
+      {/* Ventas */}
       <div className="mt-12 flex gap-4">
         <h2 className={`${lusitana.className} text-2xl`}>Ventas</h2>
         <div>
@@ -65,26 +69,25 @@ export default function NewStockPlanning({
           />
         </div>
       </div>
-
       <div className="mt-8">
         <Suspense fallback={<InvoicesTableSkeleton />}>
-          <SalesTable startDate={startDate} endDate={endDate} query={query} currentPage={currentPage} />
+          <SalesTable startDate={startDate} endDate={endDate} query={query} currentPage={salesPage} setPage={setSalesPage} />
         </Suspense>
       </div>
 
-      {/* CD Stock */}
+      {/* Stock CD */}
       <div className="mt-8">
         <h2 className={`${lusitana.className} text-2xl mt-8`}>Stock CD</h2>
         <Suspense fallback={<InvoicesTableSkeleton />}>
-          <CDStockTable query={query} currentPage={currentPage} />
+          <CDStockTable query={query} currentPage={cdStockPage} setPage={setCDStockPage} />
         </Suspense>
       </div>
 
-      {/* Stores Stock */}
+      {/* Stock Tiendas */}
       <div className="mt-8">
         <h2 className={`${lusitana.className} text-2xl mt-8`}>Stock Tiendas</h2>
         <Suspense fallback={<InvoicesTableSkeleton />}>
-          <StoresStockTable query={query} currentPage={currentPage} />
+          <StoresStockTable query={query} currentPage={storesStockPage} setPage={setStoresStockPage} />
         </Suspense>
       </div>
     </div>
