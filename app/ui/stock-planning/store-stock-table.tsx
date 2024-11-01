@@ -2,15 +2,19 @@
 import { useEffect, useState } from 'react';
 import { CardSkeleton } from '../skeletons';
 import { StoresStockData } from '@/app/lib/definitions';
+import Pagination from '../pagination';
 
 interface StoresStockTableProps {
   query: string;
   currentPage: number;
+  setPage: (page: number) => void;
 }
 
-export default function StoresStockTable({ query, currentPage }: StoresStockTableProps) {
+export default function StoresStockTable({ query, currentPage, setPage }: StoresStockTableProps) {
   const [storesStockData, setStoresStockData] = useState<StoresStockData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 10;
 
   useEffect(() => {
     async function fetchStoresStockData() {
@@ -26,7 +30,18 @@ export default function StoresStockTable({ query, currentPage }: StoresStockTabl
       }
     }
 
+    async function fetchTotalPages() {
+      try {
+        const response = await fetch(`/api/stock-planning/stock-stores-count?query=${encodeURIComponent(query)}`);
+        const { totalCount } = await response.json();
+        setTotalPages(Math.ceil(totalCount / limit));
+      } catch (error) {
+        console.error('Error fetching total pages:', error);
+      }
+    }
+
     fetchStoresStockData();
+    fetchTotalPages();
   }, [query, currentPage]);
 
   if (loading) return <CardSkeleton />;
@@ -131,6 +146,9 @@ export default function StoresStockTable({ query, currentPage }: StoresStockTabl
           ))}
         </tbody>
       </table>
+      <div className="mt-5 flex w-full justify-center">
+        <Pagination totalPages={totalPages} currentPage={currentPage} setPage={setPage} />
+      </div>
     </div>
   );
 }

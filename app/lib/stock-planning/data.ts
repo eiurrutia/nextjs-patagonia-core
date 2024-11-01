@@ -270,3 +270,24 @@ export async function fetchStoresStockData(query: string = '', page: number): Pr
   const binds = [`%${query.toUpperCase()}%`];
   return await executeQuery<StoresStockData>(sqlText, binds);
 }
+
+/**
+ * Function to fetch the total count of store stock data from the database.
+ * @param query - The search query.
+ * @returns A promise with the total count of store stock data.
+ * @throws An error if the query fails.
+ * @example
+ * const totalCount = await fetchStoresStockCount('sku');
+ */
+export async function fetchStoresStockCount(query: string): Promise<number> {
+  const sqlText = `
+    SELECT COUNT(DISTINCT REPLACE(SKU, '-', '')) AS TOTALCOUNT 
+    FROM PATAGONIA.CORE_TEST.ERP_INVENTORY
+    WHERE UPPER(REPLACE(SKU, '-', '')) LIKE ?
+  `;
+  
+  const binds = [`%${query.toUpperCase()}%`];
+  const result = await executeQuery<{ TOTALCOUNT: number }>(sqlText, binds);
+  
+  return result[0].TOTALCOUNT;
+}
