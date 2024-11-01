@@ -67,6 +67,33 @@ export async function fetchStockSegments(query: string, page: number): Promise<S
   return await executeQuery<StockSegment>(sqlText, binds);
 }
 
+
+/**
+ * Function to fetch the total count of stock segments from the database.
+ * @param query - The search query.
+ * @returns A promise with the total count of stock segments.
+ * @throws An error if the query fails.
+ * @example
+ * const totalCount = await fetchStockSegmentsCount('sku');
+ */
+export async function fetchStockSegmentsCount(query: string): Promise<number> {
+  const sqlText = query
+    ? `
+    SELECT COUNT(*) AS TOTALCOUNT 
+    FROM PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION
+    WHERE UPPER(SKU) LIKE ?
+    `
+    : `
+    SELECT COUNT(*) AS TOTALCOUNT 
+    FROM PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION
+    `;
+
+  const binds = [`%${query.toUpperCase()}%`];
+  const result = await executeQuery<{ TOTALCOUNT: number }>(sqlText, binds);
+  return result[0].TOTALCOUNT;
+}
+
+
 /**
  * Function to fetch sales data from the database with pivot.
  */

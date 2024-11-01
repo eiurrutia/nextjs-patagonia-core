@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { StockSegment } from '@/app/lib/definitions';
 import { CardSkeleton } from '../skeletons';
+import Pagination from '@/app/ui/pagination';
 
 interface StockTableProps {
   query: string;
@@ -12,6 +13,8 @@ export default function SegmentationTable({ query, currentPage }: StockTableProp
   const [segments, setSegments] = useState<StockSegment[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 10;
 
   useEffect(() => {
     async function loadSegments() {
@@ -36,7 +39,18 @@ export default function SegmentationTable({ query, currentPage }: StockTableProp
       }
     }
 
+    async function fetchTotalPages() {
+      try {
+        const response = await fetch(`/api/stock-planning/stock-segments-count?query=${encodeURIComponent(query)}`);
+        const { totalCount } = await response.json();
+        setTotalPages(Math.ceil(totalCount / limit));
+      } catch (error) {
+        console.error('Error fetching total pages:', error);
+      }
+    }
+
     loadSegments();
+    fetchTotalPages();
   }, [query, currentPage]);
 
   if (loading) return <CardSkeleton />;
@@ -65,6 +79,9 @@ export default function SegmentationTable({ query, currentPage }: StockTableProp
           ))}
         </tbody>
       </table>
+      <div className="mt-5 flex w-full justify-center">
+        <Pagination totalPages={totalPages} />
+      </div>
     </div>
   );
 }
