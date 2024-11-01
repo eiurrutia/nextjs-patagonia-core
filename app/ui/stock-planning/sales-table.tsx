@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { CardSkeleton } from '../skeletons';
+import Pagination from '../pagination';
 
 interface SalesData {
   SKU: string;
@@ -24,19 +25,23 @@ interface SalesTableProps {
   endDate: string;
   query: string;
   currentPage: number;
+  setPage: (page: number) => void;
 }
 
-export default function SalesTable({ startDate, endDate, query, currentPage }: SalesTableProps) {
+
+
+export default function SalesTable({ startDate, endDate, query, currentPage, setPage }: SalesTableProps) {
   const [salesData, setSalesData] = useState<SalesData[]>([]);
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(currentPage);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 10;
 
   useEffect(() => {
     async function fetchSalesData() {
       setLoading(true);
       try {
         const response = await fetch(
-          `/api/stock-planning/sales?startDate=${startDate}&endDate=${endDate}&query=${encodeURIComponent(query)}&page=${page}`
+          `/api/stock-planning/sales?startDate=${startDate}&endDate=${endDate}&query=${encodeURIComponent(query)}&page=${currentPage}`
         );
         const data: SalesData[] = await response.json();
         setSalesData(data);
@@ -47,8 +52,20 @@ export default function SalesTable({ startDate, endDate, query, currentPage }: S
       }
     }
 
+    async function fetchTotalPages() {
+      try {
+        const response = await fetch(`/api/stock-planning/sales-count?startDate=${startDate}&endDate=${endDate}&query=${encodeURIComponent(query)}`);
+        const { totalCount } = await response.json();
+        console.log('este total count llegó ', totalCount);
+        setTotalPages(Math.ceil(totalCount / limit));
+      } catch (error) {
+        console.error('Error fetching total pages:', error);
+      }
+    }
+
     fetchSalesData();
-  }, [startDate, endDate, query, page]);
+    fetchTotalPages();
+  }, [startDate, endDate, query, currentPage]);
 
   if (loading) return <CardSkeleton />;
 
@@ -96,6 +113,9 @@ export default function SalesTable({ startDate, endDate, query, currentPage }: S
             ))}
         </tbody>
       </table>
+      <div className="mt-5 flex w-full justify-center">
+        <Pagination totalPages={totalPages} currentPage={currentPage} setPage={setPage} />
+      </div>
     </div>
   );
 }

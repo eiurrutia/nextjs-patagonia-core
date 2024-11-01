@@ -131,6 +131,39 @@ export async function fetchSalesData(
   return await executeQuery(sqlText, binds);
 }
 
+
+/**
+ * Function to fetch the total count of sales data from the database.
+ * @param query - The search query.
+ * @returns A promise with the total count of sales data.
+ * @throws An error if the query fails.
+ * @example
+ * const totalCount = await fetchSalesCountData('sku', '2021-01-01', '2021-12-31', 1);
+ */
+export async function fetchSalesCount(
+  query: string, startDate: string, endDate: string, page: number
+) {
+  const sqlText = query
+    ? `
+    SELECT COUNT(DISTINCT SKU) AS TOTALCOUNT
+    FROM PATAGONIA.CORE_TEST.ERP_PROCESSED_SALESLINE
+    WHERE INVOICEDATE BETWEEN ? AND ?
+      AND UPPER(SKU) LIKE ?
+      AND INVOICEID LIKE '39-%';
+    `
+    : `
+    SELECT COUNT(DISTINCT SKU) AS TOTALCOUNT
+    FROM PATAGONIA.CORE_TEST.ERP_PROCESSED_SALESLINE
+    WHERE INVOICEDATE BETWEEN ? AND ?
+      AND INVOICEID LIKE '39-%';
+    `;
+  const binds = [startDate, endDate, `%${query.toUpperCase()}%`];
+  const result = await executeQuery<{ TOTALCOUNT: number }>(sqlText, binds);
+  console.log('Result!: ', result);
+  console.log('TOTAL COUNT', result[0].TOTALCOUNT);
+  return result[0].TOTALCOUNT;
+}
+
 /**
  * Function to fetch stock data from the database with pagination.
  * @param query - The search query.
