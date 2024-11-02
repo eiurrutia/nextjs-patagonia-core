@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import Search from '@/app/ui/search';
 import UploadSegmentation from '@/app/ui/stock-planning/upload-segmentation';
 import SegmentationTable from '@/app/ui/stock-planning/segmentation-table';
@@ -7,7 +8,7 @@ import { Suspense } from 'react';
 import { InvoicesTableSkeleton } from '@/app/ui/skeletons';
 import { useRouter } from 'next/navigation';
 
-export default async function Page({
+export default function Page({
   searchParams,
 }: {
   searchParams?: {
@@ -18,7 +19,7 @@ export default async function Page({
 }) {
   const router = useRouter();
   const query = searchParams?.query || '';
-  const currentPage = Number(searchParams?.page) || 1;
+  const [currentPage, setCurrentPage] = useState(1);
 
   const handleNewStockPlanning = () => {
     router.push('/dashboard/stock-planning/new');
@@ -44,7 +45,7 @@ export default async function Page({
       </div>
 
       <Suspense key={query + currentPage} fallback={<InvoicesTableSkeleton />}>
-        <SegmentationTable query={query} currentPage={currentPage} />
+        <SegmentationTable query={query} currentPage={currentPage} setPage={setCurrentPage} />
       </Suspense>
     </div>
   );
