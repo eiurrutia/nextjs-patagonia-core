@@ -30,12 +30,6 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
     const totalReplenishment = replenishmentData.reduce((sum, item) => sum + (item.REPLENISHMENT || 0), 0);
     const totalSales = replenishmentData.reduce((sum, item) => sum + (item.SALES || 0), 0);
     const totalInOrdered = replenishmentData.reduce((sum, item) => sum + (item.ORDERED_QTY || 0), 0);
-
-    const storesToReplenish = Array.from(new Set(replenishmentData
-      .filter(item => item.REPLENISHMENT > 0)
-      .map(item => item.STORE)
-    ));
-
     const replenishmentByStore = replenishmentData.reduce((acc, item) => {
       if (item.REPLENISHMENT > 0) {
         acc[item.STORE] = (acc[item.STORE] || 0) + item.REPLENISHMENT;
@@ -43,12 +37,12 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
       return acc;
     }, {} as Record<string, number>);
 
-    return { totalReplenishment, totalSales, storesToReplenish, replenishmentByStore, totalInOrdered };
+    return { totalReplenishment, totalSales, replenishmentByStore, totalInOrdered };
   }, [replenishmentData]);
 
   // Filtering the data only after replenishmentData is loaded
   const filteredData = useMemo(() => {
-    if (loading) return []; // Prevent filtering while loading
+    if (loading) return [];
     return query
       ? replenishmentData.filter(item =>
             item.SKU.toUpperCase().includes(query.toUpperCase()) ||
@@ -101,18 +95,30 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
           </tbody>
         </table>
         {/* Summary Card */}
-        <div className="p-4 my-4 rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold mb-2">Resumen de Reposición</h3>
-          <p>Total de Unidades a Reponer: {summary.totalReplenishment}</p>
-          <p>Total de Unidades en reposición: {summary.totalInOrdered}</p>
-          <p>Total de Unidades Vendidas (Periodo): {summary.totalSales}</p>
-          <p>Ubicaciones a Reponer: {summary.storesToReplenish.join(', ') || 'Ninguna'}</p>
-          <h4 className="mt-4 font-semibold">Reposición por Ubicación:</h4>
-          <ul>
+        <div className="p-6 my-6 rounded-lg shadow-md">
+          <h3 className="text-2xl font-bold mb-4 text-center">Resumen de Reposición</h3>
+          <div className="flex justify-around text-center">
+            <div className="flex flex-col items-center">
+              <p className="text-4xl font-bold text-blue-600">{summary.totalReplenishment}</p>
+              <p className="text-sm text-gray-600">Total de Unidades a Reponer</p>
+            </div>
+            <div className="flex flex-col items-center">
+              <p className="text-4xl font-bold text-yellow-600">{summary.totalInOrdered}</p>
+              <p className="text-sm text-gray-600">Total de Unidades en Reposición</p>
+            </div>
+            <div className="flex flex-col items-center">
+              <p className="text-4xl font-bold">{summary.totalSales}</p>
+              <p className="text-sm text-gray-600">Total de Unidades Vendidas (Periodo)</p>
+            </div>
+          </div>
+          <div className="mt-4">
+            <h4 className="font-semibold">Reposición por Ubicación:</h4>
+            <ul className="ml-4 list-disc">
             {Object.entries(summary.replenishmentByStore).map(([store, replenishment]) => (
-              <li key={store}>{store}: {replenishment} unidades</li>
+                <li key={store} className="text-gray-700">{store}: {replenishment} unidades</li>
             ))}
           </ul>
+          </div>
         </div>
         </>
       )}
