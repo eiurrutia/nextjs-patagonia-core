@@ -79,7 +79,7 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
         <CardSkeleton />
       ) : (
         <>
-        <div className="mb-4">
+        <div className="my-4">
           <input
             type="text"
             placeholder="Buscar SKU, Tienda..."
@@ -94,10 +94,10 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
             <tr>
               <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('SKU')}>SKU</th>
               <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('STORE')}>Tienda</th>
-                <th className="border px-4 py-2">Segmentación</th>
-                <th className="border px-4 py-2">Venta</th>
-                <th className="border px-4 py-2">Stock Actual</th>
-                <th className="border px-4 py-2">Ordenado</th>
+              <th className="border px-4 py-2 cursor-pointer"  onClick={() => handleSort('SEGMENT')}>Segmentación</th>
+              <th className="border px-4 py-2 cursor-pointer"  onClick={() => handleSort('SALES')}>Venta</th>
+              <th className="border px-4 py-2 cursor-pointer"  onClick={() => handleSort('ACTUAL_STOCK')}>Stock Actual</th>
+              <th className="border px-4 py-2 cursor-pointer"  onClick={() => handleSort('ORDERED_QTY')}>Ordenado</th>
               <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('REPLENISHMENT')}>
                 Reposición
               </th>
