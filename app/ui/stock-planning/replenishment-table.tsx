@@ -7,6 +7,7 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
   const [replenishmentData, setReplenishmentData] = useState<ReplenishmentData[]>([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState('');
+  const [sortConfig, setSortConfig] = useState<{ key: keyof ReplenishmentData; direction: 'asc' | 'desc' } | null>(null);
 
   useEffect(() => {
     async function fetchReplenishmentData() {
@@ -40,44 +41,66 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
     return { totalReplenishment, totalSales, replenishmentByStore, totalInOrdered };
   }, [replenishmentData]);
 
-  // Filtering the data only after replenishmentData is loaded
+  // Filtering and sorting the data
   const filteredData = useMemo(() => {
-    if (loading) return [];
-    return query
-      ? replenishmentData.filter(item =>
+    let data = replenishmentData;
+    if (query) {
+      data = data.filter(item =>
             item.SKU.toUpperCase().includes(query.toUpperCase()) ||
             item.STORE.toUpperCase().includes(query.toUpperCase())
-        )
-      : replenishmentData;
-  }, [query, replenishmentData, loading]);
+      );
+    }
+
+    if (sortConfig) {
+      data = [...data].sort((a, b) => {
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+        
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return data;
+  }, [query, replenishmentData, sortConfig]);
+
+  const handleSort = (key: keyof ReplenishmentData) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
 
   return (
     <div>
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Buscar SKU..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="border rounded p-2 w-full"
-        />
-      </div>
-
       {loading ? (
         <CardSkeleton />
       ) : (
         <>
+        <div className="mb-4">
+          <input
+            type="text"
+            placeholder="Buscar SKU, Tienda..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="border rounded p-2 w-full"
+          />
+        </div>
         {/* Table */}
         <table className="min-w-full border-collapse border border-gray-300">
           <thead>
             <tr>
-                <th className="border px-4 py-2">SKU</th>
-                <th className="border px-4 py-2">Tienda</th>
+              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('SKU')}>SKU</th>
+              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('STORE')}>Tienda</th>
                 <th className="border px-4 py-2">Segmentación</th>
                 <th className="border px-4 py-2">Venta</th>
                 <th className="border px-4 py-2">Stock Actual</th>
                 <th className="border px-4 py-2">Ordenado</th>
-                <th className="border px-4 py-2">Reposición</th>
+              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('REPLENISHMENT')}>
+                Reposición
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -94,6 +117,7 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
             ))}
           </tbody>
         </table>
+
         {/* Summary Card */}
         <div className="p-6 my-6 rounded-lg shadow-md">
           <h3 className="text-2xl font-bold mb-4 text-center">Resumen de Reposición</h3>
