@@ -266,6 +266,7 @@ export type StockSegment = {
   OSORNO: number;
   ALERCE: number;
   BNAVENTURA: number;
+  [key: string]: number | string;
 }
 
 export type CDStockData = {
@@ -275,6 +276,23 @@ export type CDStockData = {
   MINSTOCK: number;
 }
 
+export type  SalesData = {
+  SKU: string;
+  CD: number;
+  COYHAIQUE: number;
+  LASCONDES: number;
+  MALLSPORT: number;
+  COSTANERA: number;
+  CONCEPCION: number;
+  PTOVARAS: number;
+  LADEHESA: number;
+  PUCON: number;
+  TEMUCO: number;
+  OSORNO: number;
+  ALERCE: number;
+  BNAVENTURA: number;
+  [key: string]: number | string;
+}
 
 export type StoresStockData = {
   SKU: string;
@@ -303,3 +321,13 @@ export type StoresStockData = {
   BNAVENTURA_AVAILABLE: number;
   BNAVENTURA_ORDERED: number;
 };
+
+export type ReplenishmentData = {
+  SKU: string;
+  STORE: string;
+  SEGMENT: number;
+  SALES: number;
+  ACTUAL_STOCK: number;
+  ORDERED_QTY: number;
+  REPLENISHMENT: number;
+}

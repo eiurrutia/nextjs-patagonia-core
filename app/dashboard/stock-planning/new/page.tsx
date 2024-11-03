@@ -5,6 +5,7 @@ import SalesTable from '@/app/ui/stock-planning/sales-table';
 import CDStockTable from '@/app/ui/stock-planning/cd-stock-table';
 import StoresStockTable from '@/app/ui/stock-planning/store-stock-table';
 import Search from '@/app/ui/search';
+import ReplenishmentTable from '@/app/ui/stock-planning/replenishment-table';
 import { lusitana } from '@/app/ui/fonts';
 import { Suspense } from 'react';
 import { InvoicesTableSkeleton } from '@/app/ui/skeletons';
@@ -29,6 +30,11 @@ export default function NewStockPlanning({
   });
 
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [showReplenishment, setShowReplenishment] = useState(false);
+
+  const handleGenerateReplenishment = () => {
+    setShowReplenishment(true);
+  };
 
   return (
     <div className="w-full">
@@ -50,7 +56,7 @@ export default function NewStockPlanning({
       <div className="mt-12 flex gap-4">
         <h2 className={`${lusitana.className} text-2xl`}>Ventas</h2>
         <div>
-          <label className='mx-4'>Fecha Inicio:</label>
+          <label className="mx-4">Fecha Inicio:</label>
           <input
             type="date"
             value={startDate}
@@ -58,9 +64,8 @@ export default function NewStockPlanning({
             className="border p-2 rounded"
           />
         </div>
-
         <div>
-          <label className='mx-4'>Fecha Fin:</label>
+          <label className="mx-4">Fecha Fin:</label>
           <input
             type="date"
             value={endDate}
@@ -90,6 +95,24 @@ export default function NewStockPlanning({
           <StoresStockTable query={query} currentPage={storesStockPage} setPage={setStoresStockPage} />
         </Suspense>
       </div>
+
+      {/* Generate Replenishment button */}
+      <div className="w-full mt-4">
+        <button
+          onClick={handleGenerateReplenishment}
+          className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          Generar Reposición
+        </button>
+      </div>
+
+      {/* Replenishment Table */}
+      {showReplenishment && (
+        <div className="mt-8">
+          <h2 className={`${lusitana.className} text-2xl mt-8`}>Resultado de Reposición</h2>
+          <ReplenishmentTable startDate={startDate} endDate={endDate} />
+        </div>
+      )}
     </div>
   );
 }
