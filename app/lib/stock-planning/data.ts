@@ -1,6 +1,6 @@
 import { executeQuery } from '@/app/lib/snowflakeClient';
 import { unstable_noStore as noStore } from 'next/cache';
-import { StockSegment, CDStockData, StoresStockData } from './../definitions';
+import { StockSegment, CDStockData, StoresStockData, SalesData } from './../definitions';
 
 /**
  * Function to truncate the segmentation table.
@@ -43,9 +43,9 @@ export async function uploadStockSegments(data: StockSegment[]): Promise<void> {
  * @example
  * const segments = await fetchStockSegments('sku', 1); 
  */
-export async function fetchStockSegments(query: string, page: number): Promise<StockSegment[]> {
-  const limit = 10;
-  const offset = (page - 1) * limit;
+export async function fetchStockSegments(query: string, page: number, noPagination: boolean = false): Promise<StockSegment[]> {
+  const limit = noPagination ? '' : 'LIMIT 10';
+  const offset = noPagination ? '' : `OFFSET ${(page - 1) * 10}`;
 
   const sqlText = query
     ? `
@@ -53,13 +53,13 @@ export async function fetchStockSegments(query: string, page: number): Promise<S
       FROM PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION
       WHERE UPPER(SKU) LIKE ?
       ORDER BY SKU
-      LIMIT ${limit} OFFSET ${offset}
+      ${limit} ${offset}
     `
     : `
       SELECT * 
       FROM PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION
       ORDER BY SKU
-      LIMIT ${limit} OFFSET ${offset}
+      ${limit} ${offset}
     `;
 
   const binds = query ? [`%${query.toUpperCase()}%`] : [];
@@ -98,10 +98,10 @@ export async function fetchStockSegmentsCount(query: string): Promise<number> {
  * Function to fetch sales data from the database with pivot.
  */
 export async function fetchSalesData(
-    query: string, startDate: string, endDate: string, page: number
-  ) {
-  const limit = 10;
-  const offset = (page - 1) * limit;
+    query: string, startDate: string, endDate: string, page: number, noPagination: boolean = false
+  ): Promise<SalesData[]> {
+  const limit = noPagination ? '' : 'LIMIT 10';
+  const offset = noPagination ? '' : `OFFSET ${(page - 1) * 10}`;
   const sqlText = `
     SELECT 
       SKU,
@@ -124,11 +124,11 @@ export async function fetchSalesData(
       AND INVOICEID LIKE '39-%'
     GROUP BY SKU
     ORDER BY SKU
-    LIMIT ${limit} OFFSET ${offset}
+    ${limit} ${offset};
   `;
 
   const binds = [startDate, endDate, `%${query.toUpperCase()}%`];
-  return await executeQuery(sqlText, binds);
+  return await executeQuery<SalesData>(sqlText, binds);
 }
 
 
@@ -170,9 +170,12 @@ export async function fetchSalesCount(
  * @param page - The page number.
  * @returns A promise with the stock data.
  */
-export async function fetchCDStockData(query: string = '', page: number = 1): Promise<CDStockData[]> {
-  const limit = 10;
-  const offset = (page - 1) * limit;
+export async function fetchCDStockData(
+    query: string = '', page: number = 1, noPagination: boolean = false
+  ): Promise<CDStockData[]> {
+  const limit = noPagination ? '' : 'LIMIT 10';
+  const offset = noPagination ? '' : `OFFSET ${(page - 1) * 10}`;
+  
 
   const sqlText = `
     SELECT
@@ -188,7 +191,7 @@ export async function fetchCDStockData(query: string = '', page: number = 1): Pr
       AND UPPER(erp.INVENTORYSTATUSID) = 'DISPONIBLE'
     GROUP BY erp.SKU
     ORDER BY erp.SKU
-    LIMIT ${limit} OFFSET ${offset};
+    ${limit} ${offset};
   `;
 
   const binds = [`%${query.toUpperCase()}%`];
@@ -229,9 +232,9 @@ export async function fetchCDStockCount(query: string): Promise<number> {
  * @example
  * const storesStockData = await fetchStoresStockData('sku', 1);
  */
-export async function fetchStoresStockData(query: string = '', page: number): Promise<StoresStockData[]> {
-  const limit = 10;
-  const offset = (page - 1) * limit;
+export async function fetchStoresStockData(query: string = '', page: number, noPagination: boolean = false): Promise<StoresStockData[]> {
+  const limit = noPagination ? '' : 'LIMIT 10';
+  const offset = noPagination ? '' : `OFFSET ${(page - 1) * 10}`;
   
   const sqlText = `
     SELECT
@@ -264,7 +267,7 @@ export async function fetchStoresStockData(query: string = '', page: number): Pr
     WHERE UPPER(REPLACE(SKU, '-', '')) LIKE ?
     GROUP BY SKU
     ORDER BY SKU
-    LIMIT ${limit} OFFSET ${offset};
+    ${limit} ${offset};
   `;
 
   const binds = [`%${query.toUpperCase()}%`];
