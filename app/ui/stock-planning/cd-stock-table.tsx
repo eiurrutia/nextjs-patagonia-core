@@ -1,4 +1,3 @@
-// app/ui/stock-planning/cd-stock-table.tsx
 'use client';
 import { useEffect, useState } from 'react';
 import { CardSkeleton } from '../skeletons';

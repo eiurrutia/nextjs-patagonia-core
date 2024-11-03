@@ -2,23 +2,7 @@
 import { useEffect, useState } from 'react';
 import { CardSkeleton } from '../skeletons';
 import Pagination from '../pagination';
-
-interface SalesData {
-  SKU: string;
-  CD: number;
-  COYHAIQUE: number;
-  LASCONDES: number;
-  MALLSPORT: number;
-  COSTANERA: number;
-  CONCEPCION: number;
-  PTOVARAS: number;
-  LADEHESA: number;
-  PUCON: number;
-  TEMUCO: number;
-  OSORNO: number;
-  ALERCE: number;
-  BNAVENTURA: number;
-}
+import { SalesData } from '@/app/lib/definitions';
 
 interface SalesTableProps {
   startDate: string;
@@ -27,8 +11,6 @@ interface SalesTableProps {
   currentPage: number;
   setPage: (page: number) => void;
 }
-
-
 
 export default function SalesTable({ startDate, endDate, query, currentPage, setPage }: SalesTableProps) {
   const [salesData, setSalesData] = useState<SalesData[]>([]);
@@ -56,7 +38,6 @@ export default function SalesTable({ startDate, endDate, query, currentPage, set
       try {
         const response = await fetch(`/api/stock-planning/sales-count?startDate=${startDate}&endDate=${endDate}&query=${encodeURIComponent(query)}`);
         const { totalCount } = await response.json();
-        console.log('este total count llegó ', totalCount);
         setTotalPages(Math.ceil(totalCount / limit));
       } catch (error) {
         console.error('Error fetching total pages:', error);
