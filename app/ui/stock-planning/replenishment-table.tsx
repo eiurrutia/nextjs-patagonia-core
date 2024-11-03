@@ -3,7 +3,6 @@ import { useEffect, useState, useMemo } from 'react';
 import { CardSkeleton } from '../skeletons';
 import { ReplenishmentData } from '@/app/lib/definitions';
 
-
 export default function ReplenishmentTable({ startDate, endDate }: { startDate: string; endDate: string }) {
   const [replenishmentData, setReplenishmentData] = useState<ReplenishmentData[]>([]);
   const [loading, setLoading] = useState(false);
@@ -26,12 +25,34 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
     fetchReplenishmentData();
   }, [startDate, endDate]);
 
+  // Calculate summary data
+  const summary = useMemo(() => {
+    const totalReplenishment = replenishmentData.reduce((sum, item) => sum + (item.REPLENISHMENT || 0), 0);
+    const totalSales = replenishmentData.reduce((sum, item) => sum + (item.SALES || 0), 0);
+    const totalInOrdered = replenishmentData.reduce((sum, item) => sum + (item.ORDERED_QTY || 0), 0);
+
+    const storesToReplenish = Array.from(new Set(replenishmentData
+      .filter(item => item.REPLENISHMENT > 0)
+      .map(item => item.STORE)
+    ));
+
+    const replenishmentByStore = replenishmentData.reduce((acc, item) => {
+      if (item.REPLENISHMENT > 0) {
+        acc[item.STORE] = (acc[item.STORE] || 0) + item.REPLENISHMENT;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    return { totalReplenishment, totalSales, storesToReplenish, replenishmentByStore, totalInOrdered };
+  }, [replenishmentData]);
+
   // Filtering the data only after replenishmentData is loaded
   const filteredData = useMemo(() => {
     if (loading) return []; // Prevent filtering while loading
     return query
       ? replenishmentData.filter(item =>
-            item.SKU.toUpperCase().includes(query.toUpperCase())
+            item.SKU.toUpperCase().includes(query.toUpperCase()) ||
+            item.STORE.toUpperCase().includes(query.toUpperCase())
         )
       : replenishmentData;
   }, [query, replenishmentData, loading]);
@@ -51,6 +72,8 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
       {loading ? (
         <CardSkeleton />
       ) : (
+        <>
+        {/* Table */}
         <table className="min-w-full border-collapse border border-gray-300">
           <thead>
             <tr>
@@ -77,6 +100,21 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
             ))}
           </tbody>
         </table>
+        {/* Summary Card */}
+        <div className="p-4 my-4 rounded-lg shadow-md">
+          <h3 className="text-xl font-semibold mb-2">Resumen de Reposición</h3>
+          <p>Total de Unidades a Reponer: {summary.totalReplenishment}</p>
+          <p>Total de Unidades en reposición: {summary.totalInOrdered}</p>
+          <p>Total de Unidades Vendidas (Periodo): {summary.totalSales}</p>
+          <p>Ubicaciones a Reponer: {summary.storesToReplenish.join(', ') || 'Ninguna'}</p>
+          <h4 className="mt-4 font-semibold">Reposición por Ubicación:</h4>
+          <ul>
+            {Object.entries(summary.replenishmentByStore).map(([store, replenishment]) => (
+              <li key={store}>{store}: {replenishment} unidades</li>
+            ))}
+          </ul>
+        </div>
+        </>
       )}
     </div>
   );
