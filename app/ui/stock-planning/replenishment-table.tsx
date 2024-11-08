@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, useMemo } from 'react';
 import { CardSkeleton } from '../skeletons';
+import { ChevronRightIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { ReplenishmentData, BreakData } from '@/app/lib/definitions';
 
 export default function ReplenishmentTable({ startDate, endDate }: { startDate: string; endDate: string }) {
@@ -9,6 +10,8 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof ReplenishmentData; direction: 'asc' | 'desc' } | null>(null);
+  const [isSkuBreakExpanded, setIsSkuBreakExpanded] = useState(false);
+  const [expandedStores, setExpandedStores] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     async function fetchReplenishmentData() {
@@ -32,22 +35,32 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
     const totalReplenishment = replenishmentData.reduce((sum, item) => sum + (item.REPLENISHMENT || 0), 0);
     const totalSales = replenishmentData.reduce((sum, item) => sum + (item.SALES || 0), 0);
     const totalInOrdered = replenishmentData.reduce((sum, item) => sum + (item.ORDERED_QTY || 0), 0);
-    const replenishmentByStore = replenishmentData.reduce((acc, item) => {
-      if (item.REPLENISHMENT > 0) {
-        acc[item.STORE] = (acc[item.STORE] || 0) + item.REPLENISHMENT;
-      }
-      return acc;
-    }, {} as Record<string, number>);
+
+    const replenishmentByStore = Object.entries(
+      replenishmentData.reduce((acc, item) => {
+        if (item.REPLENISHMENT > 0) {
+          acc[item.STORE] = (acc[item.STORE] || 0) + item.REPLENISHMENT;
+        }
+        return acc;
+      }, {} as Record<string, number>)
+    ).sort(([a], [b]) => a.localeCompare(b));
+
     const totalBreakQty = breakData.reduce((sum, item) => sum + item.BREAK_QTY, 0);
-    const breakByStore = breakData.reduce((acc, item) => {
-      acc[item.STORE] = (acc[item.STORE] || 0) + item.BREAK_QTY;
-      return acc;
-    }, {} as Record<string, number>);
-    const breakByStoreSku = breakData.reduce((acc, item) => {
-      if (!acc[item.STORE]) acc[item.STORE] = {};
-      acc[item.STORE][item.SKU] = (acc[item.STORE][item.SKU] || 0) + item.BREAK_QTY;
-      return acc;
-    }, {} as Record<string, Record<string, number>>);
+
+    const breakByStore = Object.entries(
+      breakData.reduce((acc, item) => {
+        acc[item.STORE] = (acc[item.STORE] || 0) + item.BREAK_QTY;
+        return acc;
+      }, {} as Record<string, number>)
+    ).sort(([a], [b]) => a.localeCompare(b));
+
+    const breakByStoreSku = Object.entries(
+      breakData.reduce((acc, item) => {
+        if (!acc[item.STORE]) acc[item.STORE] = {};
+        acc[item.STORE][item.SKU] = (acc[item.STORE][item.SKU] || 0) + item.BREAK_QTY;
+        return acc;
+      }, {} as Record<string, Record<string, number>>)
+    ).sort(([a], [b]) => a.localeCompare(b));
 
     return { totalReplenishment, totalSales, replenishmentByStore, totalInOrdered, totalBreakQty, breakByStore, breakByStoreSku };
   }, [replenishmentData, breakData]);
@@ -83,6 +96,13 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
     setSortConfig({ key, direction });
   };
 
+  const toggleStoreExpansion = (store: string) => {
+    setExpandedStores(prev => ({
+      ...prev,
+      [store]: !prev[store]
+    }));
+  };
+
   return (
     <div>
       {loading ? (
@@ -104,13 +124,11 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
             <tr>
               <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('SKU')}>SKU</th>
               <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('STORE')}>Tienda</th>
-              <th className="border px-4 py-2 cursor-pointer"  onClick={() => handleSort('SEGMENT')}>Segmentación</th>
-              <th className="border px-4 py-2 cursor-pointer"  onClick={() => handleSort('SALES')}>Venta</th>
-              <th className="border px-4 py-2 cursor-pointer"  onClick={() => handleSort('ACTUAL_STOCK')}>Stock Actual</th>
-              <th className="border px-4 py-2 cursor-pointer"  onClick={() => handleSort('ORDERED_QTY')}>Ordenado</th>
-              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('REPLENISHMENT')}>
-                Reposición
-              </th>
+              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('SEGMENT')}>Segmentación</th>
+              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('SALES')}>Venta</th>
+              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('ACTUAL_STOCK')}>Stock Actual</th>
+              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('ORDERED_QTY')}>Ordenado</th>
+              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('REPLENISHMENT')}>Reposición</th>
             </tr>
           </thead>
           <tbody>
@@ -152,7 +170,7 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
           <div className="mt-4">
             <h4 className="font-semibold">Reposición por Ubicación:</h4>
             <ul className="ml-4 list-disc">
-              {Object.entries(summary.replenishmentByStore).map(([store, replenishment]) => (
+              {summary.replenishmentByStore.map(([store, replenishment]) => (
                 <li key={store} className="text-gray-700">{store}: {replenishment} unidades</li>
               ))}
             </ul>
@@ -160,23 +178,37 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
           <div className="mt-4">
             <h4 className="font-semibold">Quiebre por Ubicación:</h4>
             <ul className="ml-4 list-disc">
-              {Object.entries(summary.breakByStore).map(([store, breakQty]) => (
+              {summary.breakByStore.map(([store, breakQty]) => (
                 <li key={store} className="text-gray-700">{store}: {breakQty} unidades en quiebre</li>
               ))}
             </ul>
           </div>
           <div className="mt-4">
-            <h4 className="font-semibold">Quiebre por SKU en cada Tienda:</h4>
-            {Object.entries(summary.breakByStoreSku).map(([store, skuData]) => (
-              <div key={store} className="ml-4">
-                <h5 className="text-gray-700 font-semibold">{store}:</h5>
-                <ul className="list-disc ml-4">
-                  {Object.entries(skuData).map(([sku, breakQty]) => (
-                    <li key={`${store}-${sku}`} className="text-gray-700">{sku}: {breakQty} unidades en quiebre</li>
-                  ))}
-                </ul>
+            <button
+              onClick={() => setIsSkuBreakExpanded(!isSkuBreakExpanded)}
+              className="font-semibold text-black-600 hover:underline focus:outline-none mb-6"
+            >
+              Quiebre por SKU en cada Tienda {isSkuBreakExpanded ? <ChevronDownIcon className="inline h-6 w-6" /> : <ChevronRightIcon className="inline h-6 w-6" />}
+            </button>
+            {isSkuBreakExpanded && (
+              <div>
+                {summary.breakByStoreSku.map(([store, skuData]) => (
+                  <div key={store} className="ml-4">
+                    <div className="mb-4 flex items-center cursor-pointer" onClick={() => toggleStoreExpansion(store)}>
+                      {expandedStores[store] ? <ChevronDownIcon className="h-6 w-6 text-gray-600" /> : <ChevronRightIcon className="h-6 w-6 text-gray-600" />}
+                      <h5 className="text-gray-700 font-semibold ml-2">{store}</h5>
+                    </div>
+                    {expandedStores[store] && (
+                      <ul className="list-disc ml-8">
+                        {Object.entries(skuData).map(([sku, breakQty]) => (
+                          <li key={`${store}-${sku}`} className="text-gray-700">{sku}: {breakQty} unidades en quiebre</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         </div>
         </>
