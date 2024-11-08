@@ -331,3 +331,9 @@ export type ReplenishmentData = {
   ORDERED_QTY: number;
   REPLENISHMENT: number;
 }
+
+export type BreakData = {
+  SKU: string;
+  STORE: string;
+  BREAK_QTY: number;
+}

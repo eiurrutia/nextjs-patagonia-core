@@ -1,10 +1,11 @@
 'use client';
 import { useEffect, useState, useMemo } from 'react';
 import { CardSkeleton } from '../skeletons';
-import { ReplenishmentData } from '@/app/lib/definitions';
+import { ReplenishmentData, BreakData } from '@/app/lib/definitions';
 
 export default function ReplenishmentTable({ startDate, endDate }: { startDate: string; endDate: string }) {
   const [replenishmentData, setReplenishmentData] = useState<ReplenishmentData[]>([]);
+  const [breakData, setBreakData] = useState<BreakData[]>([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof ReplenishmentData; direction: 'asc' | 'desc' } | null>(null);
@@ -15,7 +16,8 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
       try {
         const response = await fetch(`/api/stock-planning/replenishment?startDate=${startDate}&endDate=${endDate}`);
         const data = await response.json();
-        setReplenishmentData(data);
+        setReplenishmentData(data.replenishmentTable);
+        setBreakData(data.breakData);
       } catch (error) {
         console.error('Error fetching replenishment data:', error);
       } finally {
@@ -26,7 +28,6 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
     fetchReplenishmentData();
   }, [startDate, endDate]);
 
-  // Calculate summary data
   const summary = useMemo(() => {
     const totalReplenishment = replenishmentData.reduce((sum, item) => sum + (item.REPLENISHMENT || 0), 0);
     const totalSales = replenishmentData.reduce((sum, item) => sum + (item.SALES || 0), 0);
@@ -37,11 +38,20 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
       }
       return acc;
     }, {} as Record<string, number>);
+    const totalBreakQty = breakData.reduce((sum, item) => sum + item.BREAK_QTY, 0);
+    const breakByStore = breakData.reduce((acc, item) => {
+      acc[item.STORE] = (acc[item.STORE] || 0) + item.BREAK_QTY;
+      return acc;
+    }, {} as Record<string, number>);
+    const breakByStoreSku = breakData.reduce((acc, item) => {
+      if (!acc[item.STORE]) acc[item.STORE] = {};
+      acc[item.STORE][item.SKU] = (acc[item.STORE][item.SKU] || 0) + item.BREAK_QTY;
+      return acc;
+    }, {} as Record<string, Record<string, number>>);
 
-    return { totalReplenishment, totalSales, replenishmentByStore, totalInOrdered };
-  }, [replenishmentData]);
+    return { totalReplenishment, totalSales, replenishmentByStore, totalInOrdered, totalBreakQty, breakByStore, breakByStoreSku };
+  }, [replenishmentData, breakData]);
 
-  // Filtering and sorting the data
   const filteredData = useMemo(() => {
     let data = replenishmentData;
     if (query) {
@@ -134,14 +144,39 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
               <p className="text-4xl font-bold">{summary.totalSales}</p>
               <p className="text-sm text-gray-600">Total de Unidades Vendidas (Periodo)</p>
             </div>
+            <div className="flex flex-col items-center">
+              <p className="text-4xl font-bold text-red-600">{summary.totalBreakQty}</p>
+              <p className="text-sm text-red-600">Total de Unidades en Quiebre</p>
+            </div>
           </div>
           <div className="mt-4">
             <h4 className="font-semibold">Reposición por Ubicación:</h4>
             <ul className="ml-4 list-disc">
-            {Object.entries(summary.replenishmentByStore).map(([store, replenishment]) => (
+              {Object.entries(summary.replenishmentByStore).map(([store, replenishment]) => (
                 <li key={store} className="text-gray-700">{store}: {replenishment} unidades</li>
+              ))}
+            </ul>
+          </div>
+          <div className="mt-4">
+            <h4 className="font-semibold">Quiebre por Ubicación:</h4>
+            <ul className="ml-4 list-disc">
+              {Object.entries(summary.breakByStore).map(([store, breakQty]) => (
+                <li key={store} className="text-gray-700">{store}: {breakQty} unidades en quiebre</li>
+              ))}
+            </ul>
+          </div>
+          <div className="mt-4">
+            <h4 className="font-semibold">Quiebre por SKU en cada Tienda:</h4>
+            {Object.entries(summary.breakByStoreSku).map(([store, skuData]) => (
+              <div key={store} className="ml-4">
+                <h5 className="text-gray-700 font-semibold">{store}:</h5>
+                <ul className="list-disc ml-4">
+                  {Object.entries(skuData).map(([sku, breakQty]) => (
+                    <li key={`${store}-${sku}`} className="text-gray-700">{sku}: {breakQty} unidades en quiebre</li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
           </div>
         </div>
         </>
