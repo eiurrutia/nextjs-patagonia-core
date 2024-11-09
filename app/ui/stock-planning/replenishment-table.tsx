@@ -167,22 +167,28 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
               <p className="text-sm text-red-600">Total de Unidades en Quiebre</p>
             </div>
           </div>
-          <div className="mt-4">
-            <h4 className="font-semibold">Reposición por Ubicación:</h4>
-            <ul className="ml-4 list-disc">
-              {summary.replenishmentByStore.map(([store, replenishment]) => (
-                <li key={store} className="text-gray-700">{store}: {replenishment} unidades</li>
-              ))}
-            </ul>
+
+          {/* Replenishment and Stockout by Store*/}
+          <div className="flex justify-between mt-20">
+            <div className="w-1/2 pr-4">
+              <h4 className="font-semibold">Reposición por Ubicación:</h4>
+              <ul className="ml-4 list-disc">
+                {summary.replenishmentByStore.map(([store, replenishment]) => (
+                  <li key={store} className="text-gray-700 my-4">{store}: {replenishment} unidades</li>
+                ))}
+              </ul>
+            </div>
+            <div className="w-1/2 pl-4">
+              <h4 className="font-semibold">Quiebre por Ubicación:</h4>
+              <ul className="ml-4 list-disc">
+                {summary.breakByStore.map(([store, breakQty]) => (
+                  <li key={store} className="text-gray-700 my-4">{store}: {breakQty} unidades en quiebre</li>
+                ))}
+              </ul>
+            </div>
           </div>
-          <div className="mt-4">
-            <h4 className="font-semibold">Quiebre por Ubicación:</h4>
-            <ul className="ml-4 list-disc">
-              {summary.breakByStore.map(([store, breakQty]) => (
-                <li key={store} className="text-gray-700">{store}: {breakQty} unidades en quiebre</li>
-              ))}
-            </ul>
-          </div>
+
+          {/* Stockout Sku-Stores */}
           <div className="mt-4">
             <button
               onClick={() => setIsSkuBreakExpanded(!isSkuBreakExpanded)}
