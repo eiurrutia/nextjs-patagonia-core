@@ -6,7 +6,7 @@ export default function UploadSegmentation() {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const modalRef = useRef<HTMLDivElement | null>(null); 
+  const modalRef = useRef<HTMLDivElement | null>(null);
 
   const detectDelimiter = (text: string): string => {
     const firstLine = text.split('\n')[0];
@@ -30,27 +30,21 @@ export default function UploadSegmentation() {
       const text = event.target?.result as string;
       const delimiter = detectDelimiter(text);
 
-      const rows = text
-        .split('\n')
-        .slice(1)
-        .filter((row) => row.trim() !== '')
-        .map((row) => row.split(delimiter));
+      const lines = text.split('\n').filter((line) => line.trim() !== '');
+      const headers = lines[0].split(delimiter).map(header => header.trim().toUpperCase());
 
-      const data = rows.map((row) => ({
-        SKU: row[0],
-        COYHAIQUE: Number(row[1]) || 0,
-        LASCONDES: Number(row[2]) || 0,
-        MALLSPORT: Number(row[3]) || 0,
-        COSTANERA: Number(row[4]) || 0,
-        CONCEPCION: Number(row[5]) || 0,
-        PTOVARAS: Number(row[6]) || 0,
-        LADEHESA: Number(row[7]) || 0,
-        PUCON: Number(row[8]) || 0,
-        TEMUCO: Number(row[9]) || 0,
-        OSORNO: Number(row[10]) || 0,
-        ALERCE: Number(row[11]) || 0,
-        BNAVENTURA: Number(row[12]) || 0,
-      }));
+      const rows = lines.slice(1).map(line => line.split(delimiter).map(value => value.trim()));
+      const data = rows.map((row) => {
+        const segment: Record<string, any> = {};
+        headers.forEach((header, index) => {
+          if (header === 'SKU' || header === 'DELIVERY') {
+            segment[header] = row[index];
+          } else {
+            segment[header] = Number(row[index]) || 0;
+          }
+        });
+        return segment;
+      });
 
       try {
         const response = await fetch('/api/stock-planning/upload-segments', {
@@ -79,10 +73,10 @@ export default function UploadSegmentation() {
 
   useEffect(() => {
     if (isModalOpen) {
-      document.body.style.overflow = 'hidden'; 
-      modalRef.current?.focus(); 
+      document.body.style.overflow = 'hidden';
+      modalRef.current?.focus();
     } else {
-      document.body.style.overflow = 'auto'; 
+      document.body.style.overflow = 'auto';
     }
   }, [isModalOpen]);
 

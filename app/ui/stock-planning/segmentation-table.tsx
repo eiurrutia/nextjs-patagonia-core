@@ -28,7 +28,10 @@ export default function SegmentationTable({ query, currentPage, setPage }: Segme
 
         if (data.length > 0) {
           const keys = Object.keys(data[0]);
-          const sortedColumns = ['SKU', ...keys.filter((key) => key !== 'SKU')];
+          const sortedColumns = [
+            'SKU', 'DELIVERY',
+            ...keys.filter((key) => (key !== 'SKU' && key !== 'DELIVERY'))
+          ];
           setColumns(sortedColumns);
         }
 

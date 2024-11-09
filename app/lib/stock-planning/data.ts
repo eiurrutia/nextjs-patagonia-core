@@ -21,18 +21,21 @@ export async function truncateSegmentationTable(): Promise<void> {
  */
 export async function uploadStockSegments(data: StockSegment[]): Promise<void> {
   noStore();
-
+  const allColumns = ["SKU", "DELIVERY", "COYHAIQUE", "LASCONDES", "MALLSPORT", "COSTANERA", "CONCEPCION", 
+                      "PTOVARAS", "LADEHESA", "PUCON", "TEMUCO", "OSORNO", "ALERCE", "BNAVENTURA"];
+  const dataColumns = Object.keys(data[0]);
+  const missingColumns = allColumns.filter(col => !dataColumns.includes(col));
+  if (missingColumns.length > 0) {
+    throw new Error(`El archivo de carga no contiene las columnas necesarias: ${missingColumns.join(', ')}`);
+  }
   const sqlText = `
-    INSERT INTO PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION (
-      SKU, COYHAIQUE, LASCONDES, MALLSPORT, COSTANERA, CONCEPCION, 
-      PTOVARAS, LADEHESA, PUCON, TEMUCO, OSORNO, ALERCE, BNAVENTURA
-    ) VALUES ${data.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').join(', ')}
+    INSERT INTO PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION (${allColumns.join(', ')})
+    VALUES ${data.map(() => `(${allColumns.map(() => '?').join(', ')})`).join(', ')}
   `;
-
-  const binds = data.flatMap(segment => Object.values(segment));
-
+  const binds = data.flatMap(segment => allColumns.map(col => segment[col as keyof StockSegment]));
   await executeQuery(sqlText, binds);
 }
+
 
 /**
  * Function to fetch stock segments from the database.
