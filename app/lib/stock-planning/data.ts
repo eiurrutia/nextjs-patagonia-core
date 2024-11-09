@@ -55,6 +55,7 @@ export async function fetchStockSegments(query: string, page: number, noPaginati
       SELECT * 
       FROM PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION
       WHERE UPPER(SKU) LIKE ?
+        OR UPPER(DELIVERY) LIKE ?
       ORDER BY SKU
       ${limit} ${offset}
     `
@@ -65,7 +66,7 @@ export async function fetchStockSegments(query: string, page: number, noPaginati
       ${limit} ${offset}
     `;
 
-  const binds = query ? [`%${query.toUpperCase()}%`] : [];
+  const binds = query ? [`%${query.toUpperCase()}%`, `%${query.toUpperCase()}%`] : [];
 
   return await executeQuery<StockSegment>(sqlText, binds);
 }

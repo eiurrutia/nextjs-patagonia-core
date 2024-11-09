@@ -254,6 +254,7 @@ export type InvoiceForm = {
 
 export type StockSegment = {
   SKU: string;
+  DELIVERY: string;
   COYHAIQUE: number;
   LASCONDES: number;
   MALLSPORT: number;

@@ -50,7 +50,7 @@ export default function Page({
       </div>
 
       <Suspense key={query + currentPage + refreshKey} fallback={<InvoicesTableSkeleton />}>
-        <SegmentationTable query={query} currentPage={currentPage} setPage={setCurrentPage} />
+        <SegmentationTable query={query} currentPage={currentPage} setPage={setCurrentPage} showDeliveryFilters={true} />
       </Suspense>
     </div>
   );
