@@ -99,6 +99,23 @@ export async function fetchStockSegmentsCount(query: string): Promise<number> {
 
 
 /**
+ * Function to fetch all unique DELIVERY options from the segmentation table.
+ * @returns A promise with the list of unique DELIVERY values.
+ * @throws An error if the query fails.
+ */
+export async function fetchAllDeliveryOptions(): Promise<string[]> {
+  const sqlText = `
+    SELECT DISTINCT DELIVERY 
+    FROM PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION
+    WHERE DELIVERY IS NOT NULL
+  `;
+  
+  const result = await executeQuery<{ DELIVERY: string }>(sqlText, []);
+  return result.map(row => row.DELIVERY);
+}
+
+
+/**
  * Function to fetch sales data from the database with pivot.
  */
 export async function fetchSalesData(
