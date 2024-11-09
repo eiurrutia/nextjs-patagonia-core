@@ -22,12 +22,12 @@ BreakData
  * @returns Replenishment data and break data.
  */
 export async function calculateReplenishment(
-  query: string = '', startDate: string, endDate: string
+  query: string = '', startDate: string, endDate: string, selectedDeliveryOptions: string[] = []
 ): Promise<{ replenishmentTable: ReplenishmentData[], breakData: BreakData[] }> {
   const salesData: SalesData[] = await fetchSalesData(query, startDate, endDate, 1, true);
   const cdStockData: CDStockData[] = await fetchCDStockData(query, 1, true);
   const storesStockData: StoresStockData[] = await fetchStoresStockData(query, 1, true);
-  const stockSegments: StockSegment[] = await fetchStockSegments(query, 1, true);
+  const stockSegments: StockSegment[] = await fetchStockSegments(query, 1, selectedDeliveryOptions, true);
 
   const cdStockMap = new Map(cdStockData.map(cd => [cd.SKU, cd.MINSTOCK]));
   const salesMap = new Map(salesData.map(s => [s.SKU, s]));

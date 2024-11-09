@@ -4,7 +4,15 @@ import { CardSkeleton } from '../skeletons';
 import { ChevronRightIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { ReplenishmentData, BreakData } from '@/app/lib/definitions';
 
-export default function ReplenishmentTable({ startDate, endDate }: { startDate: string; endDate: string }) {
+export default function ReplenishmentTable({
+    startDate, 
+    endDate,
+    selectedDeliveryOptions
+  }: {
+    startDate: string;
+    endDate: string
+    selectedDeliveryOptions: string[];
+  }) {
   const [replenishmentData, setReplenishmentData] = useState<ReplenishmentData[]>([]);
   const [breakData, setBreakData] = useState<BreakData[]>([]);
   const [loading, setLoading] = useState(false);
@@ -17,7 +25,9 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
     async function fetchReplenishmentData() {
       setLoading(true);
       try {
-        const response = await fetch(`/api/stock-planning/replenishment?startDate=${startDate}&endDate=${endDate}`);
+        const response = await fetch(
+          `/api/stock-planning/replenishment?startDate=${startDate}&endDate=${endDate}&selectedDeliveryOptions=${encodeURIComponent(JSON.stringify(selectedDeliveryOptions))}`
+        );
         const data = await response.json();
         setReplenishmentData(data.replenishmentTable);
         setBreakData(data.breakData);
@@ -29,7 +39,7 @@ export default function ReplenishmentTable({ startDate, endDate }: { startDate: 
     }
 
     fetchReplenishmentData();
-  }, [startDate, endDate]);
+  }, [startDate, endDate, selectedDeliveryOptions]);
 
   const summary = useMemo(() => {
     const totalReplenishment = replenishmentData.reduce((sum, item) => sum + (item.REPLENISHMENT || 0), 0);

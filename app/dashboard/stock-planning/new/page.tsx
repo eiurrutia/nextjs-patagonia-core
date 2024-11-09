@@ -147,7 +147,7 @@ export default function NewStockPlanning({
       {showReplenishment && (
         <div className="mt-8">
           <h2 className={`${lusitana.className} text-2xl mt-8`}>Resultado de Reposición</h2>
-          <ReplenishmentTable startDate={startDate} endDate={endDate} />
+          <ReplenishmentTable startDate={startDate} endDate={endDate} selectedDeliveryOptions={selectedDeliveryOptions} />
         </div>
       )}
     </div>
