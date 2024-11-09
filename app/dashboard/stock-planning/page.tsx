@@ -46,11 +46,11 @@ export default function Page({
       </div>
 
       <div className="mt-4 flex items-center justify-between gap-2 md:mt-8">
-        <Search placeholder="Search sku..." />
+        <Search placeholder="Search SKU, DELIVERY..." />
       </div>
 
       <Suspense key={query + currentPage + refreshKey} fallback={<InvoicesTableSkeleton />}>
-        <SegmentationTable query={query} currentPage={currentPage} setPage={setCurrentPage} showDeliveryFilters={true} />
+        <SegmentationTable query={query} currentPage={currentPage} setPage={setCurrentPage} />
       </Suspense>
     </div>
   );

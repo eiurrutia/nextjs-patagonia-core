@@ -38,61 +38,67 @@ export async function uploadStockSegments(data: StockSegment[]): Promise<void> {
 
 
 /**
- * Function to fetch stock segments from the database.
+ * Function to fetch stock segments from the database with optional delivery filtering.
  * @param query - The search query.
  * @param page - The page number.
+ * @param selectedDeliveryOptions - Array of selected delivery values.
  * @returns A promise with the stock segments.
  * @throws An error if the query fails.
- * @example
- * const segments = await fetchStockSegments('sku', 1); 
  */
-export async function fetchStockSegments(query: string, page: number, noPagination: boolean = false): Promise<StockSegment[]> {
+export async function fetchStockSegments(query: string, page: number, selectedDeliveryOptions: string[] = [], noPagination: boolean = false): Promise<StockSegment[]> {
   const limit = noPagination ? '' : 'LIMIT 10';
   const offset = noPagination ? '' : `OFFSET ${(page - 1) * 10}`;
 
-  const sqlText = query
-    ? `
-      SELECT * 
-      FROM PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION
-      WHERE UPPER(SKU) LIKE ?
-        OR UPPER(DELIVERY) LIKE ?
-      ORDER BY SKU
-      ${limit} ${offset}
-    `
-    : `
-      SELECT * 
-      FROM PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION
-      ORDER BY SKU
-      ${limit} ${offset}
-    `;
+  let sqlText = `
+    SELECT * 
+    FROM PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION
+    WHERE 1=1
+  `;
+  
+  const binds: any[] = [];
 
-  const binds = query ? [`%${query.toUpperCase()}%`, `%${query.toUpperCase()}%`] : [];
+  if (query) {
+    sqlText += ` AND (UPPER(SKU) LIKE ? OR UPPER(DELIVERY) LIKE ?)`;
+    binds.push(`%${query.toUpperCase()}%`, `%${query.toUpperCase()}%`);
+  }
+
+  if (selectedDeliveryOptions.length > 0) {
+    sqlText += ` AND DELIVERY IN (${selectedDeliveryOptions.map(() => '?').join(', ')})`;
+    binds.push(...selectedDeliveryOptions);
+  }
+
+  sqlText += ` ORDER BY SKU ${limit} ${offset}`;
 
   return await executeQuery<StockSegment>(sqlText, binds);
 }
 
 
 /**
- * Function to fetch the total count of stock segments from the database.
+ * Function to fetch the total count of stock segments from the database with optional delivery filtering.
  * @param query - The search query.
+ * @param selectedDeliveryOptions - Array of selected delivery values.
  * @returns A promise with the total count of stock segments.
  * @throws An error if the query fails.
- * @example
- * const totalCount = await fetchStockSegmentsCount('sku');
  */
-export async function fetchStockSegmentsCount(query: string): Promise<number> {
-  const sqlText = query
-    ? `
+export async function fetchStockSegmentsCount(query: string, selectedDeliveryOptions: string[] = []): Promise<number> {
+  let sqlText = `
     SELECT COUNT(*) AS TOTALCOUNT 
     FROM PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION
-    WHERE UPPER(SKU) LIKE ?
-    `
-    : `
-    SELECT COUNT(*) AS TOTALCOUNT 
-    FROM PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION
-    `;
+    WHERE 1=1
+  `;
 
-  const binds = [`%${query.toUpperCase()}%`];
+  const binds: any[] = [];
+
+  if (query) {
+    sqlText += ` AND (UPPER(SKU) LIKE ? OR UPPER(DELIVERY) LIKE ?)`;
+    binds.push(`%${query.toUpperCase()}%`, `%${query.toUpperCase()}%`);
+  }
+
+  if (selectedDeliveryOptions.length > 0) {
+    sqlText += ` AND DELIVERY IN (${selectedDeliveryOptions.map(() => '?').join(', ')})`;
+    binds.push(...selectedDeliveryOptions);
+  }
+
   const result = await executeQuery<{ TOTALCOUNT: number }>(sqlText, binds);
   return result[0].TOTALCOUNT;
 }
@@ -180,8 +186,6 @@ export async function fetchSalesCount(
     `;
   const binds = [startDate, endDate, `%${query.toUpperCase()}%`];
   const result = await executeQuery<{ TOTALCOUNT: number }>(sqlText, binds);
-  console.log('Result!: ', result);
-  console.log('TOTAL COUNT', result[0].TOTALCOUNT);
   return result[0].TOTALCOUNT;
 }
 

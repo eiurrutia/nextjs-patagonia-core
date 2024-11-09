@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import SegmentationTable from '@/app/ui/stock-planning/segmentation-table';
 import SalesTable from '@/app/ui/stock-planning/sales-table';
 import CDStockTable from '@/app/ui/stock-planning/cd-stock-table';
@@ -22,15 +22,30 @@ export default function NewStockPlanning({
   const [salesPage, setSalesPage] = useState(1);
   const [cdStockPage, setCDStockPage] = useState(1);
   const [storesStockPage, setStoresStockPage] = useState(1);
-
-  const [startDate, setStartDate] = useState(() => {
-    const date = new Date();
-    date.setDate(date.getDate() - 14);
-    return date.toISOString().split('T')[0];
-  });
-
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [startDate, setStartDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [showReplenishment, setShowReplenishment] = useState(false);
+
+  const [deliveryOptions, setDeliveryOptions] = useState<string[]>([]);
+  const [selectedDeliveryOptions, setSelectedDeliveryOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    async function fetchDeliveryOptions() {
+      const response = await fetch('/api/stock-planning/stock-segments-delivery-options');
+      const options = await response.json();
+      setDeliveryOptions(options);
+      setSelectedDeliveryOptions(options);
+    }
+    fetchDeliveryOptions();
+  }, []);
+
+  const handleDeliveryFilterChange = (delivery: string) => {
+    setSelectedDeliveryOptions((prevSelected) =>
+      prevSelected.includes(delivery)
+        ? prevSelected.filter((option) => option !== delivery)
+        : [...prevSelected, delivery]
+    );
+  };
 
   const handleGenerateReplenishment = () => {
     setShowReplenishment(true);
@@ -46,13 +61,35 @@ export default function NewStockPlanning({
         <Search placeholder="Buscar SKU..." />
       </div>
 
-      {/* Segmentación */}
+      {/* DELIVERY filters */}
+      <div className="mt-6">
+        <div className="flex flex-wrap gap-3">
+          {deliveryOptions.map((delivery) => (
+            <label key={delivery} className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-lg shadow cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selectedDeliveryOptions.includes(delivery)}
+                onChange={() => handleDeliveryFilterChange(delivery)}
+                className="cursor-pointer accent-blue-600"
+              />
+              <span className="text-gray-700">{delivery}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Segmentation */}
       <Suspense key={query + segmentationPage} fallback={<InvoicesTableSkeleton />}>
         <h2 className={`${lusitana.className} text-2xl mt-8`}>Segmentación</h2>
-        <SegmentationTable query={query} currentPage={segmentationPage} setPage={setSegmentationPage} />
+        <SegmentationTable
+          query={query}
+          currentPage={segmentationPage}
+          setPage={setSegmentationPage}
+          selectedDeliveryOptions={selectedDeliveryOptions}
+        />
       </Suspense>
 
-      {/* Ventas */}
+      {/* Sales */}
       <div className="mt-12 flex gap-4">
         <h2 className={`${lusitana.className} text-2xl`}>Ventas</h2>
         <div>
@@ -88,7 +125,7 @@ export default function NewStockPlanning({
         </Suspense>
       </div>
 
-      {/* Stock Tiendas */}
+      {/* Stores Stock */}
       <div className="mt-8">
         <h2 className={`${lusitana.className} text-2xl mt-8`}>Stock Tiendas</h2>
         <Suspense fallback={<InvoicesTableSkeleton />}>

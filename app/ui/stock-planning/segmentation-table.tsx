@@ -8,24 +8,32 @@ interface SegmentationTableProps {
   query: string;
   currentPage: number;
   setPage: (page: number) => void;
+  selectedDeliveryOptions?: string[];
   showDeliveryFilters?: boolean;
 }
 
-export default function SegmentationTable({ query, currentPage, setPage, showDeliveryFilters = true }: SegmentationTableProps) {
+export default function SegmentationTable({
+  query,
+  currentPage,
+  setPage,
+  selectedDeliveryOptions = []
+}: SegmentationTableProps) {
   const [segments, setSegments] = useState<StockSegment[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
-  const [deliveryOptions, setDeliveryOptions] = useState<string[]>([]);
-  const [selectedDeliveryOptions, setSelectedDeliveryOptions] = useState<string[]>([]);
   const limit = 10;
 
   useEffect(() => {
     async function loadSegments() {
       setLoading(true);
       try {
+        const filterParam = selectedDeliveryOptions.length
+          ? `&selectedDeliveryOptions=${encodeURIComponent(JSON.stringify(selectedDeliveryOptions))}`
+          : '';
+          
         const response = await fetch(
-          `/api/stock-planning/stock-segments?query=${encodeURIComponent(query)}&currentPage=${currentPage}`
+          `/api/stock-planning/stock-segments?query=${encodeURIComponent(query)}&currentPage=${currentPage}${filterParam}`
         );
         const data: StockSegment[] = await response.json();
 
@@ -33,11 +41,10 @@ export default function SegmentationTable({ query, currentPage, setPage, showDel
           const keys = Object.keys(data[0]);
           const sortedColumns = [
             'SKU', 'DELIVERY',
-            ...keys.filter((key) => (key !== 'SKU' && key !== 'DELIVERY'))
+            ...keys.filter((key) => key !== 'SKU' && key !== 'DELIVERY'),
           ];
           setColumns(sortedColumns);
         }
-
         setSegments(data);
       } catch (error) {
         console.error('Error loading segments:', error);
@@ -48,7 +55,13 @@ export default function SegmentationTable({ query, currentPage, setPage, showDel
 
     async function fetchTotalPages() {
       try {
-        const response = await fetch(`/api/stock-planning/stock-segments-count?query=${encodeURIComponent(query)}`);
+        const filterParam = selectedDeliveryOptions.length
+          ? `&selectedDeliveryOptions=${encodeURIComponent(JSON.stringify(selectedDeliveryOptions))}`
+          : '';
+          
+        const response = await fetch(
+          `/api/stock-planning/stock-segments-count?query=${encodeURIComponent(query)}${filterParam}`
+        );
         const { totalCount } = await response.json();
         setTotalPages(Math.ceil(totalCount / limit));
       } catch (error) {
@@ -56,31 +69,9 @@ export default function SegmentationTable({ query, currentPage, setPage, showDel
       }
     }
 
-    async function fetchAllDeliveryOptions() {
-      try {
-        const response = await fetch('/api/stock-planning/stock-segments-delivery-options');
-        const allDeliveryOptions = await response.json();
-        setDeliveryOptions(allDeliveryOptions);
-        setSelectedDeliveryOptions(allDeliveryOptions);
-      } catch (error) {
-        console.error('Error fetching all delivery options:', error);
-      }
-    }
-
-    loadSegments();
     fetchTotalPages();
-    fetchAllDeliveryOptions();
-  }, [query, currentPage]);
-
-  const filteredSegments = segments.filter(segment => selectedDeliveryOptions.includes(segment.DELIVERY));
-
-  const handleDeliveryFilterChange = (delivery: string) => {
-    setSelectedDeliveryOptions((prevSelected) =>
-      prevSelected.includes(delivery)
-        ? prevSelected.filter((option) => option !== delivery)
-        : [...prevSelected, delivery]
-    );
-  };
+    loadSegments();
+  }, [query, currentPage, JSON.stringify(selectedDeliveryOptions)]);
 
   if (loading) return <CardSkeleton />;
 
@@ -97,7 +88,7 @@ export default function SegmentationTable({ query, currentPage, setPage, showDel
           </tr>
         </thead>
         <tbody>
-          {filteredSegments.map((segment, index) => (
+          {segments.map((segment, index) => (
             <tr key={index} className="hover:bg-gray-50">
               {columns.map((column) => (
                 <td key={column} className="border px-4 py-2 text-gray-800">
@@ -108,31 +99,11 @@ export default function SegmentationTable({ query, currentPage, setPage, showDel
           ))}
         </tbody>
       </table>
-      
+
       {/* Pagination */}
       <div className="mt-5 flex w-full justify-center">
         <Pagination totalPages={totalPages} currentPage={currentPage} setPage={setPage} />
       </div>
-
-      {/* DELIVERY filters */}
-      {showDeliveryFilters && (
-        <div className="mt-6">
-          <h4 className="font-semibold mb-3">Filtrar por DELIVERY:</h4>
-          <div className="flex flex-wrap gap-3">
-            {deliveryOptions.map((delivery) => (
-              <label key={delivery} className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-lg shadow cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={selectedDeliveryOptions.includes(delivery)}
-                  onChange={() => handleDeliveryFilterChange(delivery)}
-                  className="cursor-pointer accent-blue-600"
-                />
-                <span className="text-gray-700">{delivery}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
