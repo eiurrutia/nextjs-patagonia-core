@@ -20,9 +20,14 @@ export default function Page({
   const router = useRouter();
   const query = searchParams?.query || '';
   const [currentPage, setCurrentPage] = useState(1);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleNewStockPlanning = () => {
     router.push('/dashboard/stock-planning/new');
+  };
+
+  const handleUploadComplete = () => {
+    setRefreshKey((prevKey) => prevKey + 1);
   };
 
   return (
@@ -30,7 +35,7 @@ export default function Page({
       <div className="flex w-full items-center justify-between">
         <h1 className={`${lusitana.className} text-2xl`}>Segmentación Actual</h1>
         <div className="flex gap-4">
-          <UploadSegmentation />
+          <UploadSegmentation onUploadComplete={handleUploadComplete} />
           <button
             onClick={handleNewStockPlanning}
             className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
@@ -44,7 +49,7 @@ export default function Page({
         <Search placeholder="Search sku..." />
       </div>
 
-      <Suspense key={query + currentPage} fallback={<InvoicesTableSkeleton />}>
+      <Suspense key={query + currentPage + refreshKey} fallback={<InvoicesTableSkeleton />}>
         <SegmentationTable query={query} currentPage={currentPage} setPage={setCurrentPage} />
       </Suspense>
     </div>

@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 
-export default function UploadSegmentation() {
+export default function UploadSegmentation({ onUploadComplete }: { onUploadComplete: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -58,6 +58,7 @@ export default function UploadSegmentation() {
         }
 
         alert('File uploaded successfully!');
+        onUploadComplete();
       } catch (error) {
         console.error('Error uploading file:', error);
         alert('Failed to upload file.');
@@ -116,14 +117,42 @@ export default function UploadSegmentation() {
                 <button
                   onClick={() => setIsModalOpen(false)}
                   className="px-4 py-2 bg-gray-300 rounded-lg"
+                  disabled={isUploading}
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleUpload}
                   className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                  disabled={isUploading}
                 >
-                  Confirmar
+                  {isUploading ? (
+                    <span className="flex items-center">
+                      <svg
+                        className="animate-spin h-5 w-5 mr-2 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291l2.122-2.122A4 4 0 004 12H0c0 2.21.895 4.21 2.343 5.657l1.657 1.657z"
+                        ></path>
+                      </svg>
+                      Cargando...
+                    </span>
+                  ) : (
+                    'Confirmar'
+                  )}
                 </button>
               </div>
             </div>
