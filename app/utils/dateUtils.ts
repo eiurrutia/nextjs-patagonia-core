@@ -32,3 +32,18 @@ export const formatDate = (
   // Format the date
   return format(date, withTime ? 'dd-MM-yyyy HH:mm' : 'dd-MM-yyyy');
 };
+
+
+/**
+ * Returns the ISO week number of a given date.
+ *
+ * @param date - The input date.
+ * @returns The ISO week number.
+ */
+export function getISOWeekNumber(date: Date): number {
+  const tempDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNumber = tempDate.getUTCDay() || 7;
+  tempDate.setUTCDate(tempDate.getUTCDate() + 4 - dayNumber);
+  const yearStart = new Date(Date.UTC(tempDate.getUTCFullYear(), 0, 1));
+  return Math.ceil(((tempDate.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+};
