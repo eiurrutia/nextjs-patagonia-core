@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { CardSkeleton } from '../skeletons';
 import { ChevronRightIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { ReplenishmentData, BreakData } from '@/app/lib/definitions';
+import { getISOWeekNumber } from '@/app/utils/dateUtils';
 
 export default function ReplenishmentTable({
     startDate, 
@@ -20,6 +21,7 @@ export default function ReplenishmentTable({
   const [sortConfig, setSortConfig] = useState<{ key: keyof ReplenishmentData; direction: 'asc' | 'desc' } | null>(null);
   const [isSkuBreakExpanded, setIsSkuBreakExpanded] = useState(false);
   const [expandedStores, setExpandedStores] = useState<Record<string, boolean>>({});
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchReplenishmentData() {
@@ -112,6 +114,47 @@ export default function ReplenishmentTable({
       [store]: !prev[store]
     }));
   };
+
+  const handleConfirmReplenishment = () => {
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleSaveReplenishmentRecord = async () => {
+    const today = new Date();
+    const weekNumber = getISOWeekNumber(today);
+    const formattedDate = today.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const replenishmentID = `REP-W${weekNumber}_${formattedDate}`;
+
+    const record = {
+      ID: replenishmentID,
+      totalReplenishment: summary.totalReplenishment,
+      totalBreakQty: summary.totalBreakQty,
+      selectedDeliveries: selectedDeliveryOptions.join('-'),
+      startDate,
+      endDate
+    };
+  
+    try {
+      console.log('Saving replenishment record:', record);
+      return;
+      const response = await fetch('/api/stock-planning/save-replenishment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(record),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Error al guardar el registro de reposición');
+      }
+      alert('Reposición confirmada exitosamente');
+    } catch (error) {
+      console.error('Error al guardar la reposición:', error);
+      alert('Hubo un error al confirmar la reposición');
+    }
+  };
+  
 
   return (
     <div>
@@ -227,6 +270,61 @@ export default function ReplenishmentTable({
             )}
           </div>
         </div>
+
+        {/* Replenishment Confirm Button */}
+        <div className="flex justify-end mt-6">
+          <button
+            onClick={handleConfirmReplenishment}
+            className="w-1/3 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+          >
+            Confirmar Reposición
+          </button>
+        </div>
+
+        {/* Confirm Modal */}
+        {isConfirmModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white rounded-lg p-6 w-1/2 shadow-lg">
+              <h3 className="text-xl font-bold mb-4">¿Está seguro de confirmar la reposición?</h3>
+              
+              {/* Checkboxes */}
+              <div className="mb-4 space-y-3">
+                <label className="flex items-center space-x-2">
+                  <input type="checkbox" className="cursor-not-allowed" />
+                  <span>Enviar mail con archivo</span>
+                </label>
+                <label className="flex items-center space-x-2">
+                  <input type="checkbox" className="cursor-not-allowed" />
+                  <span>Crear reposición en ERP</span>
+                </label>
+                <label className="flex items-center space-x-2">
+                  <input type="checkbox" className="cursor-not-allowed" />
+                  <span>Enviar agrupado de CC</span>
+                </label>
+              </div>
+
+              {/* Botones del modal */}
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setIsConfirmModalOpen(false)}
+                  className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={async () => {
+                    await handleSaveReplenishmentRecord(); // Función que registra la reposición
+                    setIsConfirmModalOpen(false);
+                  }}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                >
+                  Confirmar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         </>
       )}
     </div>
