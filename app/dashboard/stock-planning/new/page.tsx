@@ -8,7 +8,7 @@ import Search from '@/app/ui/search';
 import ReplenishmentTable from '@/app/ui/stock-planning/replenishment-table';
 import { lusitana } from '@/app/ui/fonts';
 import { Suspense } from 'react';
-import { InvoicesTableSkeleton } from '@/app/ui/skeletons';
+import { InvoicesTableSkeleton, CardSkeleton } from '@/app/ui/skeletons';
 
 export default function NewStockPlanning({
   searchParams,
@@ -28,15 +28,32 @@ export default function NewStockPlanning({
 
   const [deliveryOptions, setDeliveryOptions] = useState<string[]>([]);
   const [selectedDeliveryOptions, setSelectedDeliveryOptions] = useState<string[]>([]);
+  const [loadingSelectedDeliveryOptions, setLoadingSelectedDeliveryOptions] = useState(false);
 
   useEffect(() => {
-    async function fetchDeliveryOptions() {
-      const response = await fetch('/api/stock-planning/stock-segments-delivery-options');
-      const options = await response.json();
-      setDeliveryOptions(options);
-      setSelectedDeliveryOptions(options);
+    async function fetchData() {
+      try {
+        setLoadingSelectedDeliveryOptions(true);
+        // Fetch all delivery options
+        const responseOptions = await fetch('/api/stock-planning/stock-segments-delivery-options');
+        const options = await responseOptions.json();
+
+        // Fetch configured deliveries
+        const responseConfig = await fetch('/api/configs/configs');
+        const configs = await responseConfig.json();
+        const deliveriesConfig = configs.find((config: any) => config.config_key === 'stock_planning_deliveries_set');
+        const configuredDeliveries = deliveriesConfig ? deliveriesConfig.config_value.split(',').map((item: string) => item.trim()) : [];
+
+        setDeliveryOptions(options);
+        setSelectedDeliveryOptions(configuredDeliveries.length > 0 ? configuredDeliveries : options);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoadingSelectedDeliveryOptions(false);
+      }
     }
-    fetchDeliveryOptions();
+
+    fetchData();
   }, []);
 
   const handleDeliveryFilterChange = (delivery: string) => {
@@ -61,33 +78,44 @@ export default function NewStockPlanning({
         <Search placeholder="Buscar SKU..." />
       </div>
 
-      {/* DELIVERY filters */}
+      {/* DELIVERY filters and Segmentation */}
       <div className="mt-6">
-        <div className="flex flex-wrap gap-3">
-          {deliveryOptions.map((delivery) => (
-            <label key={delivery} className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-lg shadow cursor-pointer">
-              <input
-                type="checkbox"
-                checked={selectedDeliveryOptions.includes(delivery)}
-                onChange={() => handleDeliveryFilterChange(delivery)}
-                className="cursor-pointer accent-blue-600"
+        {loadingSelectedDeliveryOptions ? (
+          <CardSkeleton />
+        ) : (
+          <>
+            {/* DELIVERY filters */}
+            <div className="flex flex-wrap gap-3">
+              {deliveryOptions.map((delivery) => (
+                <label
+                  key={delivery}
+                  className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-lg shadow cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedDeliveryOptions.includes(delivery)}
+                    onChange={() => handleDeliveryFilterChange(delivery)}
+                    className="cursor-pointer accent-blue-600"
+                  />
+                  <span className="text-gray-700">{delivery}</span>
+                </label>
+              ))}
+            </div>
+
+            {/* Segmentation */}
+            <Suspense key={query + segmentationPage} fallback={<InvoicesTableSkeleton />}>
+              <h2 className={`${lusitana.className} text-2xl mt-8`}>Segmentación</h2>
+              <SegmentationTable
+                query={query}
+                currentPage={segmentationPage}
+                setPage={setSegmentationPage}
+                selectedDeliveryOptions={selectedDeliveryOptions}
               />
-              <span className="text-gray-700">{delivery}</span>
-            </label>
-          ))}
-        </div>
+            </Suspense>
+          </>
+        )}
       </div>
 
-      {/* Segmentation */}
-      <Suspense key={query + segmentationPage} fallback={<InvoicesTableSkeleton />}>
-        <h2 className={`${lusitana.className} text-2xl mt-8`}>Segmentación</h2>
-        <SegmentationTable
-          query={query}
-          currentPage={segmentationPage}
-          setPage={setSegmentationPage}
-          selectedDeliveryOptions={selectedDeliveryOptions}
-        />
-      </Suspense>
 
       {/* Sales */}
       <div className="mt-12 flex gap-4">
