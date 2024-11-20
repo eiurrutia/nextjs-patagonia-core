@@ -22,6 +22,7 @@ export default function ReplenishmentTable({
   const [isSkuBreakExpanded, setIsSkuBreakExpanded] = useState(false);
   const [expandedStores, setExpandedStores] = useState<Record<string, boolean>>({});
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [saveDeliveriesSelected, setSaveDeliveriesSelected] = useState(true);
 
   useEffect(() => {
     async function fetchReplenishmentData() {
@@ -129,13 +130,30 @@ export default function ReplenishmentTable({
       ID: replenishmentID,
       totalReplenishment: summary.totalReplenishment,
       totalBreakQty: summary.totalBreakQty,
-      selectedDeliveries: selectedDeliveryOptions.join('-'),
+      selectedDeliveries: selectedDeliveryOptions.join(', '),
       startDate,
       endDate
     };
   
     try {
       console.log('Saving replenishment record:', record);
+      
+      // Save selected deliveries if the option is checked
+      if (saveDeliveriesSelected) {
+        await fetch('/api/configs/configs', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            config_key: 'stock_planning_deliveries_set',
+            config_name: 'Deliveries',
+            config_value: selectedDeliveryOptions.join(', '),
+            description: 'Deliveries configuration for stock planning',
+          }),
+        });
+      }
+
       return;
       const response = await fetch('/api/stock-planning/save-replenishment', {
         method: 'POST',
@@ -289,16 +307,24 @@ export default function ReplenishmentTable({
               
               {/* Checkboxes */}
               <div className="mb-4 space-y-3">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={saveDeliveriesSelected}
+                  onChange={(e) => setSaveDeliveriesSelected(e.target.checked)}
+                />
+                <span>Guardar selección de deliveries</span>
+              </label>
                 <label className="flex items-center space-x-2">
-                  <input type="checkbox" className="cursor-not-allowed" />
+                  <input type="checkbox"/>
                   <span>Enviar mail con archivo</span>
                 </label>
                 <label className="flex items-center space-x-2">
-                  <input type="checkbox" className="cursor-not-allowed" />
-                  <span>Crear reposición en ERP</span>
+                  <input type="checkbox"/>
+                  <span>Crear reposiciones en ERP</span>
                 </label>
                 <label className="flex items-center space-x-2">
-                  <input type="checkbox" className="cursor-not-allowed" />
+                  <input type="checkbox"/>
                   <span>Enviar agrupado de CC</span>
                 </label>
               </div>

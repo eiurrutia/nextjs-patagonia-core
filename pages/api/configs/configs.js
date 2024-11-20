@@ -38,17 +38,21 @@ export default async function handler(req, res) {
             const result = await client.sql`
                 INSERT INTO patcore_configurations (config_key, config_name, config_value, description)
                 VALUES (${config_key}, ${config_name}, ${config_value}, ${description})
-                ON CONFLICT (config_key) DO NOTHING;
+                ON CONFLICT (config_key)
+                DO UPDATE SET
+                    config_name = EXCLUDED.config_name,
+                    config_value = EXCLUDED.config_value,
+                    description = EXCLUDED.description;
             `;
             client.release();
 
             if (result.rowCount === 0) {
-                return res.status(409).json({ message: 'Configuration already exists' });
+                return res.status(409).json({ message: 'Configuration already exists but could not be updated' });
             }
 
-            return res.status(201).json({ message: 'Configuration created successfully' });
+            return res.status(201).json({ message: 'Configuration created or updated successfully' });
         } catch (error) {
-            console.error('Error creating configuration:', error);
+            console.error('Error creating or updating configuration:', error);
             return res.status(500).json({ message: 'Internal server error' });
         }
     } else {
