@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { CardSkeleton } from '../skeletons';
 import { ChevronRightIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-import { ReplenishmentData, BreakData } from '@/app/lib/definitions';
+import { ReplenishmentData, BreakData, StockSegment } from '@/app/lib/definitions';
 import { getISOWeekNumber } from '@/app/utils/dateUtils';
 import { toZonedTime } from 'date-fns-tz';
 
@@ -17,6 +17,7 @@ export default function ReplenishmentTable({
   }) {
   const [replenishmentData, setReplenishmentData] = useState<ReplenishmentData[]>([]);
   const [breakData, setBreakData] = useState<BreakData[]>([]);
+  const [segmentationData, setSegmentationData] = useState<StockSegment[]>([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof ReplenishmentData; direction: 'asc' | 'desc' } | null>(null);
@@ -35,6 +36,7 @@ export default function ReplenishmentTable({
         const data = await response.json();
         setReplenishmentData(data.replenishmentTable);
         setBreakData(data.breakData);
+        setSegmentationData(data.stockSegments);
       } catch (error) {
         console.error('Error fetching replenishment data:', error);
       } finally {
@@ -127,6 +129,7 @@ export default function ReplenishmentTable({
     const weekNumber = getISOWeekNumber(today);
     const formattedDate = today.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const replenishmentID = `REP-W${weekNumber}_${formattedDate}`;
+    const segmentationID = `SEG-W${weekNumber}_${formattedDate}`;
 
     const record = {
       ID: replenishmentID,
@@ -156,6 +159,18 @@ export default function ReplenishmentTable({
           }),
         });
       }
+
+      // Save segmentaion history
+      await fetch('/api/stock-planning/save-segmentation-history', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          stockSegments: segmentationData,
+          segID: segmentationID
+        }),
+      });
 
       // Save replenishment record
       const response = await fetch('/api/stock-planning/save-replenishment', {

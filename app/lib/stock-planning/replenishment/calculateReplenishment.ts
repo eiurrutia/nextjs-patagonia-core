@@ -22,8 +22,15 @@ BreakData
  * @returns Replenishment data and break data.
  */
 export async function calculateReplenishment(
-  query: string = '', startDate: string, endDate: string, selectedDeliveryOptions: string[] = []
-): Promise<{ replenishmentTable: ReplenishmentData[], breakData: BreakData[] }> {
+  query: string = '',
+  startDate: string,
+  endDate: string,
+  selectedDeliveryOptions: string[] = []
+): Promise<{
+  replenishmentTable: ReplenishmentData[],
+  breakData: BreakData[],
+  stockSegments: StockSegment[]
+ }> {
   const salesData: SalesData[] = await fetchSalesData(query, startDate, endDate, 1, true);
   const cdStockData: CDStockData[] = await fetchCDStockData(query, 1, true);
   const storesStockData: StoresStockData[] = await fetchStoresStockData(query, 1, true);
@@ -81,5 +88,5 @@ export async function calculateReplenishment(
     }
   });
 
-  return { replenishmentTable, breakData };
+  return { replenishmentTable, breakData, stockSegments };
 }

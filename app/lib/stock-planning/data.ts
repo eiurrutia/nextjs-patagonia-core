@@ -366,3 +366,42 @@ export async function saveReplenishment(record: ReplenishmentRecord): Promise<vo
     throw error;
   }
 }
+
+/**
+ * Function to fetch replenishment data from the database.
+ * @param query - The search query.
+ * @param page - The page number.
+ * @returns A promise with the replenishment data.
+ * @example
+ * const replenishmentData = await fetchReplenishmentData('sku', 1);
+ */
+export async function saveSegmentationHistory(stockSegments: StockSegment[], segID: string): Promise<void> {
+  const sqlText = `
+    INSERT INTO PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION_HISTORY (
+      SEG_ID, SKU, COYHAIQUE, LASCONDES, MALLSPORT, COSTANERA,
+      CONCEPCION, PTOVARAS, LADEHESA, PUCON, TEMUCO, OSORNO,
+      ALERCE, BNAVENTURA, DELIVERY, SNOWFLAKE_CREATED_AT
+    )
+    VALUES ${stockSegments.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)').join(', ')};
+  `;
+
+  const binds = stockSegments.flatMap(segment => [
+    segID,
+    segment.SKU,
+    segment.COYHAIQUE,
+    segment.LASCONDES,
+    segment.MALLSPORT,
+    segment.COSTANERA,
+    segment.CONCEPCION,
+    segment.PTOVARAS,
+    segment.LADEHESA,
+    segment.PUCON,
+    segment.TEMUCO,
+    segment.OSORNO,
+    segment.ALERCE,
+    segment.BNAVENTURA,
+    segment.DELIVERY,
+  ]);
+
+  await executeQuery(sqlText, binds);
+}
