@@ -25,6 +25,22 @@ export async function executeQuery<T>(sqlText: string, binds: any[]): Promise<T[
       noStore();
       connectionPool.use(async (clientConnection) => {
         try {
+          // Set timezone to Santiago
+          await new Promise<void>((resolve, reject) => {
+            clientConnection.execute({
+              sqlText: "ALTER SESSION SET TIMEZONE = 'America/Santiago'",
+              complete: (err) => {
+                if (err) {
+                  console.error('Error al establecer la zona horaria de la sesión:', err);
+                  reject(err);
+                } else {
+                  resolve();
+                }
+              },
+            });
+          });
+
+          // Execute main statement
           const statement = clientConnection.execute({
             sqlText,
             binds,
