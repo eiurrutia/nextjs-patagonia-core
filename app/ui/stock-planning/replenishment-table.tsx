@@ -24,6 +24,7 @@ export default function ReplenishmentTable({
   const [isSkuBreakExpanded, setIsSkuBreakExpanded] = useState(false);
   const [expandedStores, setExpandedStores] = useState<Record<string, boolean>>({});
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isProcessingReplenishment, setIsProcessingReplenishment] = useState(false);
   const [saveDeliveriesSelected, setSaveDeliveriesSelected] = useState(true);
 
   useEffect(() => {
@@ -124,6 +125,7 @@ export default function ReplenishmentTable({
   };
 
   const handleSaveReplenishmentRecord = async () => {
+    setIsProcessingReplenishment(true);
     const TIME_ZONE = 'America/Santiago';
     const today = toZonedTime(new Date(), TIME_ZONE);
     const weekNumber = getISOWeekNumber(today);
@@ -188,6 +190,9 @@ export default function ReplenishmentTable({
     } catch (error) {
       console.error('Error al guardar la reposición:', error);
       alert('Hubo un error al confirmar la reposición');
+    } finally {
+      setIsProcessingReplenishment(false);
+      setIsConfirmModalOpen(false);
     }
   };
   
@@ -352,17 +357,42 @@ export default function ReplenishmentTable({
                 <button
                   onClick={() => setIsConfirmModalOpen(false)}
                   className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
+                  disabled={isProcessingReplenishment}
                 >
                   Cancelar
                 </button>
                 <button
-                  onClick={async () => {
-                    await handleSaveReplenishmentRecord();
-                    setIsConfirmModalOpen(false);
-                  }}
+                  onClick={handleSaveReplenishmentRecord}
                   className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                  disabled={isProcessingReplenishment}
                 >
-                  Confirmar
+                  {isProcessingReplenishment ? (
+                    <span className="flex items-center">
+                      <svg
+                        className="animate-spin h-5 w-5 mr-2 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291l2.122-2.122A4 4 0 004 12H0c0 2.21.895 4.21 2.343 5.657l1.657 1.657z"
+                        ></path>
+                      </svg>
+                      Procesando...
+                    </span>
+                  ) : (
+                    'Confirmar'
+                  )}
                 </button>
               </div>
             </div>
