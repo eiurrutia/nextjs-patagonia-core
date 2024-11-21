@@ -22,8 +22,11 @@ export default function NewStockPlanning({
   const [salesPage, setSalesPage] = useState(1);
   const [cdStockPage, setCDStockPage] = useState(1);
   const [storesStockPage, setStoresStockPage] = useState(1);
-  const [startDate, setStartDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const today = new Date();
+  const oneWeekAgo = new Date(today);
+  oneWeekAgo.setDate(today.getDate() - 7);
+  const [startDate, setStartDate] = useState(() => oneWeekAgo.toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(() => today.toISOString().split('T')[0]);
   const [showReplenishment, setShowReplenishment] = useState(false);
 
   const [deliveryOptions, setDeliveryOptions] = useState<string[]>([]);
