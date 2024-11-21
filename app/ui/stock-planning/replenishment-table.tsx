@@ -4,6 +4,7 @@ import { CardSkeleton } from '../skeletons';
 import { ChevronRightIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { ReplenishmentData, BreakData } from '@/app/lib/definitions';
 import { getISOWeekNumber } from '@/app/utils/dateUtils';
+import { toZonedTime } from 'date-fns-tz';
 
 export default function ReplenishmentTable({
     startDate, 
@@ -121,7 +122,8 @@ export default function ReplenishmentTable({
   };
 
   const handleSaveReplenishmentRecord = async () => {
-    const today = new Date();
+    const TIME_ZONE = 'America/Santiago';
+    const today = toZonedTime(new Date(), TIME_ZONE);
     const weekNumber = getISOWeekNumber(today);
     const formattedDate = today.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const replenishmentID = `REP-W${weekNumber}_${formattedDate}`;
@@ -132,7 +134,8 @@ export default function ReplenishmentTable({
       totalBreakQty: summary.totalBreakQty,
       selectedDeliveries: selectedDeliveryOptions.join(', '),
       startDate,
-      endDate
+      endDate,
+      replenishmentData
     };
   
     try {
@@ -154,7 +157,7 @@ export default function ReplenishmentTable({
         });
       }
 
-      return;
+      // Save replenishment record
       const response = await fetch('/api/stock-planning/save-replenishment', {
         method: 'POST',
         headers: {
@@ -329,7 +332,7 @@ export default function ReplenishmentTable({
                 </label>
               </div>
 
-              {/* Botones del modal */}
+              {/* Modal buttons */}
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={() => setIsConfirmModalOpen(false)}
@@ -339,7 +342,7 @@ export default function ReplenishmentTable({
                 </button>
                 <button
                   onClick={async () => {
-                    await handleSaveReplenishmentRecord(); // Función que registra la reposición
+                    await handleSaveReplenishmentRecord();
                     setIsConfirmModalOpen(false);
                   }}
                   className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"

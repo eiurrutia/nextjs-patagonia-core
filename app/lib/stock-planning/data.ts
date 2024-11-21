@@ -1,6 +1,8 @@
 import { executeQuery } from '@/app/lib/snowflakeClient';
 import { unstable_noStore as noStore } from 'next/cache';
-import { StockSegment, CDStockData, StoresStockData, SalesData } from './../definitions';
+import {
+  StockSegment, CDStockData, StoresStockData, SalesData, ReplenishmentRecord
+} from './../definitions';
 
 /**
  * Function to truncate the segmentation table.
@@ -318,4 +320,49 @@ export async function fetchStoresStockCount(query: string): Promise<number> {
   const result = await executeQuery<{ TOTALCOUNT: number }>(sqlText, binds);
   
   return result[0].TOTALCOUNT;
+}
+
+/**
+ * Function to save replenishment data to the database.
+ * @param record - The replenishment record to save.
+ * @returns A promise with the result of the operation.
+ * @throws An error if the operation fails.
+ * @example
+ * await saveReplenishment(record);
+ */
+export async function saveReplenishment(record: ReplenishmentRecord): Promise<void> {
+  const { ID, totalReplenishment, totalBreakQty, selectedDeliveries, startDate, endDate, replenishmentData } = record;
+
+  const sqlInsertReplenishment = `
+    INSERT INTO PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS (
+      ID, TOTAL_REPLENISHMENT, TOTAL_BREAK_QTY, SELECTED_DELIVERIES, START_DATE, END_DATE, SNOWFLAKE_CREATED_AT
+    )
+    VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP);
+  `;
+
+  const sqlInsertReplenishmentLine = `
+    INSERT INTO PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS_LINE (
+      REPLENISHMENT_ID, SKU, STORE, SEGMENT, SALES, ACTUAL_STOCK, ORDERED_QTY, REPLENISHMENT, SNOWFLAKE_CREATED_AT
+    )
+    VALUES ${replenishmentData.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)').join(', ')};
+  `;
+
+  const replenishmentLineBinds = replenishmentData.flatMap((line) => [
+    ID,
+    line.SKU,
+    line.STORE,
+    line.SEGMENT,
+    line.SALES,
+    line.ACTUAL_STOCK,
+    line.ORDERED_QTY,
+    line.REPLENISHMENT,
+  ]);
+
+  try {
+    await executeQuery(sqlInsertReplenishment, [ID, totalReplenishment, totalBreakQty, selectedDeliveries, startDate, endDate]);
+    await executeQuery(sqlInsertReplenishmentLine, replenishmentLineBinds);
+  } catch (error) {
+    console.error('Error saving replenishment data:', error);
+    throw error;
+  }
 }

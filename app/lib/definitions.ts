@@ -333,6 +333,16 @@ export type ReplenishmentData = {
   REPLENISHMENT: number;
 }
 
+export type ReplenishmentRecord = {
+  ID: string;
+  totalReplenishment: number;
+  totalBreakQty: number;
+  selectedDeliveries: string;
+  startDate: string;
+  endDate: string;
+  replenishmentData: ReplenishmentData[];
+}
+
 export type BreakData = {
   SKU: string;
   STORE: string;
