@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import SegmentationTable from '@/app/ui/stock-planning/segmentation-table';
 import SalesTable from '@/app/ui/stock-planning/sales-table';
 import CDStockTable from '@/app/ui/stock-planning/cd-stock-table';
@@ -7,8 +7,8 @@ import StoresStockTable from '@/app/ui/stock-planning/store-stock-table';
 import Search from '@/app/ui/search';
 import ReplenishmentTable from '@/app/ui/stock-planning/replenishment-table';
 import { lusitana } from '@/app/ui/fonts';
-import { Suspense } from 'react';
 import { InvoicesTableSkeleton, CardSkeleton } from '@/app/ui/skeletons';
+import { StockSegment } from '@/app/lib/definitions';
 
 export default function NewStockPlanning({
   searchParams,
@@ -32,6 +32,7 @@ export default function NewStockPlanning({
   const [deliveryOptions, setDeliveryOptions] = useState<string[]>([]);
   const [selectedDeliveryOptions, setSelectedDeliveryOptions] = useState<string[]>([]);
   const [loadingSelectedDeliveryOptions, setLoadingSelectedDeliveryOptions] = useState(false);
+  const [editedSegments, setEditedSegments] = useState<StockSegment[]>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -44,11 +45,17 @@ export default function NewStockPlanning({
         // Fetch configured deliveries
         const responseConfig = await fetch('/api/configs/configs');
         const configs = await responseConfig.json();
-        const deliveriesConfig = configs.find((config: any) => config.config_key === 'stock_planning_deliveries_set');
-        const configuredDeliveries = deliveriesConfig ? deliveriesConfig.config_value.split(',').map((item: string) => item.trim()) : [];
+        const deliveriesConfig = configs.find(
+          (config: any) => config.config_key === 'stock_planning_deliveries_set'
+        );
+        const configuredDeliveries = deliveriesConfig
+          ? deliveriesConfig.config_value.split(',').map((item: string) => item.trim())
+          : [];
 
         setDeliveryOptions(options);
-        setSelectedDeliveryOptions(configuredDeliveries.length > 0 ? configuredDeliveries : options);
+        setSelectedDeliveryOptions(
+          configuredDeliveries.length > 0 ? configuredDeliveries : options
+        );
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -106,19 +113,20 @@ export default function NewStockPlanning({
             </div>
 
             {/* Segmentation */}
-            <Suspense key={query + segmentationPage} fallback={<InvoicesTableSkeleton />}>
+            <Suspense fallback={<InvoicesTableSkeleton />}>
               <h2 className={`${lusitana.className} text-2xl mt-8`}>Segmentación</h2>
               <SegmentationTable
                 query={query}
                 currentPage={segmentationPage}
                 setPage={setSegmentationPage}
                 selectedDeliveryOptions={selectedDeliveryOptions}
+                editedSegments={editedSegments}
+                setEditedSegments={setEditedSegments}
               />
             </Suspense>
           </>
         )}
       </div>
-
 
       {/* Sales */}
       <div className="mt-12 flex gap-4">
@@ -144,7 +152,13 @@ export default function NewStockPlanning({
       </div>
       <div className="mt-8">
         <Suspense fallback={<InvoicesTableSkeleton />}>
-          <SalesTable startDate={startDate} endDate={endDate} query={query} currentPage={salesPage} setPage={setSalesPage} />
+          <SalesTable
+            startDate={startDate}
+            endDate={endDate}
+            query={query}
+            currentPage={salesPage}
+            setPage={setSalesPage}
+          />
         </Suspense>
       </div>
 
@@ -178,7 +192,11 @@ export default function NewStockPlanning({
       {showReplenishment && (
         <div className="mt-8">
           <h2 className={`${lusitana.className} text-2xl mt-8`}>Resultado de Reposición</h2>
-          <ReplenishmentTable startDate={startDate} endDate={endDate} selectedDeliveryOptions={selectedDeliveryOptions} />
+          <ReplenishmentTable
+            startDate={startDate}
+            endDate={endDate}
+            selectedDeliveryOptions={selectedDeliveryOptions}
+          />
         </div>
       )}
     </div>
