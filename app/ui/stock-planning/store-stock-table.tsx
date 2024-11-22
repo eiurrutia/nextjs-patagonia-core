@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { CardSkeleton } from '../skeletons';
 import { StoresStockData } from '@/app/lib/definitions';
 import Pagination from '../pagination';
@@ -14,13 +14,16 @@ export default function StoresStockTable({ query, currentPage, setPage }: Stores
   const [storesStockData, setStoresStockData] = useState<StoresStockData[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const limit = 10;
 
   useEffect(() => {
     async function fetchStoresStockData() {
       setLoading(true);
       try {
-        const response = await fetch(`/api/stock-planning/stock-stores?query=${encodeURIComponent(query)}&page=${currentPage}`);
+        const response = await fetch(
+          `/api/stock-planning/stock-stores?query=${encodeURIComponent(query)}&page=${currentPage}`
+        );
         const data: StoresStockData[] = await response.json();
         setStoresStockData(data);
       } catch (error) {
@@ -32,7 +35,9 @@ export default function StoresStockTable({ query, currentPage, setPage }: Stores
 
     async function fetchTotalPages() {
       try {
-        const response = await fetch(`/api/stock-planning/stock-stores-count?query=${encodeURIComponent(query)}`);
+        const response = await fetch(
+          `/api/stock-planning/stock-stores-count?query=${encodeURIComponent(query)}`
+        );
         const { totalCount } = await response.json();
         setTotalPages(Math.ceil(totalCount / limit));
       } catch (error) {
@@ -44,6 +49,40 @@ export default function StoresStockTable({ query, currentPage, setPage }: Stores
     fetchTotalPages();
   }, [query, currentPage]);
 
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedData = useMemo(() => {
+    let sortableData = [...storesStockData];
+    if (sortConfig !== null) {
+      sortableData.sort((a, b) => {
+        const aValue = a[sortConfig.key as keyof StoresStockData];
+        const bValue = b[sortConfig.key as keyof StoresStockData];
+
+        const aValueNum = Number(aValue);
+        const bValueNum = Number(bValue);
+
+        if (!isNaN(aValueNum) && !isNaN(bValueNum)) {
+          // Numeric comparison
+          return sortConfig.direction === 'asc' ? aValueNum - bValueNum : bValueNum - aValueNum;
+        } else {
+          // String comparison
+          const aStr = String(aValue);
+          const bStr = String(bValue);
+          if (aStr < bStr) return sortConfig.direction === 'asc' ? -1 : 1;
+          if (aStr > bStr) return sortConfig.direction === 'asc' ? 1 : -1;
+          return 0;
+        }
+      });
+    }
+    return sortableData;
+  }, [storesStockData, sortConfig]);
+
   if (loading) return <CardSkeleton />;
 
   return (
@@ -51,97 +90,65 @@ export default function StoresStockTable({ query, currentPage, setPage }: Stores
       <table className="min-w-full border-collapse border border-gray-300">
         <thead>
           <tr>
-            <th className="border px-4 py-2">SKU</th>
-            <th className="border px-4 py-2">COYHAIQUE</th>
-            <th className="border px-4 py-2">LASCONDES</th>
-            <th className="border px-4 py-2">MALLSPORT</th>
-            <th className="border px-4 py-2">COSTANERA</th>
-            <th className="border px-4 py-2">CONCEPCION</th>
-            <th className="border px-4 py-2">PTOVARAS</th>
-            <th className="border px-4 py-2">LADEHESA</th>
-            <th className="border px-4 py-2">PUCON</th>
-            <th className="border px-4 py-2">TEMUCO</th>
-            <th className="border px-4 py-2">OSORNO</th>
-            <th className="border px-4 py-2">ALERCE</th>
-            <th className="border px-4 py-2">BNAVENTURA</th>
+            <th
+              className="border px-4 py-2 cursor-pointer"
+              onClick={() => handleSort('SKU')}
+            >
+              SKU {sortConfig?.key === 'SKU' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
+            </th>
+            {[
+              'COYHAIQUE',
+              'LASCONDES',
+              'MALLSPORT',
+              'COSTANERA',
+              'CONCEPCION',
+              'PTOVARAS',
+              'LADEHESA',
+              'PUCON',
+              'TEMUCO',
+              'OSORNO',
+              'ALERCE',
+              'BNAVENTURA',
+            ].map((store) => (
+              <th
+                key={store}
+                className="border px-4 py-2 cursor-pointer"
+                onClick={() => handleSort(`${store}_AVAILABLE`)}
+              >
+                {store} {sortConfig?.key === `${store}_AVAILABLE` && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
-          {storesStockData.map((storeStock, index) => (
+          {sortedData.map((storeStock, index) => (
             <tr key={index}>
-                <td className="border px-4 py-2">{storeStock.SKU}</td>
-                <td className="border px-4 py-2">
-                    <div className="flex justify-between items-center">
-                    <span className="text-lg text-black-700">{storeStock.COYHAIQUE_AVAILABLE}</span>
-                    <span className="text-sm text-gray-500">Ord: {storeStock.COYHAIQUE_ORDERED}</span>
-                    </div>
+              <td className="border px-4 py-2">{storeStock.SKU}</td>
+              {[
+                'COYHAIQUE',
+                'LASCONDES',
+                'MALLSPORT',
+                'COSTANERA',
+                'CONCEPCION',
+                'PTOVARAS',
+                'LADEHESA',
+                'PUCON',
+                'TEMUCO',
+                'OSORNO',
+                'ALERCE',
+                'BNAVENTURA',
+              ].map((store) => (
+                <td key={store} className="border px-4 py-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg text-black-700">
+                      {storeStock[`${store}_AVAILABLE` as keyof StoresStockData]}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      Ord: {storeStock[`${store}_ORDERED` as keyof StoresStockData]}
+                    </span>
+                  </div>
                 </td>
-                <td className="border px-4 py-2">
-                    <div className="flex justify-between items-center">
-                    <span className="text-lg text-black-700">{storeStock.LASCONDES_AVAILABLE}</span>
-                    <span className="text-sm text-gray-500">Ord: {storeStock.LASCONDES_ORDERED}</span>
-                    </div>
-                </td>
-                <td className="border px-4 py-2">
-                    <div className="flex justify-between items-center">
-                    <span className="text-lg text-black-700">{storeStock.MALLSPORT_AVAILABLE}</span>
-                    <span className="text-sm text-gray-500">Ord: {storeStock.MALLSPORT_ORDERED}</span>
-                    </div>
-                </td>
-                <td className="border px-4 py-2">
-                    <div className="flex justify-between items-center">
-                    <span className="text-lg text-black-700">{storeStock.COSTANERA_AVAILABLE}</span>
-                    <span className="text-sm text-gray-500">Ord: {storeStock.COSTANERA_ORDERED}</span>
-                    </div>
-                </td>
-                <td className="border px-4 py-2">
-                    <div className="flex justify-between items-center">
-                    <span className="text-lg text-black-700">{storeStock.CONCEPCION_AVAILABLE}</span>
-                    <span className="text-sm text-gray-500">Ord: {storeStock.CONCEPCION_ORDERED}</span>
-                    </div>
-                </td>
-                <td className="border px-4 py-2">
-                    <div className="flex justify-between items-center">
-                    <span className="text-lg text-black-700">{storeStock.PTOVARAS_AVAILABLE}</span>
-                    <span className="text-sm text-gray-500">Ord: {storeStock.PTOVARAS_ORDERED}</span>
-                    </div>
-                </td>
-                <td className="border px-4 py-2">
-                    <div className="flex justify-between items-center">
-                    <span className="text-lg text-black-700">{storeStock.LADEHESA_AVAILABLE}</span>
-                    <span className="text-sm text-gray-500">Ord: {storeStock.LADEHESA_ORDERED}</span>
-                    </div>
-                </td>
-                <td className="border px-4 py-2">
-                    <div className="flex justify-between items-center">
-                    <span className="text-lg text-black-700">{storeStock.PUCON_AVAILABLE}</span>
-                    <span className="text-sm text-gray-500">Ord: {storeStock.PUCON_ORDERED}</span>
-                    </div>
-                </td>
-                <td className="border px-4 py-2">
-                    <div className="flex justify-between items-center">
-                    <span className="text-lg text-black-700">{storeStock.TEMUCO_AVAILABLE}</span>
-                    <span className="text-sm text-gray-500">Ord: {storeStock.TEMUCO_ORDERED}</span>
-                    </div>
-                </td>
-                <td className="border px-4 py-2">
-                    <div className="flex justify-between items-center">
-                    <span className="text-lg text-black-700">{storeStock.OSORNO_AVAILABLE}</span>
-                    <span className="text-sm text-gray-500">Ord: {storeStock.OSORNO_ORDERED}</span>
-                    </div>
-                </td>
-                <td className="border px-4 py-2">
-                    <div className="flex justify-between items-center">
-                    <span className="text-lg text-black-700">{storeStock.ALERCE_AVAILABLE}</span>
-                    <span className="text-sm text-gray-500">Ord: {storeStock.ALERCE_ORDERED}</span>
-                    </div>
-                </td>
-                <td className="border px-4 py-2">
-                    <div className="flex justify-between items-center">
-                    <span className="text-lg text-black-700">{storeStock.BNAVENTURA_AVAILABLE}</span>
-                    <span className="text-sm text-gray-500">Ord: {storeStock.BNAVENTURA_ORDERED}</span>
-                    </div>
-                </td>
+              ))}
             </tr>
           ))}
         </tbody>
