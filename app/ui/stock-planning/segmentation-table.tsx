@@ -1,6 +1,5 @@
 'use client';
-import React, { Dispatch, SetStateAction } from 'react';
-import { useEffect, useState } from 'react';
+import React, { Dispatch, SetStateAction, useEffect, useState, useMemo } from 'react';
 import { StockSegment } from '@/app/lib/definitions';
 import { CardSkeleton } from '../skeletons';
 import Pagination from '@/app/ui/pagination';
@@ -11,7 +10,7 @@ interface SegmentationTableProps {
   setPage: (page: number) => void;
   selectedDeliveryOptions?: string[];
   showDeliveryFilters?: boolean;
-  editedSegments: StockSegment[]; // Accept editedSegments as a prop
+  editedSegments: StockSegment[];
   setEditedSegments: Dispatch<SetStateAction<StockSegment[]>>;
 }
 
@@ -28,6 +27,7 @@ export default function SegmentationTable({
   const [loading, setLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const limit = 10;
 
   useEffect(() => {
@@ -53,8 +53,8 @@ export default function SegmentationTable({
           return editedSegment ? { ...segment, ...editedSegment } : segment;
         });
 
-        if (data.length > 0) {
-          const keys = Object.keys(data[0]);
+        if (mergedData.length > 0) {
+          const keys = Object.keys(mergedData[0]);
           const sortedColumns = [
             'SKU',
             'DELIVERY',
@@ -116,6 +116,45 @@ export default function SegmentationTable({
     });
   };
 
+  // Sorting logic using useMemo
+  const sortedSegments = useMemo(() => {
+    let sortableSegments = [...segments];
+    if (sortConfig !== null) {
+      sortableSegments.sort((a, b) => {
+        const aValue = a[sortConfig.key as keyof StockSegment];
+        const bValue = b[sortConfig.key as keyof StockSegment];
+
+        if (aValue === undefined || bValue === undefined) {
+          return 0;
+        }
+
+        const aValueNum = Number(aValue);
+        const bValueNum = Number(bValue);
+
+        if (!isNaN(aValueNum) && !isNaN(bValueNum)) {
+          // Numeric comparison
+          return sortConfig.direction === 'asc' ? aValueNum - bValueNum : bValueNum - aValueNum;
+        } else {
+          // String comparison
+          const aStr = String(aValue);
+          const bStr = String(bValue);
+          if (aStr < bStr) return sortConfig.direction === 'asc' ? -1 : 1;
+          if (aStr > bStr) return sortConfig.direction === 'asc' ? 1 : -1;
+          return 0;
+        }
+      });
+    }
+    return sortableSegments;
+  }, [segments, sortConfig]);
+
+  const handleSort = (column: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === column && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key: column, direction });
+  };
+
   if (loading) return <CardSkeleton />;
 
   return (
@@ -134,15 +173,19 @@ export default function SegmentationTable({
             {columns.map((column) => (
               <th
                 key={column}
-                className="border px-4 py-2 bg-gray-100 text-gray-700 font-semibold text-left"
+                className="border px-4 py-2 bg-gray-100 text-gray-700 font-semibold text-left cursor-pointer"
+                onClick={() => handleSort(column)}
               >
                 {column}
+                {sortConfig && sortConfig.key === column && (
+                  <span>{sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽'}</span>
+                )}
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {segments.map((segment, index) => (
+          {sortedSegments.map((segment, index) => (
             <tr key={index} className="hover:bg-gray-50">
               {columns.map((column) => (
                 <td key={column} className="border px-4 py-2 text-gray-800">
