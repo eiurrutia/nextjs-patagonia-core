@@ -122,6 +122,7 @@ export default function NewStockPlanning({
                 selectedDeliveryOptions={selectedDeliveryOptions}
                 editedSegments={editedSegments}
                 setEditedSegments={setEditedSegments}
+                isEditable={true}
               />
             </Suspense>
           </>

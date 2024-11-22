@@ -10,8 +10,9 @@ interface SegmentationTableProps {
   setPage: (page: number) => void;
   selectedDeliveryOptions?: string[];
   showDeliveryFilters?: boolean;
-  editedSegments: StockSegment[];
-  setEditedSegments: Dispatch<SetStateAction<StockSegment[]>>;
+  editedSegments?: StockSegment[];
+  setEditedSegments?: Dispatch<SetStateAction<StockSegment[]>>;
+  isEditable?: boolean;
 }
 
 export default function SegmentationTable({
@@ -19,8 +20,9 @@ export default function SegmentationTable({
   currentPage,
   setPage,
   selectedDeliveryOptions = [],
-  editedSegments,
+  editedSegments = [],
   setEditedSegments,
+  isEditable = false,
 }: SegmentationTableProps) {
   const [segments, setSegments] = useState<StockSegment[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
@@ -102,18 +104,20 @@ export default function SegmentationTable({
     setSegments(updatedSegments);
 
     // Persist changes in editedSegments
-    setEditedSegments((prev: StockSegment[]) => {
-      const newEditedSegments = [...prev]; // Create a new array to avoid mutating state directly
-      const existingIndex = newEditedSegments.findIndex(
-        (item) => item.SKU === updatedSegments[rowIndex].SKU
-      );
-      if (existingIndex >= 0) {
-        newEditedSegments[existingIndex] = updatedSegments[rowIndex];
-      } else {
-        newEditedSegments.push(updatedSegments[rowIndex]);
-      }
-      return newEditedSegments;
-    });
+    if (setEditedSegments) {
+      setEditedSegments((prev: StockSegment[]) => {
+        const newEditedSegments = [...prev];
+        const existingIndex = newEditedSegments.findIndex(
+          (item) => item.SKU === updatedSegments[rowIndex].SKU
+        );
+        if (existingIndex >= 0) {
+          newEditedSegments[existingIndex] = updatedSegments[rowIndex];
+        } else {
+          newEditedSegments.push(updatedSegments[rowIndex]);
+        }
+        return newEditedSegments;
+      });
+    }
   };
 
   // Sorting logic using useMemo
@@ -159,14 +163,16 @@ export default function SegmentationTable({
 
   return (
     <div className="w-full overflow-auto mt-4">
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={() => setIsEditMode((prev) => !prev)}
-          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-        >
-          {isEditMode ? 'Guardar' : 'Editar'}
-        </button>
-      </div>
+      {isEditable && (
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setIsEditMode((prev) => !prev)}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+          >
+            {isEditMode ? 'Guardar' : 'Editar'}
+          </button>
+        </div>
+      )}
       <table className="min-w-full border-collapse border border-gray-300">
         <thead>
           <tr>
@@ -189,7 +195,7 @@ export default function SegmentationTable({
             <tr key={index} className="hover:bg-gray-50">
               {columns.map((column) => (
                 <td key={column} className="border px-4 py-2 text-gray-800">
-                  {isEditMode && column !== 'SKU' && column !== 'DELIVERY' ? (
+                  {isEditable && isEditMode && column !== 'SKU' && column !== 'DELIVERY' ? (
                     <input
                       type="number"
                       value={segment[column as keyof StockSegment] || 0}
