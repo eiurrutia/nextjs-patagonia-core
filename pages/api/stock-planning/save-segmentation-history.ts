@@ -16,10 +16,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   console.log('Saving segmentation history:', req.body);
 
-  const { stockSegments, segID } = req.body;
+  const { stockSegments, repID } = req.body;
 
   try {
-    await saveSegmentationHistory(stockSegments, segID);
+    await saveSegmentationHistory(stockSegments, repID);
     res.status(200).json({ message: 'Segmentation history saved successfully' });
   } catch (error) {
     console.error('Error saving segmentation history:', error);

@@ -143,7 +143,6 @@ export default function ReplenishmentTable({
     const weekNumber = getISOWeekNumber(today);
     const formattedDate = today.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const replenishmentID = `REP-W${weekNumber}_${formattedDate}`;
-    const segmentationID = `SEG-W${weekNumber}_${formattedDate}`;
 
     const record = {
       ID: replenishmentID,
@@ -182,7 +181,7 @@ export default function ReplenishmentTable({
         },
         body: JSON.stringify({
           stockSegments: segmentationData,
-          segID: segmentationID
+          repID: replenishmentID
         }),
       });
 

@@ -375,10 +375,10 @@ export async function saveReplenishment(record: ReplenishmentRecord): Promise<vo
  * @example
  * const replenishmentData = await fetchReplenishmentData('sku', 1);
  */
-export async function saveSegmentationHistory(stockSegments: StockSegment[], segID: string): Promise<void> {
+export async function saveSegmentationHistory(stockSegments: StockSegment[], repID: string): Promise<void> {
   const sqlText = `
     INSERT INTO PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION_HISTORY (
-      SEG_ID, SKU, COYHAIQUE, LASCONDES, MALLSPORT, COSTANERA,
+      REP_ID, SKU, COYHAIQUE, LASCONDES, MALLSPORT, COSTANERA,
       CONCEPCION, PTOVARAS, LADEHESA, PUCON, TEMUCO, OSORNO,
       ALERCE, BNAVENTURA, DELIVERY, SNOWFLAKE_CREATED_AT
     )
@@ -386,7 +386,7 @@ export async function saveSegmentationHistory(stockSegments: StockSegment[], seg
   `;
 
   const binds = stockSegments.flatMap(segment => [
-    segID,
+    repID,
     segment.SKU,
     segment.COYHAIQUE,
     segment.LASCONDES,
