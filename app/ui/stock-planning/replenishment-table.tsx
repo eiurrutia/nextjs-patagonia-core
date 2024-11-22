@@ -9,11 +9,13 @@ import { toZonedTime } from 'date-fns-tz';
 export default function ReplenishmentTable({
     startDate, 
     endDate,
-    selectedDeliveryOptions
+    selectedDeliveryOptions,
+    editedSegments
   }: {
     startDate: string;
     endDate: string
     selectedDeliveryOptions: string[];
+    editedSegments: StockSegment[];
   }) {
   const [replenishmentData, setReplenishmentData] = useState<ReplenishmentData[]>([]);
   const [breakData, setBreakData] = useState<BreakData[]>([]);
@@ -31,9 +33,19 @@ export default function ReplenishmentTable({
     async function fetchReplenishmentData() {
       setLoading(true);
       try {
-        const response = await fetch(
-          `/api/stock-planning/replenishment?startDate=${startDate}&endDate=${endDate}&selectedDeliveryOptions=${encodeURIComponent(JSON.stringify(selectedDeliveryOptions))}`
-        );
+        // Use a POST request to send editedSegments in the body
+        const response = await fetch('/api/stock-planning/replenishment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            startDate,
+            endDate,
+            selectedDeliveryOptions,
+            editedSegments,
+          }),
+        });
         const data = await response.json();
         setReplenishmentData(data.replenishmentTable);
         setBreakData(data.breakData);
@@ -46,7 +58,7 @@ export default function ReplenishmentTable({
     }
 
     fetchReplenishmentData();
-  }, [startDate, endDate, selectedDeliveryOptions]);
+  }, [startDate, endDate, selectedDeliveryOptions, editedSegments]);
 
   const summary = useMemo(() => {
     const totalReplenishment = replenishmentData.reduce((sum, item) => sum + (item.REPLENISHMENT || 0), 0);

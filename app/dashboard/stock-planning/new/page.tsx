@@ -196,6 +196,7 @@ export default function NewStockPlanning({
             startDate={startDate}
             endDate={endDate}
             selectedDeliveryOptions={selectedDeliveryOptions}
+            editedSegments={editedSegments}
           />
         </div>
       )}
