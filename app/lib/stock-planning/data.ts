@@ -351,13 +351,22 @@ export async function fetchStoresStockCount(query: string): Promise<number> {
  * await saveReplenishment(record);
  */
 export async function saveReplenishment(record: ReplenishmentRecord): Promise<void> {
-  const { ID, totalReplenishment, totalBreakQty, selectedDeliveries, startDate, endDate, replenishmentData } = record;
+  const {
+    ID,
+    totalReplenishment,
+    totalBreakQty,
+    selectedDeliveries,
+    startDate,
+    endDate,
+    storesConsidered,
+    replenishmentData,
+  } = record;
 
   const sqlInsertReplenishment = `
     INSERT INTO PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS (
-      ID, TOTAL_REPLENISHMENT, TOTAL_BREAK_QTY, SELECTED_DELIVERIES, START_DATE, END_DATE, SNOWFLAKE_CREATED_AT
+      ID, TOTAL_REPLENISHMENT, TOTAL_BREAK_QTY, SELECTED_DELIVERIES, START_DATE, END_DATE, STORES_CONSIDERED, SNOWFLAKE_CREATED_AT
     )
-    VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP);
+    VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP);
   `;
 
   const sqlInsertReplenishmentLine = `
@@ -379,7 +388,15 @@ export async function saveReplenishment(record: ReplenishmentRecord): Promise<vo
   ]);
 
   try {
-    await executeQuery(sqlInsertReplenishment, [ID, totalReplenishment, totalBreakQty, selectedDeliveries, startDate, endDate]);
+    await executeQuery(sqlInsertReplenishment, [
+      ID,
+      totalReplenishment,
+      totalBreakQty,
+      selectedDeliveries,
+      startDate,
+      endDate,
+      storesConsidered, // Pasar el nuevo campo en los parámetros
+    ]);
     await executeQuery(sqlInsertReplenishmentLine, replenishmentLineBinds);
   } catch (error) {
     console.error('Error saving replenishment data:', error);

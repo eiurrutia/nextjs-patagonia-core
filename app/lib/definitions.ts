@@ -340,6 +340,7 @@ export type ReplenishmentRecord = {
   selectedDeliveries: string;
   startDate: string;
   endDate: string;
+  storesConsidered: string;
   replenishmentData: ReplenishmentData[];
 }
 

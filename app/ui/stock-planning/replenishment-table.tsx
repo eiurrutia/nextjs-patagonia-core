@@ -153,6 +153,7 @@ export default function ReplenishmentTable({
     const weekNumber = getISOWeekNumber(today);
     const formattedDate = today.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const replenishmentID = `REP-W${weekNumber}_${formattedDate}`;
+    const storesConsidered = Array.from(new Set(replenishmentData.map(item => item.STORE))).sort().join(', ');
 
     const record = {
       ID: replenishmentID,
@@ -161,6 +162,7 @@ export default function ReplenishmentTable({
       selectedDeliveries: selectedDeliveryOptions.join(', '),
       startDate,
       endDate,
+      storesConsidered,
       replenishmentData
     };
   

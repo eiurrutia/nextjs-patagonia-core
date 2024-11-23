@@ -6,9 +6,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const { ID, totalReplenishment, totalBreakQty, selectedDeliveries, startDate, endDate, replenishmentData } = req.body;
+  const {
+    ID,
+    totalReplenishment,
+    totalBreakQty,
+    selectedDeliveries,
+    startDate,
+    endDate,
+    storesConsidered,
+    replenishmentData,
+  } = req.body;
 
-  if (!ID || !totalReplenishment || !selectedDeliveries || !startDate || !endDate || !replenishmentData) {
+  if (
+    !ID ||
+    !totalReplenishment ||
+    !selectedDeliveries ||
+    !startDate ||
+    !endDate ||
+    !storesConsidered ||
+    !replenishmentData
+  ) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
@@ -20,6 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       selectedDeliveries,
       startDate,
       endDate,
+      storesConsidered,
       replenishmentData,
     });
 
