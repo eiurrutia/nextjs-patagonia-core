@@ -47,7 +47,14 @@ export async function uploadStockSegments(data: StockSegment[]): Promise<void> {
  * @returns A promise with the stock segments.
  * @throws An error if the query fails.
  */
-export async function fetchStockSegments(query: string, page: number, selectedDeliveryOptions: string[] = [], noPagination: boolean = false): Promise<StockSegment[]> {
+export async function fetchStockSegments(
+  query: string,
+  page: number,
+  selectedDeliveryOptions: string[] = [],
+  noPagination: boolean = false,
+  sortKey?: string,
+  sortDirection?: 'asc' | 'desc'
+): Promise<StockSegment[]> {
   const limit = noPagination ? '' : 'LIMIT 10';
   const offset = noPagination ? '' : `OFFSET ${(page - 1) * 10}`;
 
@@ -69,7 +76,20 @@ export async function fetchStockSegments(query: string, page: number, selectedDe
     binds.push(...selectedDeliveryOptions);
   }
 
-  sqlText += ` ORDER BY SKU ${limit} ${offset}`;
+  // Validate sortKey to prevent SQL injection
+  const validSortKeys = [
+    'SKU', 'DELIVERY', 'COYHAIQUE', 'LASCONDES', 'MALLSPORT', 'COSTANERA',
+    'CONCEPCION', 'PTOVARAS', 'LADEHESA', 'PUCON', 'TEMUCO', 'OSORNO',
+    'ALERCE', 'BNAVENTURA'
+  ];
+
+  let orderByClause = 'ORDER BY SKU'; // default order
+
+  if (sortKey && validSortKeys.includes(sortKey.toUpperCase())) {
+    orderByClause = `ORDER BY ${sortKey.toUpperCase()} ${sortDirection === 'desc' ? 'DESC' : 'ASC'}`;
+  }
+
+  sqlText += ` ${orderByClause} ${limit} ${offset}`;
 
   return await executeQuery<StockSegment>(sqlText, binds);
 }

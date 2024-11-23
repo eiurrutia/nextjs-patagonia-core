@@ -41,11 +41,15 @@ export default function SegmentationTable({
               JSON.stringify(selectedDeliveryOptions)
             )}`
           : '';
-
+        
+        const sortParam = sortConfig
+          ? `&sortKey=${encodeURIComponent(sortConfig.key)}&sortDirection=${sortConfig.direction}`
+          : '';
+  
         const response = await fetch(
           `/api/stock-planning/stock-segments?query=${encodeURIComponent(
             query
-          )}&currentPage=${currentPage}${filterParam}`
+          )}&currentPage=${currentPage}${filterParam}${sortParam}`
         );
         const data: StockSegment[] = await response.json();
 
@@ -92,7 +96,7 @@ export default function SegmentationTable({
 
     fetchTotalPages();
     loadSegments();
-  }, [query, currentPage, JSON.stringify(selectedDeliveryOptions)]);
+  }, [query, currentPage, JSON.stringify(selectedDeliveryOptions), sortConfig]);
 
   const handleEditCell = (rowIndex: number, column: string, value: string) => {
     const updatedSegments = segments.map((segment, index) =>
@@ -120,43 +124,13 @@ export default function SegmentationTable({
     }
   };
 
-  // Sorting logic using useMemo
-  const sortedSegments = useMemo(() => {
-    let sortableSegments = [...segments];
-    if (sortConfig !== null) {
-      sortableSegments.sort((a, b) => {
-        const aValue = a[sortConfig.key as keyof StockSegment];
-        const bValue = b[sortConfig.key as keyof StockSegment];
-
-        if (aValue === undefined || bValue === undefined) {
-          return 0;
-        }
-
-        const aValueNum = Number(aValue);
-        const bValueNum = Number(bValue);
-
-        if (!isNaN(aValueNum) && !isNaN(bValueNum)) {
-          // Numeric comparison
-          return sortConfig.direction === 'asc' ? aValueNum - bValueNum : bValueNum - aValueNum;
-        } else {
-          // String comparison
-          const aStr = String(aValue);
-          const bStr = String(bValue);
-          if (aStr < bStr) return sortConfig.direction === 'asc' ? -1 : 1;
-          if (aStr > bStr) return sortConfig.direction === 'asc' ? 1 : -1;
-          return 0;
-        }
-      });
-    }
-    return sortableSegments;
-  }, [segments, sortConfig]);
-
   const handleSort = (column: string) => {
     let direction: 'asc' | 'desc' = 'asc';
     if (sortConfig && sortConfig.key === column && sortConfig.direction === 'asc') {
       direction = 'desc';
     }
     setSortConfig({ key: column, direction });
+    setPage(1);
   };
 
   if (loading) return <CardSkeleton />;
@@ -191,7 +165,7 @@ export default function SegmentationTable({
           </tr>
         </thead>
         <tbody>
-          {sortedSegments.map((segment, index) => (
+          {segments.map((segment, index) => (
             <tr key={index} className="hover:bg-gray-50">
               {columns.map((column) => (
                 <td key={column} className="border px-4 py-2 text-gray-800">
