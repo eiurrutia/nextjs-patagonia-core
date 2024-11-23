@@ -5,6 +5,7 @@ import { ChevronRightIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { ReplenishmentData, BreakData, StockSegment } from '@/app/lib/definitions';
 import { getISOWeekNumber } from '@/app/utils/dateUtils';
 import { toZonedTime } from 'date-fns-tz';
+import Pagination from '../pagination';
 
 export default function ReplenishmentTable({
     startDate, 
@@ -28,6 +29,8 @@ export default function ReplenishmentTable({
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isProcessingReplenishment, setIsProcessingReplenishment] = useState(false);
   const [saveDeliveriesSelected, setSaveDeliveriesSelected] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     async function fetchReplenishmentData() {
@@ -117,12 +120,19 @@ export default function ReplenishmentTable({
     return data;
   }, [query, replenishmentData, sortConfig]);
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPageData = filteredData.slice(startIndex, endIndex);
+
   const handleSort = (key: keyof ReplenishmentData) => {
     let direction: 'asc' | 'desc' = 'asc';
     if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
       direction = 'desc';
     }
     setSortConfig({ key, direction });
+    setCurrentPage(1);
   };
 
   const toggleStoreExpansion = (store: string) => {
@@ -173,7 +183,7 @@ export default function ReplenishmentTable({
         });
       }
 
-      // Save segmentaion history
+      // Save segmentation history
       await fetch('/api/stock-planning/save-segmentation-history', {
         method: 'POST',
         headers: {
@@ -227,17 +237,31 @@ export default function ReplenishmentTable({
         <table className="min-w-full border-collapse border border-gray-300">
           <thead>
             <tr>
-              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('SKU')}>SKU</th>
-              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('STORE')}>Tienda</th>
-              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('SEGMENT')}>Segmentación</th>
-              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('SALES')}>Venta</th>
-              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('ACTUAL_STOCK')}>Stock Actual</th>
-              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('ORDERED_QTY')}>Ordenado</th>
-              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('REPLENISHMENT')}>Reposición</th>
+              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('SKU')}>
+                SKU {sortConfig?.key === 'SKU' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
+              </th>
+              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('STORE')}>
+                Tienda {sortConfig?.key === 'STORE' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
+              </th>
+              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('SEGMENT')}>
+                Segmentación {sortConfig?.key === 'SEGMENT' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
+              </th>
+              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('SALES')}>
+                Venta {sortConfig?.key === 'SALES' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
+              </th>
+              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('ACTUAL_STOCK')}>
+                Stock Actual {sortConfig?.key === 'ACTUAL_STOCK' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
+              </th>
+              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('ORDERED_QTY')}>
+                Ordenado {sortConfig?.key === 'ORDERED_QTY' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
+              </th>
+              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('REPLENISHMENT')}>
+                Reposición {sortConfig?.key === 'REPLENISHMENT' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
+              </th>
             </tr>
           </thead>
           <tbody>
-            {filteredData.slice(0, 20).map((item, index) => (
+            {currentPageData.map((item, index) => (
                 <tr key={`${item.SKU}-${item.STORE || index}`}>
                     <td className="border px-4 py-2">{item.SKU}</td>
                     <td className="border px-4 py-2">{item.STORE}</td>
@@ -250,6 +274,11 @@ export default function ReplenishmentTable({
             ))}
           </tbody>
         </table>
+
+        {/* Pagination */}
+        <div className="mt-5 flex w-full justify-center">
+          <Pagination totalPages={totalPages} currentPage={currentPage} setPage={setCurrentPage} />
+        </div>
 
         {/* Summary Card */}
         <div className="p-6 my-6 rounded-lg shadow-md">
