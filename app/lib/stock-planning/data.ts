@@ -601,3 +601,37 @@ export async function getSegmentationDetail(id: string) {
   return await executeQuery(sql, [id]);
 }
 
+/**
+ * Function to fetch replenishment data from the database.
+ * @param id - The replenishment ID.
+ * @returns A promise with the replenishment data.
+ * @example
+ * const replenishmentData = await fetchReplenishmentData('id');
+ */
+export async function getOperationReplenishment(id: string) {
+  const sql = `
+    SELECT
+      ROW_NUMBER() OVER (PARTITION BY rpl.STORE ORDER BY rpl.SKU) AS LINENUMBER,
+      prod.ITEMNUMBER,
+      'DISPONIBLE' AS ORDEREDINVENTORYSTATUSID,
+      prod.COLOR AS PRODUCTCOLORID,
+      prod.CONFIGURATION AS PRODUCTCONFIGURATIONID,
+      prod.SIZE AS PRODUCTSIZEID,
+      'GEN' AS PRODUCTSTYLEID,
+      'CD' AS SHIPPINGWAREHOUSEID,
+      'GENERICA' AS SHIPPINGWAREHOUSELOCATIONID,
+      rpl.REPLENISHMENT AS TRANSFERQUANTITY,
+      rpl.STORE AS TIENDA,
+      rpl.SKU,
+      prod.TEAM,
+      prod.CATEGORY,
+      prod.PRODUCTNAME
+    FROM PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS_LINE rpl
+    INNER JOIN PATAGONIA.CORE_TEST.ERP_PRODUCTS prod
+      ON rpl.SKU = prod.SKU
+    WHERE rpl.REPLENISHMENT_ID = ?
+    ORDER BY rpl.STORE, LINENUMBER
+  `;
+
+  return await executeQuery(sql, [id]);
+}
