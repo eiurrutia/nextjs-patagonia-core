@@ -35,24 +35,16 @@ export default function SegmentationDetailTable() {
   }, [id]);
 
   const columns = useMemo(() => {
-    return [
-      'SKU',
-      'DELIVERY',
-      'COYHAIQUE',
-      'LASCONDES',
-      'MALLSPORT',
-      'COSTANERA',
-      'CONCEPCION',
-      'PTOVARAS',
-      'LADEHESA',
-      'PUCON',
-      'TEMUCO',
-      'OSORNO',
-      'ALERCE',
-      'BNAVENTURA',
-      'SNOWFLAKE_CREATED_AT',
-    ];
-  }, []);
+    if (segmentation.length === 0) return [];
+    const allKeys = Object.keys(segmentation[0]);
+  
+    const storeKeys = allKeys.filter(
+      (key) => !['SKU', 'DELIVERY', 'SNOWFLAKE_CREATED_AT'].includes(key)
+    );
+  
+    return ['SKU', 'DELIVERY', ...storeKeys, 'SNOWFLAKE_CREATED_AT'];
+  }, [segmentation]);
+  
 
   const sortedSegmentation = useMemo(() => {
     if (!sortConfig) return segmentation;
