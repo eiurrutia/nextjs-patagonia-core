@@ -61,7 +61,7 @@ export default function ReplenishmentsList() {
             <th className="border px-4 py-2">REP ID</th>
             <th className="border px-4 py-2">TOTAL U.</th>
             <th className="border px-4 py-2">TOTAL QUIEBRES</th>
-            <th className="border px-4 py-2">DELIVERIES</th>
+            <th className="border px-4 py-2 max-w-[150px] break-words">DELIVERIES</th>
             <th className="border px-4 py-2 max-w-[300px] break-words">TIENDAS</th>
             <th className="border px-4 py-2">RANGO VENTA</th>
             <th className="border px-4 py-2">CREACIÓN</th>
@@ -73,7 +73,7 @@ export default function ReplenishmentsList() {
               <td className="border px-4 py-2">{item.ID}</td>
               <td className="border px-4 py-2">{item.TOTAL_REPLENISHMENT}</td>
               <td className="border px-4 py-2">{item.TOTAL_BREAK_QTY}</td>
-              <td className="border px-4 py-2">{item.SELECTED_DELIVERIES}</td>
+              <td className="border px-4 py-2 max-w-[150px] break-words">{item.SELECTED_DELIVERIES}</td>
               <td className="border px-4 py-2 max-w-[300px] break-words">{item.STORES_CONSIDERED || 'N/A'}</td>
               <td className="border px-4 py-2">{formatDate(item.START_DATE)} | {formatDate(item.END_DATE)}</td>
               <td className="border px-4 py-2">{formatDate(item.CREATED_AT, true, false)}</td>
