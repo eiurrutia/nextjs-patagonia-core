@@ -61,6 +61,26 @@ export default function OperationsExportTable() {
     setSortConfig({ key, direction });
   };
 
+  const downloadCSV = () => {
+    if (!exportData || exportData.length === 0) return;
+
+    const headers = Object.keys(exportData[0]).join(',');
+    const rows = exportData
+      .map((row) => Object.values(row).map((value) => `"${value ?? ''}"`).join(','))
+      .join('\n');
+
+    const csvContent = `${headers}\n${rows}`;
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `operations_export_${id}.csv`;
+    link.click();
+
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) return <CardSkeleton />;
 
   if (exportData.length === 0) {
@@ -68,8 +88,17 @@ export default function OperationsExportTable() {
   }
 
   return (
-    <div className="mt-6">
-      <table className="min-w-full border-collapse border border-gray-300 text-sm">
+    <div>
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={downloadCSV}
+          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+        >
+          Descargar CSV
+        </button>
+      </div>
+
+      <table className="min-w-full border-collapse border border-gray-300 text-sm mt-6">
         <thead>
           <tr>
             {Object.keys(exportData[0]).map((key) => (

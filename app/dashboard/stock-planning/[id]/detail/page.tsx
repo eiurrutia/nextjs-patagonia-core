@@ -24,7 +24,7 @@ export default function ReplenishmentDetailPage() {
       </div>
 
       {/* Export Table */}
-      <div className="mt-6">
+      <div className="mt-20">
         <h2 className="text-2xl font-bold mb-4">Tabla para exportar</h2>
         <OperationsExportTable />
       </div>
