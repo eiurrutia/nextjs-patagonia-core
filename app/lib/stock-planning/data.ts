@@ -581,22 +581,18 @@ export async function getSegmentationDetail(id: string) {
     SELECT
       SKU,
       DELIVERY,
-      COALESCE(
-        CONCAT_WS(', ',
-          COYHAIQUE,
-          LASCONDES,
-          MALLSPORT,
-          COSTANERA,
-          CONCEPCION,
-          PTOVARAS,
-          LADEHESA,
-          PUCON,
-          TEMUCO,
-          OSORNO,
-          ALERCE,
-          BNAVENTURA
-        ), 'N/A'
-      ) AS STORES,
+      COYHAIQUE,
+      LASCONDES,
+      MALLSPORT,
+      COSTANERA,
+      CONCEPCION,
+      PTOVARAS,
+      LADEHESA,
+      PUCON,
+      TEMUCO,
+      OSORNO,
+      ALERCE,
+      BNAVENTURA,
       SNOWFLAKE_CREATED_AT
     FROM PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION_HISTORY
     WHERE REP_ID = ?
@@ -604,3 +600,4 @@ export async function getSegmentationDetail(id: string) {
 
   return await executeQuery(sql, [id]);
 }
+
