@@ -4,6 +4,15 @@ import { ReplenishmentRecord } from '@/app/lib/definitions';
 import { useParams } from 'next/navigation';
 import { formatDate } from '@/app/utils/dateUtils';
 import { CardSkeleton } from '@/app/ui/skeletons';
+import {
+  ClipboardDocumentListIcon,
+  CubeIcon,
+  ChartPieIcon,
+  TruckIcon,
+  BuildingStorefrontIcon,
+  CalendarDaysIcon,
+  ClockIcon,
+} from '@heroicons/react/24/outline';
 
 export default function ReplenishmentSummary() {
   const params = useParams() as { id?: string };
@@ -32,14 +41,76 @@ export default function ReplenishmentSummary() {
   if (!replenishment) return <p>No se encontró información para el ID: {id}</p>;
 
   return (
-    <div className="bg-gray-100 p-4 rounded shadow">
-      <p><strong>REP ID:</strong> {replenishment.ID}</p>
-      <p><strong>Total Unidades:</strong> {replenishment.TOTAL_REPLENISHMENT}</p>
-      <p><strong>Total Quiebres:</strong> {replenishment.TOTAL_BREAK_QTY}</p>
-      <p><strong>Deliveries:</strong> {replenishment.SELECTED_DELIVERIES}</p>
-      <p><strong>Tiendas:</strong> {replenishment.STORES_CONSIDERED || 'N/A'}</p>
-      <p><strong>Rango de Venta:</strong> {formatDate(replenishment.START_DATE)} - {formatDate(replenishment.END_DATE)}</p>
-      <p><strong>Creación:</strong> {formatDate(replenishment.CREATED_AT, true)}</p>
+    <div className="bg-white border border-gray-300 rounded-lg p-6 shadow">
+      <h2 className="text-lg font-bold mb-4 text-gray-700">Resumen de Reposición</h2>
+      <div className="grid grid-cols-3 gap-4">
+        {/* REP ID */}
+        <div
+          className="flex items-center space-x-2"
+          title="Identificador único de la reposición"
+        >
+          <ClipboardDocumentListIcon className="h-6 w-6 text-gray-600" />
+          <p className="text-gray-700 font-medium">{replenishment.ID}</p>
+        </div>
+
+        {/* Total Units */}
+        <div
+          className="flex items-center space-x-2"
+          title="Total de unidades en esta reposición"
+        >
+          <CubeIcon className="h-6 w-6 text-gray-600" />
+          <p className="text-gray-700 font-medium">Total U: {replenishment.TOTAL_REPLENISHMENT}</p>
+        </div>
+
+        {/* Breaken Units */}
+        <div
+          className="flex items-center space-x-2"
+          title="Cantidad total de unidades en quiebre"
+        >
+          <ChartPieIcon className="h-6 w-6 text-gray-600" />
+          <p className="text-gray-700 font-medium">Quiebres: {replenishment.TOTAL_BREAK_QTY}</p>
+        </div>
+
+        {/* Deliveries */}
+        <div
+          className="flex items-center space-x-2"
+          title="Opciones de entrega seleccionadas para esta reposición"
+        >
+          <TruckIcon className="h-6 w-6 text-gray-600" />
+          <p className="text-gray-700 font-medium">{replenishment.SELECTED_DELIVERIES}</p>
+        </div>
+
+        {/* Stores */}
+        <div
+          className="flex items-center space-x-2"
+          title="Lista de tiendas consideradas en esta reposición"
+        >
+          <BuildingStorefrontIcon className="h-6 w-6 text-gray-600" />
+          <p className="text-gray-700 font-medium">{replenishment.STORES_CONSIDERED || 'N/A'}</p>
+        </div>
+
+        {/* Sales Range */}
+        <div
+          className="flex items-center space-x-2"
+          title="Rango de fechas utilizado para calcular esta reposición"
+        >
+          <CalendarDaysIcon className="h-6 w-6 text-gray-600" />
+          <p className="text-gray-700 font-medium">
+            {formatDate(replenishment.START_DATE)} - {formatDate(replenishment.END_DATE)}
+          </p>
+        </div>
+
+        {/* Created Date */}
+        <div
+          className="flex items-center space-x-2 col-span-3"
+          title="Fecha y hora en que se creó esta reposición"
+        >
+          <ClockIcon className="h-6 w-6 text-gray-600" />
+          <p className="text-gray-700 font-medium">
+            Creado: {formatDate(replenishment.CREATED_AT, true)}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
