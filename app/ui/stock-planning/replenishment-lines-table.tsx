@@ -57,6 +57,28 @@ export default function ReplenishmentLinesTable() {
     return sortedLines.slice(startIndex, startIndex + itemsPerPage);
   }, [sortedLines, currentPage]);
 
+  const downloadCSV = () => {
+    if (!lines || lines.length === 0) return;
+
+    const headers = Object.keys(lines[0]).join(',');
+    const rows = lines.map((line) =>
+      Object.values(line)
+        .map((value) => `"${value ?? ''}"`)
+        .join(',')
+    );
+
+    const csvContent = `${headers}\n${rows.join('\n')}`;
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `replenishment_lines_${groupBy}_${id}.csv`;
+    link.click();
+
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) return <CardSkeleton />;
   if (!lines.length) return <p className="text-center text-gray-600">No hay líneas de reposición para esta ID.</p>;
 
@@ -80,6 +102,14 @@ export default function ReplenishmentLinesTable() {
             </button>
           ))}
         </div>
+
+        {/* Download CSV Button */}
+        <button
+          onClick={downloadCSV}
+          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+        >
+          Descargar CSV
+        </button>
       </div>
 
       <table className="min-w-full border-collapse border border-gray-300 text-sm">
