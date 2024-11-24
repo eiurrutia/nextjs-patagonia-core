@@ -26,8 +26,6 @@ export default async function handler(req, res) {
         }
     } else if (req.method === 'POST') {
         const { config_key, config_name, config_value, description } = req.body;
-        console.log('## req.body');
-        console.log(req.body);
 
         if (!config_key || !config_name || !config_value) {
             return res.status(400).json({ message: 'Missing required fields' });

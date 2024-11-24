@@ -13,11 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
-
-  console.log('Saving segmentation history:', req.body);
-
   const { stockSegments, repID } = req.body;
-
   try {
     await saveSegmentationHistory(stockSegments, repID);
     res.status(200).json({ message: 'Segmentation history saved successfully' });

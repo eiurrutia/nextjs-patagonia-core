@@ -335,14 +335,15 @@ export type ReplenishmentData = {
 
 export type ReplenishmentRecord = {
   ID: string;
-  totalReplenishment: number;
-  totalBreakQty: number;
-  selectedDeliveries: string;
-  startDate: string;
-  endDate: string;
-  storesConsidered: string;
-  replenishmentData: ReplenishmentData[];
-}
+  TOTAL_REPLENISHMENT: number;
+  TOTAL_BREAK_QTY: number;
+  SELECTED_DELIVERIES: string;
+  START_DATE: string;
+  END_DATE: string;
+  STORES_CONSIDERED: string | null;
+  CREATED_AT?: string;
+  REPLENISHMENT_DATA: ReplenishmentData[];
+};
 
 export type BreakData = {
   SKU: string;

@@ -157,13 +157,13 @@ export default function ReplenishmentTable({
 
     const record = {
       ID: replenishmentID,
-      totalReplenishment: summary.totalReplenishment,
-      totalBreakQty: summary.totalBreakQty,
-      selectedDeliveries: selectedDeliveryOptions.join(', '),
-      startDate,
-      endDate,
-      storesConsidered,
-      replenishmentData
+      TOTAL_REPLENISHMENT: summary.totalReplenishment,
+      TOTAL_BREAK_QTY: summary.totalBreakQty,
+      SELECTED_DELIVERIES: selectedDeliveryOptions.join(', '),
+      START_DATE: startDate,
+      END_DATE: endDate,
+      STORES_CONSIDERED: storesConsidered,
+      REPLENISHMENT_DATA: replenishmentData,
     };
   
     try {

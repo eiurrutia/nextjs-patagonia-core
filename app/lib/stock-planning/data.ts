@@ -353,13 +353,13 @@ export async function fetchStoresStockCount(query: string): Promise<number> {
 export async function saveReplenishment(record: ReplenishmentRecord): Promise<void> {
   const {
     ID,
-    totalReplenishment,
-    totalBreakQty,
-    selectedDeliveries,
-    startDate,
-    endDate,
-    storesConsidered,
-    replenishmentData,
+    TOTAL_REPLENISHMENT,
+    TOTAL_BREAK_QTY,
+    SELECTED_DELIVERIES,
+    START_DATE,
+    END_DATE,
+    STORES_CONSIDERED,
+    REPLENISHMENT_DATA,
   } = record;
 
   const sqlInsertReplenishment = `
@@ -373,10 +373,10 @@ export async function saveReplenishment(record: ReplenishmentRecord): Promise<vo
     INSERT INTO PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS_LINE (
       REPLENISHMENT_ID, SKU, STORE, SEGMENT, SALES, ACTUAL_STOCK, ORDERED_QTY, REPLENISHMENT, SNOWFLAKE_CREATED_AT
     )
-    VALUES ${replenishmentData.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)').join(', ')};
+    VALUES ${REPLENISHMENT_DATA.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)').join(', ')};
   `;
 
-  const replenishmentLineBinds = replenishmentData.flatMap((line) => [
+  const replenishmentLineBinds = REPLENISHMENT_DATA.flatMap((line) => [
     ID,
     line.SKU,
     line.STORE,
@@ -388,20 +388,94 @@ export async function saveReplenishment(record: ReplenishmentRecord): Promise<vo
   ]);
 
   try {
+    // Save the replenishment header record
     await executeQuery(sqlInsertReplenishment, [
       ID,
-      totalReplenishment,
-      totalBreakQty,
-      selectedDeliveries,
-      startDate,
-      endDate,
-      storesConsidered, // Pasar el nuevo campo en los parámetros
+      TOTAL_REPLENISHMENT,
+      TOTAL_BREAK_QTY,
+      SELECTED_DELIVERIES,
+      START_DATE,
+      END_DATE,
+      STORES_CONSIDERED,
     ]);
+
+    // Save the replenishment line items
     await executeQuery(sqlInsertReplenishmentLine, replenishmentLineBinds);
   } catch (error) {
     console.error('Error saving replenishment data:', error);
     throw error;
   }
+}
+
+
+/**
+ * Function to fetch replenishment data from the database.
+ * @param query - The search query.
+ * @param page - The page number.
+ * @param limit - The number of records per page.
+ * @returns A promise with the replenishment data.
+ * @example
+ * const replenishmentData = await fetchReplenishmentData('sku', 1, 10);
+ */
+export async function getReplenishments(
+  query: string,
+  page: number,
+  limit: number
+): Promise<{ records: ReplenishmentRecord[]; totalCount: number }> {
+  const offset = (page - 1) * limit;
+
+  let sql = `
+    SELECT
+      ID,
+      TOTAL_REPLENISHMENT,
+      TOTAL_BREAK_QTY,
+      SELECTED_DELIVERIES,
+      START_DATE,
+      END_DATE,
+      STORES_CONSIDERED,
+      TO_CHAR(SNOWFLAKE_CREATED_AT, 'YYYY-MM-DD"T"HH24:MI:SS.FF3"Z"') AS CREATED_AT
+    FROM PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS
+  `;
+
+  const binds: any[] = [];
+
+  if (query) {
+    sql += `
+      WHERE
+        UPPER(ID) LIKE ?
+        OR UPPER(SELECTED_DELIVERIES) LIKE ?
+        OR UPPER(STORES_CONSIDERED) LIKE ?
+    `;
+    const q = `%${query.toUpperCase()}%`;
+    binds.push(q, q, q);
+  }
+
+  sql += `
+    ORDER BY SNOWFLAKE_CREATED_AT DESC
+    LIMIT ${limit} OFFSET ${offset}
+  `;
+
+  const records = await executeQuery<ReplenishmentRecord>(sql, binds);
+
+  // Total count query
+  let countSql = `
+    SELECT COUNT(*) AS TOTAL_COUNT
+    FROM PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS
+  `;
+
+  if (query) {
+    countSql += `
+      WHERE
+        UPPER(ID) LIKE ?
+        OR UPPER(SELECTED_DELIVERIES) LIKE ?
+        OR UPPER(STORES_CONSIDERED) LIKE ?
+    `;
+  }
+
+  const countResult = await executeQuery<{ TOTAL_COUNT: number }>(countSql, binds);
+  const totalCount = countResult[0]?.TOTAL_COUNT || 0;
+
+  return { records, totalCount };
 }
 
 /**
