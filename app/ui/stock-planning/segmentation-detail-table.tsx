@@ -131,39 +131,41 @@ export default function SegmentationDetailTable() {
             </button>
           </div>
 
-          {/* Table */}
-          <table className="min-w-full border-collapse border border-gray-300 text-sm">
-            <thead>
-              <tr>
-                {segmentation.length > 0 &&
-                  Object.keys(segmentation[0])
-                    .filter((key) => !(groupBy === 'SKU' && key === 'GROUPED_VALUE'))
-                    .map((column) => (
-                      <th
-                        key={column}
-                        className="border px-4 py-2 bg-gray-100 text-gray-700 font-semibold text-left cursor-pointer"
-                        onClick={() => handleSort(column)}
-                      >
-                        {column === 'GROUPED_VALUE' ? groupBy : column}
-                        {sortConfig?.key === column && (
-                          <span>{sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽'}</span>
-                        )}
-                      </th>
-                    ))}
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedData.map((row, index) => (
-                <tr key={index} className="hover:bg-gray-50">
-                  {Object.values(row).map((value, idx) => (
-                    <td key={idx} className="border px-4 py-2 text-gray-800">
-                      {value !== null && value !== undefined ? String(value) : '-'}
-                    </td>
-                  ))}
+          {/* Scrollable Table Container */}
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse border border-gray-300 text-sm">
+              <thead>
+                <tr>
+                  {segmentation.length > 0 &&
+                    Object.keys(segmentation[0])
+                      .filter((key) => !(groupBy === 'SKU' && key === 'GROUPED_VALUE'))
+                      .map((column) => (
+                        <th
+                          key={column}
+                          className="border px-4 py-2 bg-gray-100 text-gray-700 font-semibold text-left cursor-pointer"
+                          onClick={() => handleSort(column)}
+                        >
+                          {column === 'GROUPED_VALUE' ? groupBy : column}
+                          {sortConfig?.key === column && (
+                            <span>{sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽'}</span>
+                          )}
+                        </th>
+                      ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {paginatedData.map((row, index) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                    {Object.values(row).map((value, idx) => (
+                      <td key={idx} className="border px-4 py-2 text-gray-800">
+                        {value !== null && value !== undefined ? String(value) : '-'}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           {/* Pagination */}
           <div className="mt-5 flex w-full justify-center">
