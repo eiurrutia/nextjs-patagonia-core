@@ -68,7 +68,10 @@ export default function ReplenishmentLinesTable() {
           {['SKU', 'CC', 'TEAM', 'CATEGORY'].map((option) => (
             <button
               key={option}
-              onClick={() => setGroupBy(option as 'SKU' | 'CC' | 'TEAM' | 'CATEGORY')}
+              onClick={() => {
+                setGroupBy(option as 'SKU' | 'CC' | 'TEAM' | 'CATEGORY');
+                setCurrentPage(1);
+              }}
               className={`px-4 py-2 rounded ${
                 groupBy === option ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'
               } hover:bg-blue-400 hover:text-white`}
