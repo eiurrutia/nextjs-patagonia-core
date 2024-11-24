@@ -516,3 +516,91 @@ export async function saveSegmentationHistory(stockSegments: StockSegment[], rep
 
   await executeQuery(sqlText, binds);
 }
+
+/**
+ * Function to fetch replenishment data from the database.
+ * @param query - The search query.
+ * @param page - The page number.
+ * @returns A promise with the replenishment data.
+ * @example
+ * const replenishmentData = await fetchReplenishmentData('sku', 1);
+ */
+export async function getReplenishmentSummary(id: string) {
+  const sql = `
+    SELECT
+      ID,
+      TOTAL_REPLENISHMENT,
+      TOTAL_BREAK_QTY,
+      SELECTED_DELIVERIES,
+      START_DATE,
+      END_DATE,
+      STORES_CONSIDERED,
+      SNOWFLAKE_CREATED_AT AS CREATED_AT
+    FROM PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS
+    WHERE ID = ?
+  `;
+
+  const result = await executeQuery(sql, [id]);
+  return result[0];
+}
+
+/**
+ * Function to fetch replenishment lines from the database.
+ * @param id - The replenishment ID.
+ * @returns A promise with the replenishment lines.
+ * @example
+ * const replenishmentLines = await getReplenishmentLines('id');
+ */
+export async function getReplenishmentLines(id: string) {
+  const sql = `
+    SELECT
+      SKU,
+      STORE,
+      SEGMENT,
+      SALES,
+      ACTUAL_STOCK,
+      ORDERED_QTY,
+      REPLENISHMENT,
+      SNOWFLAKE_CREATED_AT AS CREATED_AT
+    FROM PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS_LINE
+    WHERE REPLENISHMENT_ID = ?
+  `;
+
+  return await executeQuery(sql, [id]);
+}
+
+/**
+ * Function to fetch segmentation history from the database.
+ * @param id - The replenishment ID.
+ * @returns A promise with the segmentation history.
+ * @example
+ * const segmentationHistory = await getSegmentationHistory('id');
+ */
+export async function getSegmentationDetail(id: string) {
+  const sql = `
+    SELECT
+      SKU,
+      DELIVERY,
+      COALESCE(
+        CONCAT_WS(', ',
+          COYHAIQUE,
+          LASCONDES,
+          MALLSPORT,
+          COSTANERA,
+          CONCEPCION,
+          PTOVARAS,
+          LADEHESA,
+          PUCON,
+          TEMUCO,
+          OSORNO,
+          ALERCE,
+          BNAVENTURA
+        ), 'N/A'
+      ) AS STORES,
+      SNOWFLAKE_CREATED_AT
+    FROM PATAGONIA.CORE_TEST.PATCORE_SEGMENTATION_HISTORY
+    WHERE REP_ID = ?
+  `;
+
+  return await executeQuery(sql, [id]);
+}

@@ -345,6 +345,17 @@ export type ReplenishmentRecord = {
   REPLENISHMENT_DATA: ReplenishmentData[];
 };
 
+export type ReplenishmentLine = {
+  SKU: string;
+  STORE: string;
+  SEGMENT: string;
+  SALES: number;
+  ACTUAL_STOCK: number;
+  ORDERED_QTY: number;
+  REPLENISHMENT: number;
+  CREATED_AT: string;
+}
+
 export type BreakData = {
   SKU: string;
   STORE: string;
