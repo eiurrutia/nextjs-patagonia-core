@@ -75,8 +75,10 @@ export default function OperationsExportTable() {
             {Object.keys(exportData[0]).map((key) => (
               <th
                 key={key}
-                className="border px-4 py-2 bg-gray-100 text-gray-700 font-semibold text-left cursor-pointer"
+                className="border px-4 py-2 bg-gray-100 text-gray-700 font-semibold text-left cursor-pointer truncate"
                 onClick={() => handleSort(key)}
+                title={key}
+                style={{ maxWidth: '50px' }}
               >
                 {key}
                 {sortConfig?.key === key && (
