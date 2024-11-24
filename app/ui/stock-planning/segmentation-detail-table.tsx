@@ -60,6 +60,33 @@ export default function SegmentationDetailTable() {
     return sortedData.slice(startIndex, startIndex + itemsPerPage);
   }, [sortedData, currentPage, itemsPerPage]);
 
+  const downloadCSV = () => {
+    if (!segmentation || segmentation.length === 0) return;
+
+    const headers = Object.keys(segmentation[0])
+      .filter((key) => !(groupBy === 'SKU' && key === 'GROUPED_VALUE')) // Evitar columnas duplicadas
+      .map((key) => (key === 'GROUPED_VALUE' ? groupBy : key))
+      .join(',');
+
+    const rows = segmentation.map((row) =>
+      Object.keys(row)
+        .filter((key) => !(groupBy === 'SKU' && key === 'GROUPED_VALUE')) // Evitar columnas duplicadas
+        .map((key) => `"${row[key] ?? ''}"`)
+        .join(',')
+    );
+
+    const csvContent = `${headers}\n${rows.join('\n')}`;
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `segmentation_${groupBy}_${id}.csv`;
+    link.click();
+
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) return <CardSkeleton />;
 
   return (
@@ -78,19 +105,30 @@ export default function SegmentationDetailTable() {
 
       {!isCollapsed && (
         <div className="mt-4">
-          {/* Group By Buttons */}
-          <div className="mb-4 flex gap-2">
-            {['SKU', 'CC', 'TEAM', 'CATEGORY'].map((option) => (
-              <button
-                key={option}
-                onClick={() => setGroupBy(option as 'SKU' | 'CC' | 'TEAM' | 'CATEGORY')}
-                className={`px-4 py-2 rounded ${
-                  groupBy === option ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'
-                } hover:bg-blue-400 hover:text-white`}
-              >
-                Agrupar por {option}
-              </button>
-            ))}
+          {/* Buttons Section */}
+          <div className="flex justify-between items-center mb-4">
+            {/* Group By Buttons */}
+            <div className="flex gap-2">
+              {['SKU', 'CC', 'TEAM', 'CATEGORY'].map((option) => (
+                <button
+                  key={option}
+                  onClick={() => setGroupBy(option as 'SKU' | 'CC' | 'TEAM' | 'CATEGORY')}
+                  className={`px-4 py-2 rounded ${
+                    groupBy === option ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'
+                  } hover:bg-blue-400 hover:text-white`}
+                >
+                  Agrupar por {option}
+                </button>
+              ))}
+            </div>
+
+            {/* Download CSV Button */}
+            <button
+              onClick={downloadCSV}
+              className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+            >
+              Descargar CSV
+            </button>
           </div>
 
           {/* Table */}
