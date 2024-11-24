@@ -42,16 +42,8 @@ export default function ReplenishmentSummary() {
 
   return (
     <div className="bg-white border border-gray-300 rounded-lg p-6 shadow">
-      <h2 className="text-lg font-bold mb-4 text-gray-700">Resumen de Reposición</h2>
+      <h2 className="text-lg font-bold mb-4 text-gray-700">{replenishment.ID}</h2>
       <div className="grid grid-cols-3 gap-4">
-        {/* REP ID */}
-        <div
-          className="flex items-center space-x-2"
-          title="Identificador único de la reposición"
-        >
-          <ClipboardDocumentListIcon className="h-6 w-6 text-gray-600" />
-          <p className="text-gray-700 font-medium">{replenishment.ID}</p>
-        </div>
 
         {/* Total Units */}
         <div
@@ -102,7 +94,7 @@ export default function ReplenishmentSummary() {
 
         {/* Created Date */}
         <div
-          className="flex items-center space-x-2 col-span-3"
+          className="flex items-center space-x-2"
           title="Fecha y hora en que se creó esta reposición"
         >
           <ClockIcon className="h-6 w-6 text-gray-600" />
