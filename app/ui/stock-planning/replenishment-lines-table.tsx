@@ -1,6 +1,5 @@
 'use client';
 import React, { useEffect, useState, useMemo } from 'react';
-import { ReplenishmentLine } from '@/app/lib/definitions';
 import { useParams } from 'next/navigation';
 import { CardSkeleton } from '@/app/ui/skeletons';
 import Pagination from '@/app/ui/pagination';
@@ -8,10 +7,11 @@ import Pagination from '@/app/ui/pagination';
 export default function ReplenishmentLinesTable() {
   const params = useParams() as { id?: string };
   const id = params?.id;
-  const [lines, setLines] = useState<ReplenishmentLine[]>([]);
+  const [lines, setLines] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortConfig, setSortConfig] = useState<{ key: keyof ReplenishmentLine; direction: 'asc' | 'desc' } | null>(null);
+  const [groupBy, setGroupBy] = useState<'SKU' | 'CC' | 'TEAM' | 'CATEGORY'>('SKU');
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -19,7 +19,7 @@ export default function ReplenishmentLinesTable() {
       if (!id) return;
       setLoading(true);
       try {
-        const response = await fetch(`/api/stock-planning/replenishment-lines?id=${id}`);
+        const response = await fetch(`/api/stock-planning/replenishment-lines?id=${id}&groupBy=${groupBy}`);
         const data = await response.json();
         setLines(data);
       } catch (error) {
@@ -30,21 +30,26 @@ export default function ReplenishmentLinesTable() {
     }
 
     fetchReplenishmentLines();
-  }, [id]);
+  }, [id, groupBy]);
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+    setCurrentPage(1);
+  };
 
   const sortedLines = useMemo(() => {
     if (!sortConfig) return lines;
-    const sorted = [...lines];
-    sorted.sort((a, b) => {
+    return [...lines].sort((a, b) => {
       const aValue = a[sortConfig.key];
       const bValue = b[sortConfig.key];
-
-      if (aValue === undefined || bValue === undefined) return 0;
       if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
-    return sorted;
   }, [lines, sortConfig]);
 
   const paginatedLines = useMemo(() => {
@@ -52,27 +57,36 @@ export default function ReplenishmentLinesTable() {
     return sortedLines.slice(startIndex, startIndex + itemsPerPage);
   }, [sortedLines, currentPage]);
 
-  const handleSort = (key: keyof ReplenishmentLine) => {
-    let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
-  };
-
   if (loading) return <CardSkeleton />;
   if (!lines.length) return <p className="text-center text-gray-600">No hay líneas de reposición para esta ID.</p>;
 
   return (
     <div>
+      <div className="flex justify-between items-center mb-4">
+        {/* Group By Buttons */}
+        <div className="flex gap-2">
+          {['SKU', 'CC', 'TEAM', 'CATEGORY'].map((option) => (
+            <button
+              key={option}
+              onClick={() => setGroupBy(option as 'SKU' | 'CC' | 'TEAM' | 'CATEGORY')}
+              className={`px-4 py-2 rounded ${
+                groupBy === option ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'
+              } hover:bg-blue-400 hover:text-white`}
+            >
+              Agrupar por {option}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <table className="min-w-full border-collapse border border-gray-300 text-sm">
         <thead>
           <tr>
             <th
               className="border px-4 py-2 cursor-pointer"
-              onClick={() => handleSort('SKU')}
+              onClick={() => handleSort('GROUPED_VALUE')}
             >
-              SKU {sortConfig?.key === 'SKU' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
+              {groupBy} {sortConfig?.key === 'GROUPED_VALUE' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
             </th>
             <th
               className="border px-4 py-2 cursor-pointer"
@@ -82,55 +96,54 @@ export default function ReplenishmentLinesTable() {
             </th>
             <th
               className="border px-4 py-2 cursor-pointer"
-              onClick={() => handleSort('SEGMENT')}
+              onClick={() => handleSort('TOTAL_SEGMENT')}
             >
-              Segmentación {sortConfig?.key === 'SEGMENT' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
+              Segmentación {sortConfig?.key === 'TOTAL_SEGMENT' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
             </th>
             <th
               className="border px-4 py-2 cursor-pointer"
-              onClick={() => handleSort('SALES')}
+              onClick={() => handleSort('TOTAL_SALES')}
             >
-              Ventas {sortConfig?.key === 'SALES' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
+              Ventas {sortConfig?.key === 'TOTAL_SALES' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
             </th>
             <th
               className="border px-4 py-2 cursor-pointer"
-              onClick={() => handleSort('ACTUAL_STOCK')}
+              onClick={() => handleSort('TOTAL_STOCK')}
             >
-              Stock Actual {sortConfig?.key === 'ACTUAL_STOCK' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
+              Stock Actual {sortConfig?.key === 'TOTAL_STOCK' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
             </th>
             <th
               className="border px-4 py-2 cursor-pointer"
-              onClick={() => handleSort('ORDERED_QTY')}
+              onClick={() => handleSort('TOTAL_ORDERED')}
             >
-              Ordenado {sortConfig?.key === 'ORDERED_QTY' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
+              Ordenado {sortConfig?.key === 'TOTAL_ORDERED' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
             </th>
             <th
               className="border px-4 py-2 cursor-pointer"
-              onClick={() => handleSort('REPLENISHMENT')}
+              onClick={() => handleSort('TOTAL_REPLENISHMENT')}
             >
-              Reposición {sortConfig?.key === 'REPLENISHMENT' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
+              Reposición {sortConfig?.key === 'TOTAL_REPLENISHMENT' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
             </th>
           </tr>
         </thead>
         <tbody>
           {paginatedLines.map((line, index) => (
             <tr key={index} className="hover:bg-gray-50">
-              <td className="border px-4 py-2">{line.SKU}</td>
+              <td className="border px-4 py-2">{line.GROUPED_VALUE}</td>
               <td className="border px-4 py-2">{line.STORE}</td>
-              <td className="border px-4 py-2">{line.SEGMENT}</td>
-              <td className="border px-4 py-2">{line.SALES}</td>
-              <td className="border px-4 py-2">{line.ACTUAL_STOCK}</td>
-              <td className="border px-4 py-2">{line.ORDERED_QTY}</td>
-              <td className="border px-4 py-2">{line.REPLENISHMENT}</td>
+              <td className="border px-4 py-2">{line.TOTAL_SEGMENT}</td>
+              <td className="border px-4 py-2">{line.TOTAL_SALES}</td>
+              <td className="border px-4 py-2">{line.TOTAL_STOCK}</td>
+              <td className="border px-4 py-2">{line.TOTAL_ORDERED}</td>
+              <td className="border px-4 py-2">{line.TOTAL_REPLENISHMENT}</td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      {/* Pagination */}
       <div className="mt-5 flex w-full justify-center">
         <Pagination
-          totalPages={Math.ceil(sortedLines.length / itemsPerPage)}
+          totalPages={Math.ceil(lines.length / itemsPerPage)}
           currentPage={currentPage}
           setPage={setCurrentPage}
         />

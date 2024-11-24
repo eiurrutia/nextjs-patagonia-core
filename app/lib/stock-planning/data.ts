@@ -545,29 +545,56 @@ export async function getReplenishmentSummary(id: string) {
 }
 
 /**
- * Function to fetch replenishment lines from the database.
- * @param id - The replenishment ID.
- * @returns A promise with the replenishment lines.
+ * Function to fetch replenishment data from the database.
+ * @param query - The search query.
+ * @param page - The page number.
+ * @returns A promise with the replenishment data.
  * @example
- * const replenishmentLines = await getReplenishmentLines('id');
+ * const replenishmentData = await fetchReplenishmentData('sku', 1);
  */
-export async function getReplenishmentLines(id: string) {
+export async function getReplenishmentLines(id: string, groupBy: string) {
+  const groupByColumn = {
+    SKU: 'line.SKU',
+    CC: 'product.ESTILOCOLOR',
+    TEAM: 'product.TEAM',
+    CATEGORY: 'product.CATEGORY',
+  }[groupBy || 'SKU'];
+
+  const selectGroupBy = groupBy
+    ? `
+      ${groupByColumn} AS GROUPED_VALUE,
+      line.STORE,
+      SUM(line.SEGMENT) AS TOTAL_SEGMENT,
+      SUM(line.SALES) AS TOTAL_SALES,
+      SUM(line.ACTUAL_STOCK) AS TOTAL_STOCK,
+      SUM(line.ORDERED_QTY) AS TOTAL_ORDERED,
+      SUM(line.REPLENISHMENT) AS TOTAL_REPLENISHMENT
+    `
+    : `
+      line.SKU AS GROUPED_VALUE,
+      line.STORE,
+      line.SEGMENT AS TOTAL_SEGMENT,
+      line.SALES AS TOTAL_SALES,
+      line.ACTUAL_STOCK AS TOTAL_STOCK,
+      line.ORDERED_QTY AS TOTAL_ORDERED,
+      line.REPLENISHMENT AS TOTAL_REPLENISHMENT
+    `;
+
+  const groupByClause = groupBy ? `GROUP BY ${groupByColumn}, line.STORE` : '';
+
   const sql = `
     SELECT
-      SKU,
-      STORE,
-      SEGMENT,
-      SALES,
-      ACTUAL_STOCK,
-      ORDERED_QTY,
-      REPLENISHMENT,
-      SNOWFLAKE_CREATED_AT AS CREATED_AT
-    FROM PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS_LINE
-    WHERE REPLENISHMENT_ID = ?
+      ${selectGroupBy}
+    FROM PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS_LINE AS line
+    LEFT JOIN PATAGONIA.CORE_TEST.ERP_PRODUCTS AS product ON line.SKU = product.SKU
+    WHERE line.REPLENISHMENT_ID = ?
+    ${groupByClause}
+    ORDER BY ${groupBy ? 'GROUPED_VALUE' : 'line.SKU'};
   `;
 
   return await executeQuery(sql, [id]);
 }
+
 
 /**
  * Function to fetch replenishment data from the database.
