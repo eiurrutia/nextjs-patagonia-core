@@ -151,8 +151,14 @@ export default function ReplenishmentTable({
     const TIME_ZONE = 'America/Santiago';
     const today = toZonedTime(new Date(), TIME_ZONE);
     const weekNumber = getISOWeekNumber(today);
-    const formattedDate = today.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const replenishmentID = `REP-W${weekNumber}_${formattedDate}`;
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const hours = String(today.getHours()).padStart(2, '0');
+    const minutes = String(today.getMinutes()).padStart(2, '0');
+
+    const formattedDateTime = `${year}${month}${day}_${hours}${minutes}`;
+    const replenishmentID = `REP-W${weekNumber}_${formattedDateTime}`;
     const storesConsidered = Array.from(new Set(replenishmentData.map(item => item.STORE))).sort().join(', ');
 
     const record = {
