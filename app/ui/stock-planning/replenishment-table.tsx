@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { CardSkeleton } from '../skeletons';
 import { ChevronRightIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { ReplenishmentData, BreakData, StockSegment } from '@/app/lib/definitions';
@@ -18,6 +19,7 @@ export default function ReplenishmentTable({
     selectedDeliveryOptions: string[];
     editedSegments: StockSegment[];
   }) {
+  const router = useRouter();
   const [replenishmentData, setReplenishmentData] = useState<ReplenishmentData[]>([]);
   const [breakData, setBreakData] = useState<BreakData[]>([]);
   const [segmentationData, setSegmentationData] = useState<StockSegment[]>([]);
@@ -216,6 +218,7 @@ export default function ReplenishmentTable({
         throw new Error('Error al guardar el registro de reposición');
       }
       alert('Reposición confirmada exitosamente');
+      router.push('/dashboard/stock-planning');
     } catch (error) {
       console.error('Error al guardar la reposición:', error);
       alert('Hubo un error al confirmar la reposición');
