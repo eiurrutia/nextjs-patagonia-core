@@ -93,6 +93,7 @@ export default function UploadSegmentation({ onUploadComplete }: { onUploadCompl
       <label
         htmlFor="file-upload"
         className="bg-steelblue text-white px-4 py-2 rounded-lg hover:bg-steelblue cursor-pointer"
+        onClick={(event) => event.stopPropagation()} 
       >
         {isUploading ? 'Uploading...' : 'Actualizar Segmentación'}
       </label>
