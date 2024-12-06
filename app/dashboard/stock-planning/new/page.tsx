@@ -65,7 +65,7 @@ export default function NewStockPlanning({
         setLoadingSelectedDeliveryOptions(false);
       }
     }
-
+  
     fetchData();
   }, []);
 
@@ -183,19 +183,28 @@ export default function NewStockPlanning({
       </div>
 
       {/* Generate Replenishment button */}
-      <div className="w-full mt-4">
-        <button
-          onClick={handleGenerateReplenishment}
-          className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          Generar Reposición
-        </button>
-      </div>
+      {!showReplenishment && (
+        <div className="w-full mt-4">
+          <button
+            onClick={handleGenerateReplenishment}
+            className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Generar Reposición
+          </button>
+        </div>
+      )}
 
       {/* Replenishment Table */}
       {showReplenishment && (
-        <div className="mt-8">
-          <h2 className={`${lusitana.className} text-2xl mt-8`}>Resultado de Reposición</h2>
+        <div className="mt-16">
+          {/* Divider */}
+          <div className="flex items-center my-8">
+            <div className="flex-grow border-t border-gray-300"></div>
+            <span className="mx-4 text-gray-500">O</span>
+            <div className="flex-grow border-t border-gray-300"></div>
+          </div>
+
+          <h2 className={`${lusitana.className} text-2xl text-center mt-16`}>Resultado de Reposición</h2>
           <ReplenishmentTable
             startDate={startDate}
             endDate={endDate}
