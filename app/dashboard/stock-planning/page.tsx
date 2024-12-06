@@ -53,7 +53,9 @@ export default function Page({
             Segmentación Actual
           </h2>
           {!isSegmentationCollapsed && (
-            <UploadSegmentation onUploadComplete={handleUploadComplete} />
+            <div onClick={(event) => event.stopPropagation()}>
+              <UploadSegmentation onUploadComplete={handleUploadComplete} />
+            </div>
           )}
         </div>
 
