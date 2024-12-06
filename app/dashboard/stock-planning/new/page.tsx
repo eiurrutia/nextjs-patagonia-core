@@ -51,10 +51,13 @@ export default function NewStockPlanning({
         const configuredDeliveries = deliveriesConfig
           ? deliveriesConfig.config_value.split(',').map((item: string) => item.trim())
           : [];
+        const filteredConfiguredDeliveries = configuredDeliveries.filter((delivery: string) =>
+          options.includes(delivery)
+        );
 
         setDeliveryOptions(options);
         setSelectedDeliveryOptions(
-          configuredDeliveries.length > 0 ? configuredDeliveries : options
+          filteredConfiguredDeliveries.length > 0 ? filteredConfiguredDeliveries : options
         );
       } catch (error) {
         console.error('Error fetching data:', error);
