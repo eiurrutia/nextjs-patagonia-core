@@ -170,7 +170,10 @@ export async function fetchSalesData(
     FROM PATAGONIA.CORE_TEST.ERP_PROCESSED_SALESLINE
     WHERE INVOICEDATE BETWEEN ? AND ?
       AND UPPER(SKU) LIKE ?
-      AND INVOICEID LIKE '39-%'
+      AND (
+        INVOICEID LIKE '39-%'
+        OR INVOICEID LIKE '33-%'
+    )
     GROUP BY SKU
     ORDER BY SKU
     ${limit} ${offset};
@@ -198,13 +201,19 @@ export async function fetchSalesCount(
     FROM PATAGONIA.CORE_TEST.ERP_PROCESSED_SALESLINE
     WHERE INVOICEDATE BETWEEN ? AND ?
       AND UPPER(SKU) LIKE ?
-      AND INVOICEID LIKE '39-%';
+      AND (
+        INVOICEID LIKE '39-%'
+        OR INVOICEID LIKE '33-%'
+      );
     `
     : `
     SELECT COUNT(DISTINCT SKU) AS TOTALCOUNT
     FROM PATAGONIA.CORE_TEST.ERP_PROCESSED_SALESLINE
     WHERE INVOICEDATE BETWEEN ? AND ?
-      AND INVOICEID LIKE '39-%';
+      AND (
+        INVOICEID LIKE '39-%'
+        OR INVOICEID LIKE '33-%'
+      );
     `;
   const binds = [startDate, endDate, `%${query.toUpperCase()}%`];
   const result = await executeQuery<{ TOTALCOUNT: number }>(sqlText, binds);
