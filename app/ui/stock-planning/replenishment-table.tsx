@@ -31,6 +31,8 @@ export default function ReplenishmentTable({
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isProcessingReplenishment, setIsProcessingReplenishment] = useState(false);
   const [saveDeliveriesSelected, setSaveDeliveriesSelected] = useState(true);
+  const [selectedStores, setSelectedStores] = useState<string[]>([]);
+  const [storeList, setStoreList] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
@@ -64,6 +66,14 @@ export default function ReplenishmentTable({
 
     fetchReplenishmentData();
   }, [startDate, endDate, selectedDeliveryOptions, editedSegments]);
+
+  useEffect(() => {
+    if (replenishmentData.length > 0) {
+      const uniqueStores = Array.from(new Set(replenishmentData.map(item => item.STORE))).sort();
+      setStoreList(uniqueStores); 
+      setSelectedStores(uniqueStores);
+    }
+  }, [replenishmentData]);
 
   const summary = useMemo(() => {
     const totalReplenishment = replenishmentData.reduce((sum, item) => sum + (item.REPLENISHMENT || 0), 0);
@@ -148,6 +158,14 @@ export default function ReplenishmentTable({
     setIsConfirmModalOpen(true);
   };
 
+  const handleToggleStore = (store: string) => {
+    setSelectedStores(prev =>
+      prev.includes(store)
+        ? prev.filter(s => s !== store)
+        : [...prev, store]
+    );
+  };
+
   const handleSaveReplenishmentRecord = async () => {
     setIsProcessingReplenishment(true);
     const TIME_ZONE = 'America/Santiago';
@@ -161,17 +179,23 @@ export default function ReplenishmentTable({
 
     const formattedDateTime = `${year}${month}${day}_${hours}${minutes}`;
     const replenishmentID = `REP-W${weekNumber}_${formattedDateTime}`;
-    const storesConsidered = Array.from(new Set(replenishmentData.map(item => item.STORE))).sort().join(', ');
+    const storesConsidered = selectedStores.join(', ');
+
+    // Filter by selected stores
+    const filteredLinesForSaving = replenishmentData.filter(item => selectedStores.includes(item.STORE));
+    const filteredBreakDataForSaving = breakData.filter(item => selectedStores.includes(item.STORE));
+    const totalReplenishmentForSaving = filteredLinesForSaving.reduce((sum, item) => sum + (item.REPLENISHMENT || 0), 0);
+    const totalBreakQtyForSaving = filteredBreakDataForSaving.reduce((sum, item) => sum + item.BREAK_QTY, 0);
 
     const record = {
       ID: replenishmentID,
-      TOTAL_REPLENISHMENT: summary.totalReplenishment,
-      TOTAL_BREAK_QTY: summary.totalBreakQty,
+      TOTAL_REPLENISHMENT: totalReplenishmentForSaving,
+      TOTAL_BREAK_QTY: totalBreakQtyForSaving,
       SELECTED_DELIVERIES: selectedDeliveryOptions.join(', '),
       START_DATE: startDate,
       END_DATE: endDate,
       STORES_CONSIDERED: storesConsidered,
-      REPLENISHMENT_DATA: replenishmentData,
+      REPLENISHMENT_DATA: filteredLinesForSaving,
     };
   
     try {
@@ -378,8 +402,24 @@ export default function ReplenishmentTable({
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
             <div className="bg-white rounded-lg p-6 w-1/2 shadow-lg">
               <h3 className="text-xl font-bold mb-4">¿Está seguro de confirmar la reposición?</h3>
+
+              {/* Stores to consider */}
+              <h4 className="text-lg font-semibold mb-2">Tiendas a Considerar</h4>
+              <div className="mb-4 grid grid-cols-5 gap-4">
+                {storeList.map(store => (
+                  <label key={store} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedStores.includes(store)}
+                      onChange={() => handleToggleStore(store)}
+                    />
+                    <span>{store}</span>
+                  </label>
+                ))}
+              </div>
               
               {/* Checkboxes */}
+              <h4 className="text-lg font-semibold mb-2">Acciones</h4>
               <div className="mb-4 space-y-3">
               <label className="flex items-center space-x-2">
                 <input
