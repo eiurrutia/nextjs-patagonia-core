@@ -32,10 +32,13 @@ export default function ReplenishmentTable({
   const [isProcessingReplenishment, setIsProcessingReplenishment] = useState(false);
   const [saveDeliveriesSelected, setSaveDeliveriesSelected] = useState(true);
   const [selectedStores, setSelectedStores] = useState<string[]>([]);
+  const [createERPchecked, setCreateERPChecked] = useState(false);
   const [storeList, setStoreList] = useState<string[]>([]);
+  const [progressSteps, setProgressSteps] = useState<{ message: string; completed: boolean; level: number }[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
+  // Fetch replenishment data
   useEffect(() => {
     async function fetchReplenishmentData() {
       setLoading(true);
@@ -67,6 +70,7 @@ export default function ReplenishmentTable({
     fetchReplenishmentData();
   }, [startDate, endDate, selectedDeliveryOptions, editedSegments]);
 
+  // Store list
   useEffect(() => {
     if (replenishmentData.length > 0) {
       const uniqueStores = Array.from(new Set(replenishmentData.map(item => item.STORE))).sort();
@@ -75,6 +79,7 @@ export default function ReplenishmentTable({
     }
   }, [replenishmentData]);
 
+  // Summary calculations
   const summary = useMemo(() => {
     const totalReplenishment = replenishmentData.reduce((sum, item) => sum + (item.REPLENISHMENT || 0), 0);
     const totalSales = replenishmentData.reduce((sum, item) => sum + (item.SALES || 0), 0);
@@ -109,6 +114,7 @@ export default function ReplenishmentTable({
     return { totalReplenishment, totalSales, replenishmentByStore, totalInOrdered, totalBreakQty, breakByStore, breakByStoreSku };
   }, [replenishmentData, breakData]);
 
+  // Data filtering and sorting
   const filteredData = useMemo(() => {
     let data = replenishmentData;
     if (query) {
@@ -166,6 +172,7 @@ export default function ReplenishmentTable({
     );
   };
 
+  // Save replenishment record
   const handleSaveReplenishmentRecord = async () => {
     setIsProcessingReplenishment(true);
     const TIME_ZONE = 'America/Santiago';
@@ -197,17 +204,31 @@ export default function ReplenishmentTable({
       STORES_CONSIDERED: storesConsidered,
       REPLENISHMENT_DATA: filteredLinesForSaving,
     };
-  
+
+    // Progress steps
+    const initialSteps = [];
+    if (saveDeliveriesSelected) {
+      initialSteps.push({ message: 'Guardando selección de deliveries', completed: false, level: 1 });
+    }
+    initialSteps.push(
+      { message: 'Guardando historial de segmentación', completed: false, level: 1 },
+      { message: 'Guardando registro de reposición', completed: false, level: 1 }
+    );
+    if (createERPchecked) {
+      initialSteps.push(
+        { message: 'Cargando repos en ERP', completed: false, level: 1 }
+      );
+    }
+    setProgressSteps(initialSteps);
     try {
       console.log('Saving replenishment record:', record);
       
       // Save selected deliveries if the option is checked
       if (saveDeliveriesSelected) {
-        await fetch('/api/configs/configs', {
+        const deliveriesStep = 'Guardando selección de deliveries';
+        const resp = await fetch('/api/configs/configs', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             config_key: 'stock_planning_deliveries_set',
             config_name: 'Deliveries',
@@ -215,34 +236,177 @@ export default function ReplenishmentTable({
             description: 'Deliveries configuration for stock planning',
           }),
         });
+        if (!resp.ok) throw new Error('Error al guardar selección de deliveries');
+        setProgressSteps(prev => prev.map(step => 
+          step.message === deliveriesStep ? { ...step, completed: true, level: 1 } : step
+        ));
       }
 
       // Save segmentation history
-      await fetch('/api/stock-planning/save-segmentation-history', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          stockSegments: segmentationData,
-          repID: replenishmentID
-        }),
-      });
+      {
+        const segmentationStep = 'Guardando historial de segmentación';
+        const resp = await fetch('/api/stock-planning/save-segmentation-history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stockSegments: segmentationData, repID: replenishmentID }),
+        });
+        if (!resp.ok) throw new Error('Error al guardar historial de segmentación');
+        setProgressSteps(prev => prev.map(step =>
+          step.message === segmentationStep ? { ...step, completed: true, level: 1 } : step
+        ));
+      }
 
       // Save replenishment record
-      const response = await fetch('/api/stock-planning/save-replenishment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(record),
-      });
-  
-      if (!response.ok) {
-        throw new Error('Error al guardar el registro de reposición');
+      {
+        const savingRecordStep = 'Guardando registro de reposición';
+        const resp = await fetch('/api/stock-planning/save-replenishment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(record),
+        });
+        if (!resp.ok) throw new Error('Error al guardar el registro de reposición');
+        setProgressSteps(prev => prev.map(step =>
+          step.message === savingRecordStep ? { ...step, completed: true, level: 1 } : step
+        ));
       }
-      alert('Reposición confirmada exitosamente');
-      router.push('/dashboard/stock-planning');
+
+      // Create ERP replenishments if the option is checked
+      if (createERPchecked) {
+        const linesResponse = await fetch(`/api/stock-planning/get-operation-replenishment?id=${replenishmentID}`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (!linesResponse.ok) throw new Error('Error al obtener líneas enriquecidas');
+        const enrichedLines = await linesResponse.json();
+        const linesByStore = enrichedLines.reduce((acc: Record<string, any[]>, line: any) => {
+          if (!acc[line.TIENDA]) acc[line.TIENDA] = [];
+          acc[line.TIENDA].push(line);
+          return acc;
+        }, {});
+        const stores = Object.keys(linesByStore);
+  
+        // Loading Replenishments in ERP
+        const erpLinesWithInfo: {SKU: string; STORE: string; ERP_TR_ID: string; ERP_LINE_ID: string}[] = [];
+        const erpTRNumbers: string[] = [];
+  
+        for (const store of stores) {
+          // Create TransferHeader for this store
+          const headerStep = `Creando encabezado ERP para tienda ${store}`;
+          setProgressSteps(prev => [...prev, { message: headerStep, completed: false, level: 2 }]);
+  
+          const headerResp = await fetch('/api/stock-planning/create-erp-replenishment-header', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ replenishmentID, store })
+          });
+          if (!headerResp.ok) throw new Error(`Error al crear encabezado para ${store}`);
+  
+          const headerData = await headerResp.json();
+          const transferOrderNumber = headerData.TransferOrderNumber;
+          console.log('Encabezado creado para tienda: ', headerData);
+  
+          // Check if the header was created successfully
+          setProgressSteps(prev => prev.map(step =>
+            step.message === headerStep ? { ...step, completed: true, level: 2 } : step
+          ));
+  
+          erpTRNumbers.push(transferOrderNumber);
+  
+          // Create lines for this Transfer Order
+          const storeLines = linesByStore[store];
+          const totalLines = storeLines.length;
+          const lineStepBase = `Creando líneas en ERP para TR ${transferOrderNumber}`;
+          setProgressSteps(prev => [...prev, { message: `${lineStepBase} (0/${totalLines})`, completed: false, level: 3 }]);
+  
+          for (let i = 0; i < totalLines; i++) {
+            const line = storeLines[i];
+            const lineData = {
+              transferOrderNumber,
+              lineData: {
+                ItemNumber: line.ITEMNUMBER,
+                ProductColorId: line.PRODUCTCOLORID,
+                ProductConfigurationId: line.PRODUCTCONFIGURATIONID,
+                ProductSizeId: line.PRODUCTSIZEID,
+                ProductStyleId: line.PRODUCTSTYLEID,
+                OrderedInventoryStatusId: line.ORDEREDINVENTORYSTATUSID,
+                ShippingWarehouseLocationId: line.SHIPPINGWAREHOUSELOCATIONID,
+                TransferQuantity: line.REPLENISHMENT,
+                RequestedReceiptDate: new Date().toISOString(),
+                RequestedShippingDate: new Date().toISOString(),
+                SalesTaxItemGroupCodeShipment: 'IVA',
+                SalesTaxItemGroupCodeReceipt: 'EXENTO',
+                PriceType: 'CostPrice',
+                LineNumber: i + 1
+              }
+            };
+            
+            // Create line in ERP request
+            const lineResp = await fetch('/api/stock-planning/create-erp-replenishment-line', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(lineData)
+            });
+            if (!lineResp.ok) throw new Error(`Error al crear línea ${i + 1} para la tienda ${store}`);
+  
+            const lineResult = await lineResp.json();
+            erpLinesWithInfo.push({
+              SKU: line.SKU,
+              STORE: line.TIENDA,
+              ERP_TR_ID: transferOrderNumber,
+              ERP_LINE_ID: lineResult.ERP_LINE_ID
+            });
+  
+            // Update the step with the current progress (i+1 / totalLines)
+            setProgressSteps(prev => prev.map(step =>
+              step.message.startsWith(lineStepBase)
+                ? { ...step, message: `${lineStepBase} (${i + 1}/${totalLines})`, level: 3 }
+                : step
+            ));
+          }
+  
+          // Check if the lines were created successfully
+          setProgressSteps(prev => prev.map(step =>
+            step.message.startsWith(lineStepBase)
+              ? { ...step, completed: true }
+              : step
+          ));
+        }
+        setProgressSteps(prev => prev.map(step =>
+          step.message === 'Cargando repos en ERP' ? { ...step, completed: true, level: 1 } : step
+        ));
+  
+        console.log('Aqui va el updateERPInfo');
+        console.log({
+          repID: replenishmentID,
+          erpTRs: erpTRNumbers.join(', '),
+          lines: erpLinesWithInfo
+        });
+
+        // Update ERP info in BD
+        setProgressSteps(prev => [...prev, { message: 'Actualizando ERP info en BD', completed: false, level: 1 }]);
+        const updateERPResp = await fetch('/api/stock-planning/update-erp-info-in-replenishment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            repID: replenishmentID,
+            erpTRs: erpTRNumbers.join(', '),
+            lines: erpLinesWithInfo
+          })
+        });
+  
+        if (!updateERPResp.ok) {
+          throw new Error('Error al actualizar info de ERP en BD');
+        }
+
+        setProgressSteps(prev => prev.map(step =>
+          step.message === 'Actualizando ERP info en BD' ? { ...step, completed: true, level: 1 } : step
+        ));
+      }
+  
+      setTimeout(() => {
+        alert('Reposición confirmada exitosamente');
+        router.push('/dashboard/stock-planning');
+      }, 1000);
     } catch (error) {
       console.error('Error al guardar la reposición:', error);
       alert('Hubo un error al confirmar la reposición');
@@ -401,47 +565,75 @@ export default function ReplenishmentTable({
         {isConfirmModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
             <div className="bg-white rounded-lg p-6 w-1/2 shadow-lg">
-              <h3 className="text-xl font-bold mb-4">¿Está seguro de confirmar la reposición?</h3>
+              {isProcessingReplenishment ? (
+                <div className="mt-4 text-gray-700 border-t pt-4">
+                  {progressSteps.map((step, index) => (
+                    <div
+                      key={index}
+                      className={`flex items-center space-x-2 mb-2 ${
+                        step.level === 1 ? 'ml-4' :
+                        step.level === 2 ? 'ml-8' :
+                        step.level === 3 ? 'ml-12' : ''
+                      }`}
+                    >
+                      {step.completed ? (
+                        <span className="text-green-600">✔</span>
+                      ) : (
+                        <span className="text-gray-400">⏳</span>
+                      )}
+                      <span>{step.message}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                <h3 className="text-xl font-bold mb-4">¿Está seguro de confirmar la reposición?</h3>
 
-              {/* Stores to consider */}
-              <h4 className="text-lg font-semibold mb-2">Tiendas a Considerar</h4>
-              <div className="mb-4 grid grid-cols-5 gap-4">
-                {storeList.map(store => (
-                  <label key={store} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={selectedStores.includes(store)}
-                      onChange={() => handleToggleStore(store)}
-                    />
-                    <span>{store}</span>
-                  </label>
-                ))}
-              </div>
-              
-              {/* Checkboxes */}
-              <h4 className="text-lg font-semibold mb-2">Acciones</h4>
-              <div className="mb-4 space-y-3">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={saveDeliveriesSelected}
-                  onChange={(e) => setSaveDeliveriesSelected(e.target.checked)}
-                />
-                <span>Guardar selección de deliveries</span>
-              </label>
-                <label className="flex items-center space-x-2">
-                  <input type="checkbox"/>
-                  <span>Enviar mail con archivo</span>
-                </label>
-                <label className="flex items-center space-x-2">
-                  <input type="checkbox"/>
-                  <span>Crear reposiciones en ERP</span>
-                </label>
-                <label className="flex items-center space-x-2">
-                  <input type="checkbox"/>
-                  <span>Enviar agrupado de CC</span>
-                </label>
-              </div>
+                  {/* Stores to consider */}
+                  <h4 className="text-lg font-semibold mb-2">Tiendas a Considerar</h4>
+                  <div className="mb-4 grid grid-cols-5 gap-4">
+                    {storeList.map(store => (
+                      <label key={store} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedStores.includes(store)}
+                          onChange={() => handleToggleStore(store)}
+                        />
+                        <span>{store}</span>
+                      </label>
+                    ))}
+                  </div>
+                  
+                  {/* Checkboxes */}
+                  <h4 className="text-lg font-semibold mb-2">Acciones</h4>
+                  <div className="mb-4 space-y-3">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={saveDeliveriesSelected}
+                        onChange={(e) => setSaveDeliveriesSelected(e.target.checked)}
+                      />
+                      <span>Guardar selección de deliveries</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input type="checkbox"/>
+                      <span>Enviar mail con archivo</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                          type="checkbox"
+                          checked={createERPchecked} 
+                          onChange={(e) => setCreateERPChecked(e.target.checked)}
+                      />
+                      <span>Crear reposiciones en ERP</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input type="checkbox"/>
+                      <span>Enviar agrupado de CC</span>
+                    </label>
+                  </div>
+                </>
+              )}
 
               {/* Modal buttons */}
               <div className="flex justify-end space-x-3">
