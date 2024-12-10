@@ -725,3 +725,34 @@ export async function getOperationReplenishment(id: string) {
 
   return await executeQuery(sql, [id]);
 }
+
+/**
+ * Function to fetch replenishment data from the database.
+ * @param id - The replenishment ID.
+ * @returns A promise with the replenishment data.
+ * @example
+ * const replenishmentData = await fetchReplenishmentData('id');
+ */
+export async function updateERPInfo(
+  repID: string,
+  erpTRs: string,
+  lines: {SKU: string; STORE: string; ERP_TR_ID: string; ERP_LINE_ID: string}[]
+): Promise<void> {
+  const updateHeaderSQL = `
+    UPDATE PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS
+    SET ERP_TRS_IDS = ?
+    WHERE ID = ?
+  `;
+  await executeQuery(updateHeaderSQL, [erpTRs, repID]);
+
+  for (const line of lines) {
+    const updateLineSQL = `
+      UPDATE PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS_LINE
+      SET ERP_TR_ID = ?, ERP_LINE_ID = ?
+      WHERE REPLENISHMENT_ID = ?
+        AND SKU = ?
+        AND STORE = ?
+    `;
+    await executeQuery(updateLineSQL, [line.ERP_TR_ID, line.ERP_LINE_ID, repID, line.SKU, line.STORE]);
+  }
+}
