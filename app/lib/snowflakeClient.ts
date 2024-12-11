@@ -19,7 +19,7 @@ const poolOptions = {
 const connectionPool = snowflake.createPool(poolConfig, poolOptions);
 
 // Generic function to execute a query
-export async function executeQuery<T>(sqlText: string, binds: any[]): Promise<T[]> {
+export async function executeQuery<T>(sqlText: string, binds: any[], debug_query: boolean = false): Promise<T[]> {
   try {
     return await new Promise<T[]>((resolve, reject) => {
       noStore();
@@ -45,6 +45,14 @@ export async function executeQuery<T>(sqlText: string, binds: any[]): Promise<T[
             sqlText,
             binds,
           });
+
+          if (debug_query) {
+            let reconstructed = sqlText;
+            binds.forEach(val => {
+              reconstructed = reconstructed.replace('?', `'${val}'`);
+            });
+            console.log('[snowflakeCLient] Reconstructed query (DEBUG ONLY):\n', reconstructed);
+          }
 
           const rows: T[] = [];
           const stream = statement.streamRows();
@@ -76,7 +84,7 @@ export async function executeQuery<T>(sqlText: string, binds: any[]): Promise<T[
   } catch (error: unknown) {
     if (error instanceof Error && (error.message.includes('terminated connection') || error.message.includes('407002'))) {
       console.warn('Connection terminated. Reconnecting...');
-      return executeQuery(sqlText, binds); // Reintentar la operación
+      return executeQuery(sqlText, binds);
     } else {
       console.error('Connection Error:', error);
       throw new Error('Failed to execute query.');
