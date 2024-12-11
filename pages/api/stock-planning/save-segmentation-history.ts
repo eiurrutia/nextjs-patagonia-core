@@ -15,10 +15,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   const { stockSegments, repID } = req.body;
   try {
+    const batchStartTime = Date.now();
     await saveSegmentationHistory(stockSegments, repID);
-    res.status(200).json({ message: 'Segmentation history saved successfully' });
+    const batchEndTime = Date.now();
+
+    res.status(200).json({
+      message: 'Batch saved successfully',
+      rowsProcessed: stockSegments.length,
+      timeTaken: `${batchEndTime - batchStartTime}ms`,
+    });
   } catch (error) {
-    console.error('Error saving segmentation history:', error);
+    console.error('Error processing batch:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 }
+

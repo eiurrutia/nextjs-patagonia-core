@@ -187,6 +187,7 @@ export default function ReplenishmentTable({
     const formattedDateTime = `${year}${month}${day}_${hours}${minutes}`;
     const replenishmentID = `REP-W${weekNumber}_${formattedDateTime}`;
     const storesConsidered = selectedStores.join(', ');
+    const batchSize = 2000;
 
     // Filter by selected stores
     const filteredLinesForSaving = replenishmentData.filter(item => selectedStores.includes(item.STORE));
@@ -242,17 +243,29 @@ export default function ReplenishmentTable({
         ));
       }
 
-      // Save segmentation history
+      // Save segmentation history in batches
       {
-        const segmentationStep = 'Guardando historial de segmentación';
-        const resp = await fetch('/api/stock-planning/save-segmentation-history', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ stockSegments: segmentationData, repID: replenishmentID }),
-        });
-        if (!resp.ok) throw new Error('Error al guardar historial de segmentación');
+        const batchStartTime = Date.now();
+        for (let i = 0; i < segmentationData.length; i += batchSize) {
+          const batch = segmentationData.slice(i, i + batchSize);
+
+          const response = await fetch('/api/stock-planning/save-segmentation-history', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ stockSegments: batch, repID: replenishmentID }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Error al guardar el lote ${i / batchSize + 1}`);
+          }
+
+          console.log(`Lote ${i / batchSize + 1} guardado exitosamente.`);
+        }
+        const batchEndTime = Date.now();
+        console.log(`Historial de segmentación guardado en ${batchEndTime - batchStartTime}ms`);
+        const savingRecordStep = 'Guardando historial de segmentación';
         setProgressSteps(prev => prev.map(step =>
-          step.message === segmentationStep ? { ...step, completed: true, level: 1 } : step
+          step.message === savingRecordStep ? { ...step, completed: true, level: 1 } : step
         ));
       }
 
