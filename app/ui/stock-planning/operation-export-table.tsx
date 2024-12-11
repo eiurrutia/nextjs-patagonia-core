@@ -16,6 +16,7 @@ export default function OperationsExportTable() {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(
     null
   );
+  const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
 
   useEffect(() => {
     async function fetchExportData() {
@@ -34,6 +35,23 @@ export default function OperationsExportTable() {
 
     fetchExportData();
   }, [id]);
+
+  useEffect(() => {
+    if (exportData.length > 0) {
+      const columns = Object.keys(exportData[0]);
+
+      // Chack if all ERP_TR_ID and ERP_LINE_ID are null
+      const allERP_TR_ID_null = exportData.every((row) => row.ERP_TR_ID == null);
+      const allERP_LINE_ID_null = exportData.every((row) => row.ERP_LINE_ID == null);
+      const filteredColumns = columns.filter((col) => {
+        if (col === 'ERP_TR_ID' && allERP_TR_ID_null) return false;
+        if (col === 'ERP_LINE_ID' && allERP_LINE_ID_null) return false;
+        return true;
+      });
+
+      setVisibleColumns(filteredColumns);
+    }
+  }, [exportData]);
 
   const sortedData = useMemo(() => {
     if (!sortConfig) return exportData;
@@ -64,9 +82,9 @@ export default function OperationsExportTable() {
   const downloadCSV = () => {
     if (!exportData || exportData.length === 0) return;
 
-    const headers = Object.keys(exportData[0]).join(',');
+    const headers = visibleColumns.join(',');
     const rows = exportData
-      .map((row) => Object.values(row).map((value) => `"${value ?? ''}"`).join(','))
+      .map((row) => visibleColumns.map((col) => `"${row[col] ?? ''}"`).join(','))
       .join('\n');
 
     const csvContent = `${headers}\n${rows}`;
@@ -101,7 +119,7 @@ export default function OperationsExportTable() {
       <table className="min-w-full border-collapse border border-gray-300 text-sm mt-6">
         <thead>
           <tr>
-            {Object.keys(exportData[0]).map((key) => (
+            {visibleColumns.map((key) => (
               <th
                 key={key}
                 className="border px-4 py-2 bg-gray-100 text-gray-700 font-semibold text-left cursor-pointer truncate"
@@ -120,9 +138,9 @@ export default function OperationsExportTable() {
         <tbody>
           {paginatedData.map((row, index) => (
             <tr key={index} className="hover:bg-gray-50">
-              {Object.values(row).map((value, idx) => (
+              {visibleColumns.map((col, idx) => (
                 <td key={idx} className="border px-4 py-2 text-gray-800">
-                  {value !== null && value !== undefined ? String(value) : ''}
+                  {row[col] !== null && row[col] !== undefined ? String(row[col]) : ''}
                 </td>
               ))}
             </tr>

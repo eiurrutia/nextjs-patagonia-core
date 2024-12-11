@@ -272,7 +272,7 @@ export default function ReplenishmentTable({
 
       // Create ERP replenishments if the option is checked
       if (createERPchecked) {
-        const linesResponse = await fetch(`/api/stock-planning/get-operation-replenishment?id=${replenishmentID}`, {
+        const linesResponse = await fetch(`/api/stock-planning/operation-replenishment?id=${replenishmentID}`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
         });

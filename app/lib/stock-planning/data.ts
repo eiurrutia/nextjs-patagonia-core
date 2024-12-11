@@ -716,7 +716,9 @@ export async function getOperationReplenishment(id: string) {
       rpl.SKU,
       prod.TEAM,
       prod.CATEGORY,
-      prod.PRODUCTNAME
+      prod.PRODUCTNAME,
+      rpl.ERP_TR_ID,
+      rpl.ERP_LINE_ID
     FROM PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS_LINE rpl
     INNER JOIN PATAGONIA.CORE_TEST.ERP_PRODUCTS prod
       ON rpl.SKU = prod.SKU
