@@ -544,7 +544,8 @@ export async function getReplenishmentSummary(id: string) {
       START_DATE,
       END_DATE,
       STORES_CONSIDERED,
-      SNOWFLAKE_CREATED_AT AS CREATED_AT
+      SNOWFLAKE_CREATED_AT AS CREATED_AT,
+      ERP_TRS_IDS
     FROM PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS
     WHERE ID = ?
   `;

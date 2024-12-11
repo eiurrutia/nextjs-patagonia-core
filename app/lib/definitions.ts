@@ -343,6 +343,7 @@ export type ReplenishmentRecord = {
   STORES_CONSIDERED: string | null;
   CREATED_AT?: string;
   REPLENISHMENT_DATA: ReplenishmentData[];
+  ERP_TRS_IDS?: string;
 };
 
 export type ReplenishmentLine = {

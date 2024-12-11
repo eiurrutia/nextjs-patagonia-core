@@ -40,6 +40,8 @@ export default function ReplenishmentSummary() {
   if (loading) return <CardSkeleton />;
   if (!replenishment) return <p>No se encontró información para el ID: {id}</p>;
 
+  const erpUrl = process.env.NEXT_PUBLIC_ERP_URL;
+
   return (
     <div className="bg-white border border-gray-300 rounded-lg p-6 shadow">
       <h2 className="text-lg font-bold mb-4 text-gray-700">{replenishment.ID}</h2>
@@ -102,6 +104,29 @@ export default function ReplenishmentSummary() {
             Creado: {formatDate(replenishment.CREATED_AT, true)}
           </p>
         </div>
+
+        {/* ERP_TRS_IDS (optional) */}
+        {replenishment.ERP_TRS_IDS && (
+          <div
+            className="flex items-center space-x-2"
+            title="Número de TR"
+          >
+            <ClipboardDocumentListIcon className="h-6 w-6 text-gray-600" />
+            <p className="text-gray-700 font-medium">
+              Número de TR: {replenishment.ERP_TRS_IDS}{' '}
+              {erpUrl && (
+                <a
+                  href={`${erpUrl}/?cmp=PAT&mi=InventTransferOrder`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline ml-2"
+                >
+                  Ver en ERP
+                </a>
+              )}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 const ERP_TOKEN_URL = process.env.ERP_TOKEN_URL || '';
-const ERP_URL = process.env.ERP_URL || '';
+const ERP_URL = process.env.NEXT_PUBLIC_ERP_URL || '';
 const ERP_CLIENT_ID = process.env.ERP_CLIENT_ID || '';
 const ERP_CLIENT_SECRET = process.env.ERP_CLIENT_SECRET || '';
 
