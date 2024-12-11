@@ -70,6 +70,10 @@ export type Order = {
   TAXGROUP: string;
   SHOPIFY_ID: string;
   OMS_ID: string;
+  ORDER_DATE?: string;
+  PARTNER_NAME?: string;
+  CREATED_AT?: string;
+  EMAIL?: string;
 };
 
 export type OrderLine = {
@@ -251,3 +255,114 @@ export type InvoiceForm = {
   amount: number;
   status: 'pending' | 'paid';
 };
+
+export type StockSegment = {
+  SKU: string;
+  DELIVERY: string;
+  COYHAIQUE: number;
+  LASCONDES: number;
+  MALLSPORT: number;
+  COSTANERA: number;
+  CONCEPCION: number;
+  PTOVARAS: number;
+  LADEHESA: number;
+  PUCON: number;
+  TEMUCO: number;
+  OSORNO: number;
+  ALERCE: number;
+  BNAVENTURA: number;
+  [key: string]: number | string;
+}
+
+export type CDStockData = {
+  SKU: string;
+  STOCKERP: number;
+  STOCKWMS: number;
+  MINSTOCK: number;
+}
+
+export type  SalesData = {
+  SKU: string;
+  CD: number;
+  COYHAIQUE: number;
+  LASCONDES: number;
+  MALLSPORT: number;
+  COSTANERA: number;
+  CONCEPCION: number;
+  PTOVARAS: number;
+  LADEHESA: number;
+  PUCON: number;
+  TEMUCO: number;
+  OSORNO: number;
+  ALERCE: number;
+  BNAVENTURA: number;
+  [key: string]: number | string;
+}
+
+export type StoresStockData = {
+  SKU: string;
+  COYHAIQUE_AVAILABLE: number;
+  COYHAIQUE_ORDERED: number;
+  LASCONDES_AVAILABLE: number;
+  LASCONDES_ORDERED: number;
+  MALLSPORT_AVAILABLE: number;
+  MALLSPORT_ORDERED: number;
+  COSTANERA_AVAILABLE: number;
+  COSTANERA_ORDERED: number;
+  CONCEPCION_AVAILABLE: number;
+  CONCEPCION_ORDERED: number;
+  PTOVARAS_AVAILABLE: number;
+  PTOVARAS_ORDERED: number;
+  LADEHESA_AVAILABLE: number;
+  LADEHESA_ORDERED: number;
+  PUCON_AVAILABLE: number;
+  PUCON_ORDERED: number;
+  TEMUCO_AVAILABLE: number;
+  TEMUCO_ORDERED: number;
+  OSORNO_AVAILABLE: number;
+  OSORNO_ORDERED: number;
+  ALERCE_AVAILABLE: number;
+  ALERCE_ORDERED: number;
+  BNAVENTURA_AVAILABLE: number;
+  BNAVENTURA_ORDERED: number;
+};
+
+export type ReplenishmentData = {
+  SKU: string;
+  STORE: string;
+  SEGMENT: number;
+  SALES: number;
+  ACTUAL_STOCK: number;
+  ORDERED_QTY: number;
+  REPLENISHMENT: number;
+}
+
+export type ReplenishmentRecord = {
+  ID: string;
+  TOTAL_REPLENISHMENT: number;
+  TOTAL_BREAK_QTY: number;
+  SELECTED_DELIVERIES: string;
+  START_DATE: string;
+  END_DATE: string;
+  STORES_CONSIDERED: string | null;
+  CREATED_AT?: string;
+  REPLENISHMENT_DATA: ReplenishmentData[];
+  ERP_TRS_IDS?: string;
+};
+
+export type ReplenishmentLine = {
+  SKU: string;
+  STORE: string;
+  SEGMENT: string;
+  SALES: number;
+  ACTUAL_STOCK: number;
+  ORDERED_QTY: number;
+  REPLENISHMENT: number;
+  CREATED_AT: string;
+}
+
+export type BreakData = {
+  SKU: string;
+  STORE: string;
+  BREAK_QTY: number;
+}

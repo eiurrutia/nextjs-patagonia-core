@@ -21,7 +21,6 @@ const getSimilarImages = async (embedding) => {
   const results = await executeQuery(query);
   console.log('# Images obtained');
   const distances = results.map(row => {
-    const dbEmbedding = row.EMBEDDING;
     const distance = manhattanDistance(embedding, row.EMBEDDING);
     return { item_color: row.ITEM_COLOR, image_src: row.IMAGE_SRC, distance: distance };
   });
@@ -33,6 +32,10 @@ const getSimilarImages = async (embedding) => {
 };
 
 const manhattanDistance = (a, b) => {
+  if (!a || !b || a.length !== b.length) {
+    console.error('Error: Embeddings are null or have different lengths');
+    return -Infinity;
+  }
   const distance = a.reduce((sum, val, i) => sum + Math.abs(val - b[i]), 0);
   return 1 / (1 + distance);
 };

@@ -1,6 +1,6 @@
 {
     "name": "Patagonia Core",
-    "short_name": "PatCore",
+    "short_name": "Patagonia Core",
     "description": "A custom solution to centralize Patagonia's platform data.",
     "start_url": "/",
     "display": "standalone",

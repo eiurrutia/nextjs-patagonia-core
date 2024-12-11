@@ -19,16 +19,40 @@ const poolOptions = {
 const connectionPool = snowflake.createPool(poolConfig, poolOptions);
 
 // Generic function to execute a query
-export async function executeQuery<T>(sqlText: string, binds: any[]): Promise<T[]> {
+export async function executeQuery<T>(sqlText: string, binds: any[], debug_query: boolean = false): Promise<T[]> {
   try {
     return await new Promise<T[]>((resolve, reject) => {
       noStore();
       connectionPool.use(async (clientConnection) => {
         try {
+          // Set timezone to Santiago
+          await new Promise<void>((resolve, reject) => {
+            clientConnection.execute({
+              sqlText: "ALTER SESSION SET TIMEZONE = 'America/Santiago'",
+              complete: (err) => {
+                if (err) {
+                  console.error('Error al establecer la zona horaria de la sesión:', err);
+                  reject(err);
+                } else {
+                  resolve();
+                }
+              },
+            });
+          });
+
+          // Execute main statement
           const statement = clientConnection.execute({
             sqlText,
             binds,
           });
+
+          if (debug_query) {
+            let reconstructed = sqlText;
+            binds.forEach(val => {
+              reconstructed = reconstructed.replace('?', `'${val}'`);
+            });
+            console.log('[snowflakeCLient] Reconstructed query (DEBUG ONLY):\n', reconstructed);
+          }
 
           const rows: T[] = [];
           const stream = statement.streamRows();
@@ -60,7 +84,7 @@ export async function executeQuery<T>(sqlText: string, binds: any[]): Promise<T[
   } catch (error: unknown) {
     if (error instanceof Error && (error.message.includes('terminated connection') || error.message.includes('407002'))) {
       console.warn('Connection terminated. Reconnecting...');
-      return executeQuery(sqlText, binds); // Reintentar la operación
+      return executeQuery(sqlText, binds);
     } else {
       console.error('Connection Error:', error);
       throw new Error('Failed to execute query.');

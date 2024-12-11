@@ -5,7 +5,9 @@ import {
   DocumentDuplicateIcon,
   BellAlertIcon,
   ArrowPathIcon,
-  UserIcon
+  AdjustmentsVerticalIcon,
+  UserIcon,
+  Cog8ToothIcon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -45,10 +47,22 @@ const links = [
     roles: ['admin'],
   },
   { 
+    name: 'Stock Planning',
+    href: '/dashboard/stock-planning',
+    icon: AdjustmentsVerticalIcon,
+    roles: ['admin'],
+  },
+  { 
     name: 'Users',
     href: '/dashboard/users',
     icon: UserIcon,
     roles: ['admin'],
+  },
+  { 
+    name: 'Settings',
+    href: '/dashboard/configs',
+    icon: Cog8ToothIcon,
+    roles: ['admin', 'user'],
   },
 ];
 

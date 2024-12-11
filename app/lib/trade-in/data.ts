@@ -102,11 +102,6 @@ export async function fetchTradeInRecords(query: string, currentPage: number): P
  * @throws An error if the query execution fails
  * @example
  * const record = await fetchTradeInRecordByRut('12345678-9');
- * if (record) {
- *  console.log('Trade-In record:', record);
- * } else {
- * console.log('Trade-In record not found');
- * }
  **/
 export async function fetchTradeInRecordById(id: string): Promise<TradeInRecord | null> {
   const sqlText = `
