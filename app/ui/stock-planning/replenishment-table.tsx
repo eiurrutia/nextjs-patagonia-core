@@ -315,7 +315,7 @@ export default function ReplenishmentTable({
           // Create lines for this Transfer Order
           const storeLines = linesByStore[store];
           const totalLines = storeLines.length;
-          const lineStepBase = `Creando líneas en ERP para TR ${transferOrderNumber}`;
+          const lineStepBase = `Creando líneas en ERP para ${transferOrderNumber} - ${store}`;
           setProgressSteps(prev => [...prev, { message: `${lineStepBase} (0/${totalLines})`, completed: false, level: 3 }]);
   
           for (let i = 0; i < totalLines; i++) {
