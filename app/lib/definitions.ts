@@ -70,6 +70,10 @@ export type Order = {
   TAXGROUP: string;
   SHOPIFY_ID: string;
   OMS_ID: string;
+  ORDER_DATE?: string;
+  PARTNER_NAME?: string;
+  CREATED_AT?: string;
+  EMAIL?: string;
 };
 
 export type OrderLine = {
