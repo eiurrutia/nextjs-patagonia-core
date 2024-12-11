@@ -54,7 +54,7 @@ export default function Page() {
         </h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <Suspense fallback={<CardSkeleton />}>
-                <InErpNoOmsDifferenceCard
+                <InShopifyNoOmsDifferenceCard
                     startDate={format(startDate, 'yyyy/MM/dd')}
                     endDate={format(endDate, 'yyyy/MM/dd')} />
             </Suspense>
@@ -64,7 +64,7 @@ export default function Page() {
                     endDate={format(endDate, 'yyyy/MM/dd')} />
             </Suspense>
             <Suspense fallback={<CardSkeleton />}>
-                <InShopifyNoOmsDifferenceCard
+                <InErpNoOmsDifferenceCard
                     startDate={format(startDate, 'yyyy/MM/dd')}
                     endDate={format(endDate, 'yyyy/MM/dd')} />
             </Suspense>
