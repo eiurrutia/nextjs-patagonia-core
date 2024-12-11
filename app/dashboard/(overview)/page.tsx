@@ -2,9 +2,9 @@
 import { useState } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import InErpNoOmsDifferenceCard from '@/app/ui/dashboard/in-erp-no-oms-difference-card';
 import InOmsNoErpDifferenceCard from '@/app/ui/dashboard/in-oms-no-erp-difference-card';
 import InShopifyNoOmsDifferenceCard from '@/app/ui/dashboard/in-shopify-no-oms-difference-card';
+import QuantityDiscrepancyCard from '@/app/ui/dashboard/quantity-discrepanciy-card';
 import OpenedIncidencesCard from '@/app/ui/dashboard/opened-incidences-card';
 import { lusitana } from '@/app/ui/fonts';
 import { Suspense } from 'react';
@@ -64,7 +64,7 @@ export default function Page() {
                     endDate={format(endDate, 'yyyy/MM/dd')} />
             </Suspense>
             <Suspense fallback={<CardSkeleton />}>
-                <InErpNoOmsDifferenceCard
+                <QuantityDiscrepancyCard
                     startDate={format(startDate, 'yyyy/MM/dd')}
                     endDate={format(endDate, 'yyyy/MM/dd')} />
             </Suspense>
