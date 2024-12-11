@@ -736,7 +736,7 @@ export async function getOperationReplenishment(id: string) {
 export async function updateERPInfo(
   repID: string,
   erpTRs: string,
-  lines: {SKU: string; STORE: string; ERP_TR_ID: string; ERP_LINE_ID: string}[]
+  lines: { SKU: string; STORE: string; ERP_TR_ID: string; ERP_LINE_ID: string }[]
 ): Promise<void> {
   const updateHeaderSQL = `
     UPDATE PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS
@@ -745,14 +745,49 @@ export async function updateERPInfo(
   `;
   await executeQuery(updateHeaderSQL, [erpTRs, repID]);
 
-  for (const line of lines) {
-    const updateLineSQL = `
-      UPDATE PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS_LINE
-      SET ERP_TR_ID = ?, ERP_LINE_ID = ?
-      WHERE REPLENISHMENT_ID = ?
-        AND SKU = ?
-        AND STORE = ?
-    `;
-    await executeQuery(updateLineSQL, [line.ERP_TR_ID, line.ERP_LINE_ID, repID, line.SKU, line.STORE]);
+  if (lines.length === 0) {
+    return;
   }
+
+  // Create temporary table
+  const createTempTableSQL = `
+    CREATE TEMPORARY TABLE PATAGONIA.CORE_TEST.temp_data (
+      ERP_TR_ID STRING,
+      ERP_LINE_ID STRING,
+      REP_ID STRING,
+      SKU STRING,
+      STORE STRING
+    )
+  `;
+  await executeQuery(createTempTableSQL, []);
+
+  // Insert data into temporary table
+  const insertTempDataSQL = `
+    INSERT INTO PATAGONIA.CORE_TEST.temp_data (ERP_TR_ID, ERP_LINE_ID, REP_ID, SKU, STORE)
+    VALUES ${lines.map(() => `(?, ?, ?, ?, ?)`).join(', ')}
+  `;
+  const binds = lines.flatMap(line => [
+    line.ERP_TR_ID,
+    line.ERP_LINE_ID,
+    repID,
+    line.SKU,
+    line.STORE,
+  ]);
+  await executeQuery(insertTempDataSQL, binds);
+
+  // Update replenishment lines with temporary data
+  const updateLineSQL = `
+    UPDATE PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS_LINE l
+    SET l.ERP_TR_ID = t.ERP_TR_ID,
+        l.ERP_LINE_ID = t.ERP_LINE_ID
+    FROM PATAGONIA.CORE_TEST.temp_data t
+    WHERE l.REPLENISHMENT_ID = t.REP_ID
+      AND l.SKU = t.SKU
+      AND l.STORE = t.STORE
+  `;
+  await executeQuery(updateLineSQL, []);
+
+  // Drop temporary table
+  const dropTempTableSQL = `DROP TABLE PATAGONIA.CORE_TEST.temp_data`;
+  await executeQuery(dropTempTableSQL, []);
 }
