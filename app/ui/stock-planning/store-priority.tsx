@@ -50,6 +50,7 @@ export default function StorePriority({ stores, onPriorityChange }: StorePriorit
   const [storeOrder, setStoreOrder] = useState<string[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (stores.length > 0) {
@@ -79,22 +80,30 @@ export default function StorePriority({ stores, onPriorityChange }: StorePriorit
 
   const handleEditClick = async () => {
     if (isEditing) {
-      const resp = await fetch('/api/configs/configs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          config_key: 'stock_planning_store_priority',
-          config_name: 'Store Priority',
-          config_value: storeOrder.join(', '),
-          description: 'Store priority configuration for stock planning',
-        }),
-      });
+      // Guardar cambios en la BDD
+      setIsSaving(true);
+      try {
+        const resp = await fetch('/api/configs/configs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            config_key: 'stock_planning_store_priority',
+            config_name: 'Store Priority',
+            config_value: storeOrder.join(', '),
+            description: 'Store priority configuration for stock planning',
+          }),
+        });
 
-      if (!resp.ok) {
-        console.error('Error al guardar prioridades');
-        alert('Error al guardar prioridades');
-      } else {
-        onPriorityChange(storeOrder);
+        if (!resp.ok) {
+          console.error('Error al guardar prioridades');
+          alert('Error al guardar prioridades');
+        } else {
+          onPriorityChange(storeOrder);
+        }
+      } catch (error) {
+        console.error('Error al guardar prioridades:', error);
+      } finally {
+        setIsSaving(false);
       }
     }
     setIsEditing(!isEditing);
@@ -164,9 +173,36 @@ export default function StorePriority({ stores, onPriorityChange }: StorePriorit
                   e.stopPropagation();
                   handleEditClick();
                 }}
-                className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded"
+                className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded flex items-center"
+                disabled={isSaving}
               >
-                {isEditing ? 'Guardar' : 'Editar'}
+                {isSaving ? (
+                  <>
+                    <svg
+                      className="animate-spin h-5 w-5 mr-2 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291l2.122-2.122A4 4 0 004 12H0c0 2.21.895 4.21 2.343 5.657l1.657 1.657z"
+                      ></path>
+                    </svg>
+                    Guardando...
+                  </>
+                ) : (
+                  isEditing ? 'Guardar' : 'Editar'
+                )}
               </button>
             </div>
           </div>
