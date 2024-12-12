@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { lusitana } from '@/app/ui/fonts';
 import {
   DndContext,
   useSensor,
@@ -16,6 +17,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 type StorePriorityProps = {
   stores: string[];
@@ -71,44 +73,72 @@ export default function StorePriority({ stores, onPriorityChange }: StorePriorit
     });
   };
 
-  const handleEditClick = () => {
-    if (isEditing) {
-      onPriorityChange(storeOrder);
-    }
-    setIsEditing(!isEditing);
-  };
-
   const handleCollapseToggle = () => {
     setIsCollapsed(!isCollapsed);
   };
 
+  const handleEditClick = async () => {
+    if (isEditing) {
+      const resp = await fetch('/api/configs/configs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          config_key: 'stock_planning_store_priority',
+          config_name: 'Store Priority',
+          config_value: storeOrder.join(', '),
+          description: 'Store priority configuration for stock planning',
+        }),
+      });
+
+      if (!resp.ok) {
+        console.error('Error al guardar prioridades');
+        alert('Error al guardar prioridades');
+      } else {
+        onPriorityChange(storeOrder);
+      }
+    }
+    setIsEditing(!isEditing);
+  };
+
   return (
-    <div className="mt-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Prioridad de Tiendas</h2>
-        <button
-          onClick={handleCollapseToggle}
-          className="bg-gray-200 hover:bg-gray-300 text-gray-700 py-1 px-3 rounded"
-        >
-          {isCollapsed ? 'Mostrar' : 'Ocultar'}
-        </button>
+    <div className="mb-8">
+      <div
+        className="flex items-center justify-start cursor-pointer"
+        onClick={handleCollapseToggle}
+      >
+        <h2 className={`${lusitana.className} text-2xl`}>
+          {isCollapsed ? (
+            <ChevronRightIcon className="inline h-6 w-6 mr-2" />
+          ) : (
+            <ChevronDownIcon className="inline h-6 w-6 mr-2" />
+          )}
+          Prioridad de Tiendas
+        </h2>
       </div>
 
       {!isCollapsed && (
-        <div className="mt-4 w-1/3 border rounded shadow p-4 relative">
-          <div className="absolute top-2 right-2">
-            <button
-              onClick={handleEditClick}
-              className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded"
-            >
-              {isEditing ? 'Guardar' : 'Editar'}
-            </button>
-          </div>
-
-          {isEditing ? (
-            // Edition mode: with DnD
-            <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-              <SortableContext items={storeOrder} strategy={verticalListSortingStrategy}>
+        <>
+          <div className="mt-4 flex items-start justify-between">
+            <div className="w-1/3 border rounded shadow p-4">
+              {isEditing ? (
+                <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+                  <SortableContext items={storeOrder} strategy={verticalListSortingStrategy}>
+                    <table className="table-auto w-full border-collapse">
+                      <thead>
+                        <tr className="border-b bg-gray-100">
+                          <th className="py-2 px-4 text-left">#</th>
+                          <th className="py-2 px-4 text-left">Tienda</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {storeOrder.map((store, index) => (
+                          <SortableItem key={store} id={store} index={index} />
+                        ))}
+                      </tbody>
+                    </table>
+                  </SortableContext>
+                </DndContext>
+              ) : (
                 <table className="table-auto w-full border-collapse">
                   <thead>
                     <tr className="border-b bg-gray-100">
@@ -118,32 +148,29 @@ export default function StorePriority({ stores, onPriorityChange }: StorePriorit
                   </thead>
                   <tbody>
                     {storeOrder.map((store, index) => (
-                      <SortableItem key={store} id={store} index={index} />
+                      <tr key={store} className="border-b">
+                        <td className="py-2 px-4">{index + 1}</td>
+                        <td className="py-2 px-4">{store}</td>
+                      </tr>
                     ))}
                   </tbody>
                 </table>
-              </SortableContext>
-            </DndContext>
-          ) : (
-            // Normal mode: just show the list
-            <table className="table-auto w-full border-collapse">
-              <thead>
-                <tr className="border-b bg-gray-100">
-                  <th className="py-2 px-4 text-left">#</th>
-                  <th className="py-2 px-4 text-left">Tienda</th>
-                </tr>
-              </thead>
-              <tbody>
-                {storeOrder.map((store, index) => (
-                  <tr key={store} className="border-b">
-                    <td className="py-2 px-4">{index + 1}</td>
-                    <td className="py-2 px-4">{store}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+              )}
+            </div>
+
+            <div className="ml-4 flex-grow flex items-start justify-end">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditClick();
+                }}
+                className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded"
+              >
+                {isEditing ? 'Guardar' : 'Editar'}
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
