@@ -125,8 +125,9 @@ export default function NewStockPlanning({
           <CardSkeleton />
         ) : (
           <>
+            <h2 className={`${lusitana.className} text-2xl mt-8`}>Segmentación</h2>
             {/* DELIVERY filters */}
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3 mt-4">
               {deliveryOptions.map((delivery) => (
                 <label
                   key={delivery}
@@ -145,7 +146,6 @@ export default function NewStockPlanning({
 
             {/* Segmentation */}
             <Suspense fallback={<InvoicesTableSkeleton />}>
-              <h2 className={`${lusitana.className} text-2xl mt-8`}>Segmentación</h2>
               <SegmentationTable
                 query={query}
                 currentPage={segmentationPage}
