@@ -14,13 +14,14 @@ import {
 } from '@/app/lib/definitions';
 
 /**
- * Calculate replenishment data for all stores.
+ * Calculate replenishment data for all stores with prioritization.
  *
  * @param query - Search query to filter the data.
  * @param startDate - Start date for the sales data.
  * @param endDate - End date for the sales data.
  * @param selectedDeliveryOptions - Selected delivery options.
  * @param editedSegments - Edited stock segments from the client.
+ * @param storePriority - Array defining the priority order of stores.
  * @returns Replenishment data and break data.
  */
 export async function calculateReplenishment(
@@ -28,7 +29,8 @@ export async function calculateReplenishment(
   startDate: string,
   endDate: string,
   selectedDeliveryOptions: string[] = [],
-  editedSegments: StockSegment[] = []
+  editedSegments: StockSegment[] = [],
+  storePriority: string[] = []
 ): Promise<{
   replenishmentTable: ReplenishmentData[];
   breakData: BreakData[];
@@ -62,44 +64,45 @@ export async function calculateReplenishment(
     const { SKU, ...stockByStore } = storeStock;
     let remainingCDStock = cdStockMap.get(SKU) || 0;
 
-    for (const store in stockByStore) {
-      if (store.endsWith('_AVAILABLE')) {
-        const storeName = store.replace('_AVAILABLE', '');
-        const stockActual = (stockByStore as Record<string, number>)[`${storeName}_AVAILABLE`];
-        const orderedQuantity =
-          (stockByStore as Record<string, number>)[`${storeName}_ORDERED`] || 0;
-        const sales = Number(salesMap.get(SKU)?.[storeName]) || 0;
-        const segment = Number(segmentsMap.get(SKU)?.[storeName]) || 0;
+    const prioritizedStores = storePriority.filter((store) => 
+      stockByStore.hasOwnProperty(`${store}_AVAILABLE`)
+    );
 
-        if (segment === 0) continue;
+    for (const storeName of prioritizedStores) {
+      const stockActual = (stockByStore as Record<string, number>)[`${storeName}_AVAILABLE`];
+      const orderedQuantity =
+        (stockByStore as Record<string, number>)[`${storeName}_ORDERED`] || 0;
+      const sales = Number(salesMap.get(SKU)?.[storeName]) || 0;
+      const segment = Number(segmentsMap.get(SKU)?.[storeName]) || 0;
 
-        const calculatedDemand = Math.max(segment, sales);
-        const replenishmentNeeded = Math.max(calculatedDemand - (stockActual + orderedQuantity), 0);
+      if (segment === 0) continue;
 
-        let replenishment = Math.min(replenishmentNeeded, remainingCDStock);
-        let breakQty = replenishmentNeeded - replenishment;
+      const calculatedDemand = Math.max(segment, sales);
+      const replenishmentNeeded = Math.max(calculatedDemand - (stockActual + orderedQuantity), 0);
 
-        if (replenishment > 0) {
-          replenishmentTable.push({
-            SKU,
-            STORE: storeName,
-            SEGMENT: segment,
-            SALES: sales,
-            ACTUAL_STOCK: stockActual,
-            ORDERED_QTY: orderedQuantity,
-            REPLENISHMENT: replenishment,
-          });
-          remainingCDStock -= replenishment;
-        }
+      let replenishment = Math.min(replenishmentNeeded, remainingCDStock);
+      let breakQty = replenishmentNeeded - replenishment;
 
-        // Log break data if there's a shortage
-        if (breakQty > 0) {
-          breakData.push({
-            SKU,
-            STORE: storeName,
-            BREAK_QTY: breakQty,
-          });
-        }
+      if (replenishment > 0) {
+        replenishmentTable.push({
+          SKU,
+          STORE: storeName,
+          SEGMENT: segment,
+          SALES: sales,
+          ACTUAL_STOCK: stockActual,
+          ORDERED_QTY: orderedQuantity,
+          REPLENISHMENT: replenishment,
+        });
+        remainingCDStock -= replenishment;
+      }
+
+      // Log break data if there's a shortage
+      if (breakQty > 0) {
+        breakData.push({
+          SKU,
+          STORE: storeName,
+          BREAK_QTY: breakQty,
+        });
       }
     }
   });

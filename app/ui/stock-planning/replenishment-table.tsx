@@ -12,12 +12,14 @@ export default function ReplenishmentTable({
     startDate, 
     endDate,
     selectedDeliveryOptions,
-    editedSegments
+    editedSegments,
+    storePriority
   }: {
     startDate: string;
     endDate: string
     selectedDeliveryOptions: string[];
     editedSegments: StockSegment[];
+    storePriority: string[];
   }) {
   const router = useRouter();
   const [replenishmentData, setReplenishmentData] = useState<ReplenishmentData[]>([]);
@@ -54,6 +56,7 @@ export default function ReplenishmentTable({
             endDate,
             selectedDeliveryOptions,
             editedSegments,
+            storePriority,
           }),
         });
         const data = await response.json();
