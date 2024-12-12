@@ -11,7 +11,7 @@ export const config = {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
-    const { startDate, endDate, selectedDeliveryOptions, editedSegments } = req.body;
+    const { startDate, endDate, selectedDeliveryOptions, editedSegments, storePriority } = req.body;
 
     try {
       const data = await calculateReplenishment(
@@ -19,7 +19,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         startDate,
         endDate,
         selectedDeliveryOptions,
-        editedSegments
+        editedSegments,
+        storePriority
       );
       res.status(200).json(data);
     } catch (error) {
