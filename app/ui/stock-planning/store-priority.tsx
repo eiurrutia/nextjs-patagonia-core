@@ -51,6 +51,7 @@ export default function StorePriority({ stores, onPriorityChange }: StorePriorit
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [originalOrder, setOriginalOrder] = useState<string[]>([]);
 
   useEffect(() => {
     if (stores.length > 0) {
@@ -79,8 +80,9 @@ export default function StorePriority({ stores, onPriorityChange }: StorePriorit
   };
 
   const handleEditClick = async () => {
-    if (isEditing) {
-      // Guardar cambios en la BDD
+    if (!isEditing) {
+      setOriginalOrder([...storeOrder]);
+    } else {
       setIsSaving(true);
       try {
         const resp = await fetch('/api/configs/configs', {
@@ -107,6 +109,11 @@ export default function StorePriority({ stores, onPriorityChange }: StorePriorit
       }
     }
     setIsEditing(!isEditing);
+  };
+
+  const handleCancel = () => {
+    setStoreOrder(originalOrder);
+    setIsEditing(false);
   };
 
   return (
@@ -167,7 +174,20 @@ export default function StorePriority({ stores, onPriorityChange }: StorePriorit
               )}
             </div>
 
-            <div className="ml-4 flex-grow flex items-start justify-end">
+            <div className="ml-4 flex-grow flex items-start justify-end gap-2">
+              {isEditing && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCancel();
+                  }}
+                  className="bg-gray-500 hover:bg-gray-600 text-white py-1 px-3 rounded flex items-center"
+                  disabled={isSaving}
+                >
+                  <span className="font-bold mr-1">X</span> Cancelar
+                </button>
+              )}
+              
               <button
                 onClick={(e) => {
                   e.stopPropagation();
