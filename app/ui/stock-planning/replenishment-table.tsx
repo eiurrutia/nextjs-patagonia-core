@@ -45,7 +45,6 @@ export default function ReplenishmentTable({
     async function fetchReplenishmentData() {
       setLoading(true);
       try {
-        // Use a POST request to send editedSegments in the body
         const response = await fetch('/api/stock-planning/replenishment', {
           method: 'POST',
           headers: {
