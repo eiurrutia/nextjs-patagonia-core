@@ -62,17 +62,13 @@ export default function NewStockPlanning({
           filteredConfiguredDeliveries.length > 0 ? filteredConfiguredDeliveries : options
         );
 
-        console.log('### configs', configs);
-
         // Fetch store priority
         const priorityConfig = configs.find(
           (config: any) => config.config_key === 'stock_planning_store_priority'
         );
-        console.log('## priorityConfig', priorityConfig);
         const prioritizedStores = priorityConfig
           ? priorityConfig.config_value.split(', ').map((item: string) => item.trim())
           : [];
-        console.log('## prioritizedStores', prioritizedStores);
         setStorePriority(prioritizedStores);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -83,10 +79,6 @@ export default function NewStockPlanning({
   
     fetchData();
   }, []);
-
-  useEffect(() => {
-    console.log('Updated storePriority:', storePriority);
-  }, [storePriority]);
 
   const handleDeliveryFilterChange = (delivery: string) => {
     setSelectedDeliveryOptions((prevSelected) =>
