@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, Suspense } from 'react';
+import StorePriority from '@/app/ui/stock-planning/store-priority';
 import SegmentationTable from '@/app/ui/stock-planning/segmentation-table';
 import SalesTable from '@/app/ui/stock-planning/sales-table';
 import CDStockTable from '@/app/ui/stock-planning/cd-stock-table';
@@ -33,6 +34,7 @@ export default function NewStockPlanning({
   const [selectedDeliveryOptions, setSelectedDeliveryOptions] = useState<string[]>([]);
   const [loadingSelectedDeliveryOptions, setLoadingSelectedDeliveryOptions] = useState(false);
   const [editedSegments, setEditedSegments] = useState<StockSegment[]>([]);
+  const [storePriority, setStorePriority] = useState<string[]>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -59,6 +61,15 @@ export default function NewStockPlanning({
         setSelectedDeliveryOptions(
           filteredConfiguredDeliveries.length > 0 ? filteredConfiguredDeliveries : options
         );
+
+        // Fetch store priority
+        const priorityConfig = configs.find(
+          (config: any) => config.config_key === 'stock_planning_store_priority'
+        );
+        const prioritizedStores = priorityConfig
+          ? priorityConfig.config_value.split(', ').map((item: string) => item.trim())
+          : [];
+        setStorePriority(prioritizedStores);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -81,6 +92,10 @@ export default function NewStockPlanning({
     setShowReplenishment(true);
   };
 
+  const handlePriorityChange = (newPriority: string[]) => {
+    setStorePriority(newPriority);
+  };
+
   return (
     <div className="w-full">
       <div className="flex w-full items-center justify-between">
@@ -90,6 +105,11 @@ export default function NewStockPlanning({
       <div className="mt-4 flex items-center gap-2 md:mt-8">
         <Search placeholder="Buscar SKU..." />
       </div>
+        
+      {/* Store Priority */}
+      <div className="mt-6">
+        <StorePriority stores={storePriority} onPriorityChange={handlePriorityChange}/>
+      </div>
 
       {/* DELIVERY filters and Segmentation */}
       <div className="mt-6">
@@ -97,8 +117,9 @@ export default function NewStockPlanning({
           <CardSkeleton />
         ) : (
           <>
+            <h2 className={`${lusitana.className} text-2xl mt-8`}>Segmentación</h2>
             {/* DELIVERY filters */}
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3 mt-4">
               {deliveryOptions.map((delivery) => (
                 <label
                   key={delivery}
@@ -117,7 +138,6 @@ export default function NewStockPlanning({
 
             {/* Segmentation */}
             <Suspense fallback={<InvoicesTableSkeleton />}>
-              <h2 className={`${lusitana.className} text-2xl mt-8`}>Segmentación</h2>
               <SegmentationTable
                 query={query}
                 currentPage={segmentationPage}
@@ -210,6 +230,7 @@ export default function NewStockPlanning({
             endDate={endDate}
             selectedDeliveryOptions={selectedDeliveryOptions}
             editedSegments={editedSegments}
+            storePriority={storePriority}
           />
         </div>
       )}

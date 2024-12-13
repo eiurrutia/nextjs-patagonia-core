@@ -20,6 +20,11 @@ export const formatDate = (
     return 'N/A';
   }
 
+  if (!applyTimeZone && typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+    const [year, month, day] = dateInput.split('-');
+    return `${day}-${month}-${year}`; // dd-MM-yyyy
+  }
+
   let date: Date;
 
   if (typeof dateInput === 'string') {

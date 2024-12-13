@@ -12,12 +12,14 @@ export default function ReplenishmentTable({
     startDate, 
     endDate,
     selectedDeliveryOptions,
-    editedSegments
+    editedSegments,
+    storePriority
   }: {
     startDate: string;
     endDate: string
     selectedDeliveryOptions: string[];
     editedSegments: StockSegment[];
+    storePriority: string[];
   }) {
   const router = useRouter();
   const [replenishmentData, setReplenishmentData] = useState<ReplenishmentData[]>([]);
@@ -43,7 +45,6 @@ export default function ReplenishmentTable({
     async function fetchReplenishmentData() {
       setLoading(true);
       try {
-        // Use a POST request to send editedSegments in the body
         const response = await fetch('/api/stock-planning/replenishment', {
           method: 'POST',
           headers: {
@@ -54,6 +55,7 @@ export default function ReplenishmentTable({
             endDate,
             selectedDeliveryOptions,
             editedSegments,
+            storePriority,
           }),
         });
         const data = await response.json();
@@ -68,7 +70,7 @@ export default function ReplenishmentTable({
     }
 
     fetchReplenishmentData();
-  }, [startDate, endDate, selectedDeliveryOptions, editedSegments]);
+  }, [startDate, endDate, selectedDeliveryOptions, editedSegments, storePriority]);
 
   // Store list
   useEffect(() => {
@@ -186,7 +188,8 @@ export default function ReplenishmentTable({
 
     const formattedDateTime = `${year}${month}${day}_${hours}${minutes}`;
     const replenishmentID = `REP-W${weekNumber}_${formattedDateTime}`;
-    const storesConsidered = selectedStores.join(', ');
+    const orderedSelectedStores = storePriority.filter(store => selectedStores.includes(store));
+    const storesConsidered = orderedSelectedStores.join(', ');
     const batchSize = 2000;
 
     // Filter by selected stores
