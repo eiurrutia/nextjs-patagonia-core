@@ -90,7 +90,7 @@ export default function ReplenishmentSummary() {
         >
           <CalendarDaysIcon className="h-6 w-6 text-gray-600" />
           <p className="text-gray-700 font-medium">
-            {formatDate(replenishment.START_DATE)} - {formatDate(replenishment.END_DATE)}
+            {formatDate(replenishment.START_DATE, false, false)} | {formatDate(replenishment.END_DATE, false, false)}
           </p>
         </div>
 
