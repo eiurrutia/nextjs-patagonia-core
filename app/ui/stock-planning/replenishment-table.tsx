@@ -70,7 +70,7 @@ export default function ReplenishmentTable({
     }
 
     fetchReplenishmentData();
-  }, [startDate, endDate, selectedDeliveryOptions, editedSegments]);
+  }, [startDate, endDate, selectedDeliveryOptions, editedSegments, storePriority]);
 
   // Store list
   useEffect(() => {
@@ -188,7 +188,8 @@ export default function ReplenishmentTable({
 
     const formattedDateTime = `${year}${month}${day}_${hours}${minutes}`;
     const replenishmentID = `REP-W${weekNumber}_${formattedDateTime}`;
-    const storesConsidered = selectedStores.join(', ');
+    const orderedSelectedStores = storePriority.filter(store => selectedStores.includes(store));
+    const storesConsidered = orderedSelectedStores.join(', ');
     const batchSize = 2000;
 
     // Filter by selected stores
