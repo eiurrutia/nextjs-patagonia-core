@@ -1,19 +1,21 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { CardSkeleton } from '@/app/ui/skeletons';
 import Pagination from '@/app/ui/pagination';
+import TableSearch from '@/app/ui/table-search';
 
 export default function SegmentationDetailTable() {
   const params = useParams() as { id?: string };
   const id = params?.id;
 
   const [segmentation, setSegmentation] = useState<any[]>([]);
+  const [filteredSegmentation, setFilteredSegmentation] = useState<any[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const itemsPerPage = 10;
   const [groupBy, setGroupBy] = useState<'SKU' | 'CC' | 'TEAM' | 'CATEGORY'>('SKU');
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
@@ -25,6 +27,7 @@ export default function SegmentationDetailTable() {
         const response = await fetch(`/api/stock-planning/segmentation-detail?id=${id}&groupBy=${groupBy}`);
         const data = await response.json();
         setSegmentation(data);
+        setFilteredSegmentation(data);
       } catch (error) {
         console.error('Error fetching segmentation detail:', error);
       } finally {
@@ -35,6 +38,17 @@ export default function SegmentationDetailTable() {
     fetchSegmentation();
   }, [id, groupBy]);
 
+  const handleSearch = (term: string) => {
+    const lowercasedTerm = term.toLowerCase();
+    const filtered = segmentation.filter((row) =>
+      Object.values(row).some((value) =>
+        String(value).toLowerCase().includes(lowercasedTerm)
+      )
+    );
+    setFilteredSegmentation(filtered);
+    setCurrentPage(1);
+  };
+
   const handleSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
     if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
@@ -44,33 +58,33 @@ export default function SegmentationDetailTable() {
     setCurrentPage(1);
   };
 
-  const sortedData = React.useMemo(() => {
-    if (!sortConfig) return segmentation;
-    return [...segmentation].sort((a, b) => {
+  const sortedData = useMemo(() => {
+    if (!sortConfig) return filteredSegmentation;
+    return [...filteredSegmentation].sort((a, b) => {
       const aValue = a[sortConfig.key];
       const bValue = b[sortConfig.key];
       if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [segmentation, sortConfig]);
+  }, [filteredSegmentation, sortConfig]);
 
-  const paginatedData = React.useMemo(() => {
+  const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return sortedData.slice(startIndex, startIndex + itemsPerPage);
-  }, [sortedData, currentPage, itemsPerPage]);
+  }, [sortedData, currentPage]);
 
   const downloadCSV = () => {
-    if (!segmentation || segmentation.length === 0) return;
+    if (!filteredSegmentation || filteredSegmentation.length === 0) return;
 
-    const headers = Object.keys(segmentation[0])
-      .filter((key) => !(groupBy === 'SKU' && key === 'GROUPED_VALUE')) // Evitar columnas duplicadas
+    const headers = Object.keys(filteredSegmentation[0])
+      .filter((key) => !(groupBy === 'SKU' && key === 'GROUPED_VALUE'))
       .map((key) => (key === 'GROUPED_VALUE' ? groupBy : key))
       .join(',');
 
-    const rows = segmentation.map((row) =>
+    const rows = filteredSegmentation.map((row) =>
       Object.keys(row)
-        .filter((key) => !(groupBy === 'SKU' && key === 'GROUPED_VALUE')) // Evitar columnas duplicadas
+        .filter((key) => !(groupBy === 'SKU' && key === 'GROUPED_VALUE'))
         .map((key) => `"${row[key] ?? ''}"`)
         .join(',')
     );
@@ -105,7 +119,9 @@ export default function SegmentationDetailTable() {
 
       {!isCollapsed && (
         <div className="mt-4">
-          {/* Buttons Section */}
+          <div className="mb-4">
+            <TableSearch placeholder="Buscar en detalle de segmentación..." onSearch={handleSearch} />
+          </div>
           <div className="flex justify-between items-center mb-4">
             {/* Group By Buttons */}
             <div className="flex gap-2">
@@ -170,7 +186,7 @@ export default function SegmentationDetailTable() {
           {/* Pagination */}
           <div className="mt-5 flex w-full justify-center">
             <Pagination
-              totalPages={Math.ceil(segmentation.length / itemsPerPage)}
+              totalPages={Math.ceil(filteredSegmentation.length / itemsPerPage)}
               currentPage={currentPage}
               setPage={setCurrentPage}
             />
