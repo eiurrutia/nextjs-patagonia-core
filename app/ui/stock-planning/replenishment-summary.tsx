@@ -46,7 +46,6 @@ export default function ReplenishmentSummary() {
     <div className="bg-white border border-gray-300 rounded-lg p-6 shadow">
       <h2 className="text-lg font-bold mb-4 text-gray-700">{replenishment.ID}</h2>
       <div className="grid grid-cols-3 gap-4">
-
         {/* Total Units */}
         <div
           className="flex items-center space-x-2"
@@ -74,15 +73,6 @@ export default function ReplenishmentSummary() {
           <p className="text-gray-700 font-medium">{replenishment.SELECTED_DELIVERIES}</p>
         </div>
 
-        {/* Stores */}
-        <div
-          className="flex items-center space-x-2"
-          title="Lista de tiendas consideradas en esta reposición"
-        >
-          <BuildingStorefrontIcon className="h-6 w-6 text-gray-600" />
-          <p className="text-gray-700 font-medium">{replenishment.STORES_CONSIDERED || 'N/A'}</p>
-        </div>
-
         {/* Sales Range */}
         <div
           className="flex items-center space-x-2"
@@ -104,30 +94,33 @@ export default function ReplenishmentSummary() {
             Creado: {formatDate(replenishment.CREATED_AT, true)}
           </p>
         </div>
-
-        {/* ERP_TRS_IDS (optional) */}
-        {replenishment.ERP_TRS_IDS && (
-          <div
-            className="flex items-center space-x-2"
-            title="Número de TR"
-          >
-            <ClipboardDocumentListIcon className="h-6 w-6 text-gray-600" />
-            <p className="text-gray-700 font-medium">
-              Número de TR: {replenishment.ERP_TRS_IDS}{' '}
-              {erpUrl && (
-                <a
-                  href={`${erpUrl}/?cmp=PAT&mi=InventTransferOrder`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 underline ml-2"
-                >
-                  Ver en ERP
-                </a>
-              )}
-            </p>
-          </div>
-        )}
       </div>
+
+      {/* Stores - Full Row */}
+      <div className="flex items-center space-x-2 mt-4" title="Lista de tiendas consideradas en esta reposición">
+        <BuildingStorefrontIcon className="h-6 w-6 text-gray-600" />
+        <p className="text-gray-700 font-medium w-full">{replenishment.STORES_CONSIDERED || 'N/A'}</p>
+      </div>
+
+      {/* ERP_TRS_IDS - Full Row */}
+      {replenishment.ERP_TRS_IDS && (
+        <div className="flex items-center space-x-2 mt-4" title="Número de TR">
+          <ClipboardDocumentListIcon className="h-6 w-6 text-gray-600" />
+          <p className="text-gray-700 font-medium w-full">
+            Número de TR: {replenishment.ERP_TRS_IDS}{' '}
+            {erpUrl && (
+              <a
+                href={`${erpUrl}/?cmp=PAT&mi=InventTransferOrder`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline ml-2"
+              >
+                Ver en ERP
+              </a>
+            )}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
