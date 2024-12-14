@@ -2,12 +2,14 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { CardSkeleton } from '@/app/ui/skeletons';
+import TableSearch from '@/app/ui/table-search';
 import Pagination from '@/app/ui/pagination';
 
 export default function ReplenishmentLinesTable() {
   const params = useParams() as { id?: string };
   const id = params?.id;
   const [lines, setLines] = useState<any[]>([]);
+  const [filteredLines, setFilteredLines] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [groupBy, setGroupBy] = useState<'SKU' | 'CC' | 'TEAM' | 'CATEGORY'>('SKU');
@@ -22,6 +24,7 @@ export default function ReplenishmentLinesTable() {
         const response = await fetch(`/api/stock-planning/replenishment-lines?id=${id}&groupBy=${groupBy}`);
         const data = await response.json();
         setLines(data);
+        setFilteredLines(data);
       } catch (error) {
         console.error('Error fetching replenishment lines:', error);
       } finally {
@@ -31,6 +34,17 @@ export default function ReplenishmentLinesTable() {
 
     fetchReplenishmentLines();
   }, [id, groupBy]);
+
+  const handleSearch = (term: string) => {
+    const lowercasedTerm = term.toLowerCase();
+    const filtered = lines.filter((line) =>
+      Object.values(line).some((value) =>
+        String(value).toLowerCase().includes(lowercasedTerm)
+      )
+    );
+    setFilteredLines(filtered);
+    setCurrentPage(1);
+  };
 
   const handleSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
@@ -42,15 +56,15 @@ export default function ReplenishmentLinesTable() {
   };
 
   const sortedLines = useMemo(() => {
-    if (!sortConfig) return lines;
-    return [...lines].sort((a, b) => {
+    if (!sortConfig) return filteredLines;
+    return [...filteredLines].sort((a, b) => {
       const aValue = a[sortConfig.key];
       const bValue = b[sortConfig.key];
       if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [lines, sortConfig]);
+  }, [filteredLines, sortConfig]);
 
   const paginatedLines = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -58,10 +72,10 @@ export default function ReplenishmentLinesTable() {
   }, [sortedLines, currentPage]);
 
   const downloadCSV = () => {
-    if (!lines || lines.length === 0) return;
+    if (!filteredLines || filteredLines.length === 0) return;
 
-    const headers = Object.keys(lines[0]).join(',');
-    const rows = lines.map((line) =>
+    const headers = Object.keys(filteredLines[0]).join(',');
+    const rows = filteredLines.map((line) =>
       Object.values(line)
         .map((value) => `"${value ?? ''}"`)
         .join(',')
@@ -84,6 +98,10 @@ export default function ReplenishmentLinesTable() {
 
   return (
     <div>
+      <div className="mb-4">
+        <TableSearch placeholder="Buscar en líneas de reposición..." onSearch={handleSearch} />
+      </div>
+
       <div className="flex justify-between items-center mb-4">
         {/* Group By Buttons */}
         <div className="flex gap-2">
@@ -176,7 +194,7 @@ export default function ReplenishmentLinesTable() {
 
       <div className="mt-5 flex w-full justify-center">
         <Pagination
-          totalPages={Math.ceil(lines.length / itemsPerPage)}
+          totalPages={Math.ceil(filteredLines.length / itemsPerPage)}
           currentPage={currentPage}
           setPage={setCurrentPage}
         />
