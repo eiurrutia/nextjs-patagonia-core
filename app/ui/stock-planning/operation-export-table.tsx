@@ -4,18 +4,18 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { CardSkeleton } from '@/app/ui/skeletons';
 import Pagination from '@/app/ui/pagination';
+import TableSearch from '@/app/ui/table-search';
 
 export default function OperationsExportTable() {
   const params = useParams() as { id?: string };
   const id = params?.id;
 
   const [exportData, setExportData] = useState<any[]>([]);
+  const [filteredExportData, setFilteredExportData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(
-    null
-  );
+  const itemsPerPage = 10;
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
 
   useEffect(() => {
@@ -26,6 +26,7 @@ export default function OperationsExportTable() {
         const response = await fetch(`/api/stock-planning/operation-replenishment?id=${id}`);
         const data = await response.json();
         setExportData(data);
+        setFilteredExportData(data);
       } catch (error) {
         console.error('Error fetching export data:', error);
       } finally {
@@ -40,7 +41,7 @@ export default function OperationsExportTable() {
     if (exportData.length > 0) {
       const columns = Object.keys(exportData[0]);
 
-      // Chack if all ERP_TR_ID and ERP_LINE_ID are null
+      // Check if all ERP_TR_ID and ERP_LINE_ID are null
       const allERP_TR_ID_null = exportData.every((row) => row.ERP_TR_ID == null);
       const allERP_LINE_ID_null = exportData.every((row) => row.ERP_LINE_ID == null);
       const filteredColumns = columns.filter((col) => {
@@ -53,9 +54,20 @@ export default function OperationsExportTable() {
     }
   }, [exportData]);
 
+  const handleSearch = (term: string) => {
+    const lowercasedTerm = term.toLowerCase();
+    const filtered = exportData.filter((row) =>
+      Object.values(row).some((value) =>
+        String(value).toLowerCase().includes(lowercasedTerm)
+      )
+    );
+    setFilteredExportData(filtered);
+    setCurrentPage(1);
+  };
+
   const sortedData = useMemo(() => {
-    if (!sortConfig) return exportData;
-    return [...exportData].sort((a, b) => {
+    if (!sortConfig) return filteredExportData;
+    return [...filteredExportData].sort((a, b) => {
       const aValue = a[sortConfig.key];
       const bValue = b[sortConfig.key];
 
@@ -64,12 +76,12 @@ export default function OperationsExportTable() {
       if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [exportData, sortConfig]);
+  }, [filteredExportData, sortConfig]);
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return sortedData.slice(startIndex, startIndex + itemsPerPage);
-  }, [sortedData, currentPage, itemsPerPage]);
+  }, [sortedData, currentPage]);
 
   const handleSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
@@ -80,10 +92,10 @@ export default function OperationsExportTable() {
   };
 
   const downloadCSV = () => {
-    if (!exportData || exportData.length === 0) return;
+    if (!filteredExportData || filteredExportData.length === 0) return;
 
     const headers = visibleColumns.join(',');
-    const rows = exportData
+    const rows = filteredExportData
       .map((row) => visibleColumns.map((col) => `"${row[col] ?? ''}"`).join(','))
       .join('\n');
 
@@ -107,6 +119,10 @@ export default function OperationsExportTable() {
 
   return (
     <div>
+      <div className="mb-4">
+        <TableSearch placeholder="Buscar en operaciones exportadas..." onSearch={handleSearch} />
+      </div>
+
       <div className="flex justify-end mb-4">
         <button
           onClick={downloadCSV}
@@ -151,7 +167,7 @@ export default function OperationsExportTable() {
       {/* Pagination */}
       <div className="mt-5 flex w-full justify-center">
         <Pagination
-          totalPages={Math.ceil(sortedData.length / itemsPerPage)}
+          totalPages={Math.ceil(filteredExportData.length / itemsPerPage)}
           currentPage={currentPage}
           setPage={setCurrentPage}
         />
