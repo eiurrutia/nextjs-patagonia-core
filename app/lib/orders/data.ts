@@ -230,8 +230,10 @@ export async function fetchInShopifyNoOmsDifference(startDate: string, endDate: 
       ON SH.NAME = OMS.ECOMMERCE_NAME
     WHERE OMS.ORDER_ID IS NULL
       AND SH.FINANCIAL_STATUS = 'paid'
-      AND SH.CREATED_AT BETWEEN ? AND ?
-    ORDER BY SH.ORDER_ID DESC`;
+      AND SH.CREATED_AT >= ? 
+      AND SH.CREATED_AT < DATEADD(DAY, 1, ?)
+    ORDER BY SH.ORDER_ID DESC
+  `;
 
   const binds = [startDate, endDate];
 
