@@ -209,8 +209,10 @@ export async function fetchInOmsNoErpDifference(startDate: string, endDate: stri
       ON SH.NAME = OMS.ECOMMERCE_NAME
     WHERE OMS.ECOMMERCE_NAME <> ''
       AND EPS.SALESID IS NULL
-      AND OMS.ORDER_DATE BETWEEN ? AND ?
-    ORDER BY OMS.ECOMMERCE_NAME DESC`;
+      AND OMS.ORDER_DATE >= ? 
+      AND OMS.ORDER_DATE < DATEADD(DAY, 1, ?)
+    ORDER BY OMS.ECOMMERCE_NAME DESC
+  `;
 
   const binds = [startDate, endDate];
 
