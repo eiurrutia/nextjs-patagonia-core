@@ -288,7 +288,7 @@ export async function fetchQuantityDiscrepancy(
                 s.CREATED_AT,
                 SUM(s.QUANTITY) AS total_cantidad_SHOPIFY
             FROM PATAGONIA.CORE_TEST.SHOPIFY_ORDERS_LINE s
-            WHERE s.CREATED_AT BETWEEN ? AND ?
+            WHERE s.CREATED_AT >= ? AND s.CREATED_AT < DATEADD(DAY, 1, ?)
             GROUP BY
                 s.ORDER_ID, s.ORDER_NAME, s.CREATED_AT
         ) AS shop
@@ -327,6 +327,10 @@ export async function fetchQuantityDiscrepancy(
         )
     ORDER BY TRY_TO_NUMBER(erp.PURCHORDERFORMNUM) ASC;
   `;
+
+  // Ajustar la fecha de fin para incluir todo el día
+  const endDateAdjusted = new Date(endDate);
+  endDateAdjusted.setDate(endDateAdjusted.getDate() + 1);
 
   const binds = [startDate, endDate];
 
