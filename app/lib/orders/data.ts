@@ -276,37 +276,41 @@ export async function fetchQuantityDiscrepancy(
         CAST(erp.total_cantidad_ERP AS INT) AS TOTAL_QUANTITY_ERP,
         oms.ORDER_ID AS OMS_ORDER_ID
     FROM
-        (SELECT
-            s.ORDER_ID,
-            s.ORDER_NAME,
-            s.CREATED_AT,
-            SUM(s.QUANTITY) AS total_cantidad_SHOPIFY
-         FROM
-            PATAGONIA.CORE_TEST.SHOPIFY_ORDERS_LINE s
-         WHERE
-            s.CREATED_AT BETWEEN ? AND ?
-         GROUP BY
-            s.ORDER_ID,
-            s.ORDER_NAME,
-            s.CREATED_AT) AS shop
+        -- Shopify Aggregated Data
+        (
+            SELECT
+                s.ORDER_ID,
+                s.ORDER_NAME,
+                s.CREATED_AT,
+                SUM(s.QUANTITY) AS total_cantidad_SHOPIFY
+            FROM PATAGONIA.CORE_TEST.SHOPIFY_ORDERS_LINE s
+            WHERE s.CREATED_AT BETWEEN ? AND ?
+            GROUP BY
+                s.ORDER_ID, s.ORDER_NAME, s.CREATED_AT
+        ) AS shop
+    INNER JOIN
+        -- ERP Aggregated Data (only existing in ERP)
+        (
+            SELECT
+                s.PURCHORDERFORMNUM,
+                SUM(s.QTY) AS total_cantidad_ERP
+            FROM PATAGONIA.CORE_TEST.ERP_PROCESSED_SALESLINE s
+            WHERE s.ITEMID != 'DESPACHO'
+            GROUP BY s.PURCHORDERFORMNUM
+        ) AS erp
+        ON shop.ORDER_NAME = TRY_TO_NUMBER(erp.PURCHORDERFORMNUM)
     LEFT JOIN
-        (SELECT
-            s.PURCHORDERFORMNUM,
-            SUM(s.QTY) AS total_cantidad_ERP
-         FROM
-            PATAGONIA.CORE_TEST.ERP_PROCESSED_SALESLINE s
-         WHERE
-            s.ITEMID != 'DESPACHO'
-         GROUP BY
-            s.PURCHORDERFORMNUM) AS erp
-    ON
-        shop.ORDER_NAME = TRY_TO_NUMBER(erp.PURCHORDERFORMNUM)
-    LEFT JOIN
-        PATAGONIA.CORE_TEST.OMS_SUBORDERS oms
-    ON
-        shop.ORDER_NAME = oms.ECOMMERCE_NAME
+        -- OMS Consolidated Data (Single Row Per Order)
+        (
+            SELECT
+                ECOMMERCE_NAME,
+                MAX(ORDER_ID) AS ORDER_ID
+            FROM PATAGONIA.CORE_TEST.OMS_SUBORDERS
+            GROUP BY ECOMMERCE_NAME
+        ) AS oms
+        ON shop.ORDER_NAME = oms.ECOMMERCE_NAME
     WHERE
-        shop.total_cantidad_SHOPIFY != erp.total_cantidad_ERP
+        shop.total_cantidad_SHOPIFY != CAST(erp.total_cantidad_ERP AS INT)
         AND NOT EXISTS (
             SELECT 1
             FROM PATAGONIA.CORE_TEST.ERP_PROCESSED_SALESLINE e
@@ -317,8 +321,7 @@ export async function fetchQuantityDiscrepancy(
             FROM PATAGONIA.CORE_TEST.ERP_PROCESSED_SALESLINE e
             WHERE e.PURCHORDERFORMNUM = CONCAT(shop.ORDER_NAME, '1')
         )
-    ORDER BY
-        TRY_TO_NUMBER(erp.PURCHORDERFORMNUM) ASC;
+    ORDER BY TRY_TO_NUMBER(erp.PURCHORDERFORMNUM) ASC;
   `;
 
   const binds = [startDate, endDate];
