@@ -1,4 +1,4 @@
-import { ArrowUpOnSquareIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { ArrowUpOnSquareIcon, ClockIcon, UserIcon } from '@heroicons/react/24/outline';
 import { lusitana } from '@/app/ui/fonts';
 import { useEffect, useState } from 'react';
 import { Order } from '@/app/lib/definitions';
@@ -97,7 +97,7 @@ export default function InOmsNoErpDifferenceCard({
               key={order.ORDER_ID}
               className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col space-y-2 relative"
             >
-              <div className="top-2 right-2 flex justify-end space-x-2">
+              <div className="absolute top-2 right-2 flex justify-end space-x-2">
                 <a
                   href={`https://patagonia.omni.pro/orders/esaleorder/${encodeURIComponent(order.ORDER_ID)}`}
                   className="text-blue-500 hover:underline text-sm font-semibold"
@@ -120,7 +120,10 @@ export default function InOmsNoErpDifferenceCard({
               <div className="mt-8 flex items-center space-x-2 text-sm text-gray-700">
                 <ArrowUpOnSquareIcon className="h-5 w-5 text-gray-500" />
                 <span className='font-semibold'>{order.ECOMMERCE_NAME}</span>
-                <span className="text-gray-500"> - {order.PARTNER_NAME}</span>
+              </div>
+              <div className="flex items-center space-x-2  text-sm text-gray-700">
+                <UserIcon className="h-5 w-5 text-gray-500" />
+                <span className="text-gray-500">{order.PARTNER_NAME}</span>
               </div>
               <div className="flex items-center space-x-2 text-sm text-gray-500">
                 <ClockIcon className="h-5 w-5 text-gray-500" />
