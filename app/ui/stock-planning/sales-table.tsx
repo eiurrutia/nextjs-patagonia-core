@@ -26,7 +26,7 @@ export default function SalesTable({ startDate, endDate, query, currentPage, set
         const response = await fetch(
           `/api/stock-planning/sales?startDate=${startDate}&endDate=${endDate}&query=${encodeURIComponent(
             query
-          )}&page=${currentPage}`
+          )}&page=${currentPage}&sortKey=${sortConfig?.key || ''}&sortDirection=${sortConfig?.direction || ''}`
         );
         const data: SalesData[] = await response.json();
         setSalesData(data);
@@ -40,9 +40,7 @@ export default function SalesTable({ startDate, endDate, query, currentPage, set
     async function fetchTotalPages() {
       try {
         const response = await fetch(
-          `/api/stock-planning/sales-count?startDate=${startDate}&endDate=${endDate}&query=${encodeURIComponent(
-            query
-          )}`
+          `/api/stock-planning/sales-count?startDate=${startDate}&endDate=${endDate}&query=${encodeURIComponent(query)}`
         );
         const { totalCount } = await response.json();
         setTotalPages(Math.ceil(totalCount / limit));
@@ -53,11 +51,11 @@ export default function SalesTable({ startDate, endDate, query, currentPage, set
 
     fetchSalesData();
     fetchTotalPages();
-  }, [startDate, endDate, query, currentPage]);
+  }, [startDate, endDate, query, currentPage, sortConfig]);
 
   const handleSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+    if (sortConfig?.key === key && sortConfig.direction === 'asc') {
       direction = 'desc';
     }
     setSortConfig({ key, direction });

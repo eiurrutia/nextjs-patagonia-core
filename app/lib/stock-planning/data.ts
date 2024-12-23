@@ -147,10 +147,27 @@ export async function fetchAllDeliveryOptions(): Promise<string[]> {
  * Function to fetch sales data from the database with pivot.
  */
 export async function fetchSalesData(
-    query: string, startDate: string, endDate: string, page: number, noPagination: boolean = false
-  ): Promise<SalesData[]> {
+  query: string,
+  startDate: string,
+  endDate: string,
+  page: number,
+  noPagination: boolean = false,
+  sortKey?: string,
+  sortDirection?: 'asc' | 'desc'
+): Promise<SalesData[]> {
   const limit = noPagination ? '' : 'LIMIT 10';
   const offset = noPagination ? '' : `OFFSET ${(page - 1) * 10}`;
+  const validSortKeys = [
+    'SKU', 'CD', 'COYHAIQUE', 'LASCONDES', 'MALLSPORT', 'COSTANERA', 
+    'CONCEPCION', 'PTOVARAS', 'LADEHESA', 'PUCON', 'TEMUCO', 
+    'OSORNO', 'ALERCE', 'BNAVENTURA'
+  ];
+
+  let orderByClause = 'ORDER BY SKU';
+  if (sortKey && validSortKeys.includes(sortKey.toUpperCase())) {
+    orderByClause = `ORDER BY ${sortKey.toUpperCase()} ${sortDirection === 'desc' ? 'DESC' : 'ASC'}`;
+  }
+
   const sqlText = `
     SELECT 
       SKU,
@@ -173,11 +190,10 @@ export async function fetchSalesData(
       AND (
         INVOICEID LIKE '39-%'
         OR INVOICEID LIKE '33-%'
-    )
+      )
       AND UPPER(CANAL) <> 'ECOMERCE'
     GROUP BY SKU
-    ORDER BY SKU
-    ${limit} ${offset};
+    ${orderByClause} ${limit} ${offset};
   `;
 
   const binds = [startDate, endDate, `%${query.toUpperCase()}%`];

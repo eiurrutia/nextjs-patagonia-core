@@ -6,9 +6,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const startDate = req.query.startDate as string;
   const endDate = req.query.endDate as string;
   const page = parseInt(req.query.page as string, 10) || 1;
+  const sortKey = req.query.sortKey as string;
+  const sortDirection = req.query.sortDirection as 'asc' | 'desc';
 
   try {
-    const data = await fetchSalesData(query, startDate, endDate, page);
+    const data = await fetchSalesData(query, startDate, endDate, page, false, sortKey, sortDirection);
     res.status(200).json(data);
   } catch (error) {
     console.error('Error fetching sales data:', error);
