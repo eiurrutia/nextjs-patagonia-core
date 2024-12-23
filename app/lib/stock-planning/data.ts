@@ -314,10 +314,28 @@ export async function fetchCDStockCount(query: string): Promise<number> {
  * @example
  * const storesStockData = await fetchStoresStockData('sku', 1);
  */
-export async function fetchStoresStockData(query: string = '', page: number, noPagination: boolean = false): Promise<StoresStockData[]> {
+export async function fetchStoresStockData(
+  query: string = '',
+  page: number,
+  noPagination: boolean = false,
+  sortKey?: string,
+  sortDirection?: 'asc' | 'desc'
+): Promise<StoresStockData[]> {
   const limit = noPagination ? '' : 'LIMIT 10';
   const offset = noPagination ? '' : `OFFSET ${(page - 1) * 10}`;
-  
+  const validSortKeys = [
+    'SKU',
+    'COYHAIQUE_AVAILABLE', 'LASCONDES_AVAILABLE', 'MALLSPORT_AVAILABLE',
+    'COSTANERA_AVAILABLE', 'CONCEPCION_AVAILABLE', 'PTOVARAS_AVAILABLE',
+    'LADEHESA_AVAILABLE', 'PUCON_AVAILABLE', 'TEMUCO_AVAILABLE',
+    'OSORNO_AVAILABLE', 'ALERCE_AVAILABLE', 'BNAVENTURA_AVAILABLE'
+  ];
+
+  let orderByClause = 'ORDER BY SKU';
+  if (sortKey && validSortKeys.includes(sortKey.toUpperCase())) {
+    orderByClause = `ORDER BY ${sortKey.toUpperCase()} ${sortDirection === 'desc' ? 'DESC' : 'ASC'}`;
+  }
+
   const sqlText = `
     SELECT
       REPLACE(SKU, '-', '') AS SKU,
@@ -348,7 +366,7 @@ export async function fetchStoresStockData(query: string = '', page: number, noP
     FROM PATAGONIA.CORE_TEST.ERP_INVENTORY
     WHERE UPPER(REPLACE(SKU, '-', '')) LIKE ?
     GROUP BY SKU
-    ORDER BY SKU
+    ${orderByClause}
     ${limit} ${offset};
   `;
 
