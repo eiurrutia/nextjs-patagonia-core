@@ -174,6 +174,7 @@ export async function fetchSalesData(
         INVOICEID LIKE '39-%'
         OR INVOICEID LIKE '33-%'
     )
+      AND UPPER(CANAL) <> 'ECOMERCE'
     GROUP BY SKU
     ORDER BY SKU
     ${limit} ${offset};
