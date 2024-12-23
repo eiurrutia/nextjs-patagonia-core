@@ -1,7 +1,14 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/pages/api/auth/[...nextauth]';
 import { fetchSalesCount } from '@/app/lib/stock-planning/data';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const session = await getServerSession(req, res, authOptions);
+  if (!session) {
+    console.log('No autorizado. Debes iniciar sesión.');
+    return res.status(401).json({ message: 'No autorizado. Debes iniciar sesión.' });
+  }
   const query = (req.query.query as string) || '';
   const startDate = req.query.startDate as string;
   const endDate = req.query.endDate as string;

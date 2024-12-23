@@ -147,10 +147,27 @@ export async function fetchAllDeliveryOptions(): Promise<string[]> {
  * Function to fetch sales data from the database with pivot.
  */
 export async function fetchSalesData(
-    query: string, startDate: string, endDate: string, page: number, noPagination: boolean = false
-  ): Promise<SalesData[]> {
+  query: string,
+  startDate: string,
+  endDate: string,
+  page: number,
+  noPagination: boolean = false,
+  sortKey?: string,
+  sortDirection?: 'asc' | 'desc'
+): Promise<SalesData[]> {
   const limit = noPagination ? '' : 'LIMIT 10';
   const offset = noPagination ? '' : `OFFSET ${(page - 1) * 10}`;
+  const validSortKeys = [
+    'SKU', 'CD', 'COYHAIQUE', 'LASCONDES', 'MALLSPORT', 'COSTANERA', 
+    'CONCEPCION', 'PTOVARAS', 'LADEHESA', 'PUCON', 'TEMUCO', 
+    'OSORNO', 'ALERCE', 'BNAVENTURA'
+  ];
+
+  let orderByClause = 'ORDER BY SKU';
+  if (sortKey && validSortKeys.includes(sortKey.toUpperCase())) {
+    orderByClause = `ORDER BY ${sortKey.toUpperCase()} ${sortDirection === 'desc' ? 'DESC' : 'ASC'}`;
+  }
+
   const sqlText = `
     SELECT 
       SKU,
@@ -173,10 +190,10 @@ export async function fetchSalesData(
       AND (
         INVOICEID LIKE '39-%'
         OR INVOICEID LIKE '33-%'
-    )
+      )
+      AND UPPER(CANAL) <> 'ECOMERCE'
     GROUP BY SKU
-    ORDER BY SKU
-    ${limit} ${offset};
+    ${orderByClause} ${limit} ${offset};
   `;
 
   const binds = [startDate, endDate, `%${query.toUpperCase()}%`];
@@ -227,11 +244,20 @@ export async function fetchSalesCount(
  * @returns A promise with the stock data.
  */
 export async function fetchCDStockData(
-    query: string = '', page: number = 1, noPagination: boolean = false
-  ): Promise<CDStockData[]> {
+  query: string = '',
+  page: number = 1,
+  noPagination: boolean = false,
+  sortKey?: string,
+  sortDirection?: 'asc' | 'desc'
+): Promise<CDStockData[]> {
   const limit = noPagination ? '' : 'LIMIT 10';
   const offset = noPagination ? '' : `OFFSET ${(page - 1) * 10}`;
-  
+  const validSortKeys = ['SKU', 'STOCKERP', 'STOCKWMS', 'MINSTOCK'];
+
+  let orderByClause = 'ORDER BY SKU';
+  if (sortKey && validSortKeys.includes(sortKey.toUpperCase())) {
+    orderByClause = `ORDER BY ${sortKey.toUpperCase()} ${sortDirection === 'desc' ? 'DESC' : 'ASC'}`;
+  }
 
   const sqlText = `
     SELECT
@@ -246,12 +272,12 @@ export async function fetchCDStockData(
       AND erp.INVENTORYWAREHOUSEID = 'CD'
       AND UPPER(erp.INVENTORYSTATUSID) = 'DISPONIBLE'
     GROUP BY erp.SKU
-    ORDER BY erp.SKU
-    ${limit} ${offset};
+    ${orderByClause}
+    ${limit}
+    ${offset};
   `;
 
   const binds = [`%${query.toUpperCase()}%`];
-
   return await executeQuery<CDStockData>(sqlText, binds);
 }
 
@@ -288,10 +314,28 @@ export async function fetchCDStockCount(query: string): Promise<number> {
  * @example
  * const storesStockData = await fetchStoresStockData('sku', 1);
  */
-export async function fetchStoresStockData(query: string = '', page: number, noPagination: boolean = false): Promise<StoresStockData[]> {
+export async function fetchStoresStockData(
+  query: string = '',
+  page: number,
+  noPagination: boolean = false,
+  sortKey?: string,
+  sortDirection?: 'asc' | 'desc'
+): Promise<StoresStockData[]> {
   const limit = noPagination ? '' : 'LIMIT 10';
   const offset = noPagination ? '' : `OFFSET ${(page - 1) * 10}`;
-  
+  const validSortKeys = [
+    'SKU',
+    'COYHAIQUE_AVAILABLE', 'LASCONDES_AVAILABLE', 'MALLSPORT_AVAILABLE',
+    'COSTANERA_AVAILABLE', 'CONCEPCION_AVAILABLE', 'PTOVARAS_AVAILABLE',
+    'LADEHESA_AVAILABLE', 'PUCON_AVAILABLE', 'TEMUCO_AVAILABLE',
+    'OSORNO_AVAILABLE', 'ALERCE_AVAILABLE', 'BNAVENTURA_AVAILABLE'
+  ];
+
+  let orderByClause = 'ORDER BY SKU';
+  if (sortKey && validSortKeys.includes(sortKey.toUpperCase())) {
+    orderByClause = `ORDER BY ${sortKey.toUpperCase()} ${sortDirection === 'desc' ? 'DESC' : 'ASC'}`;
+  }
+
   const sqlText = `
     SELECT
       REPLACE(SKU, '-', '') AS SKU,
@@ -322,7 +366,7 @@ export async function fetchStoresStockData(query: string = '', page: number, noP
     FROM PATAGONIA.CORE_TEST.ERP_INVENTORY
     WHERE UPPER(REPLACE(SKU, '-', '')) LIKE ?
     GROUP BY SKU
-    ORDER BY SKU
+    ${orderByClause}
     ${limit} ${offset};
   `;
 
