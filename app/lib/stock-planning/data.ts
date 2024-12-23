@@ -244,11 +244,20 @@ export async function fetchSalesCount(
  * @returns A promise with the stock data.
  */
 export async function fetchCDStockData(
-    query: string = '', page: number = 1, noPagination: boolean = false
-  ): Promise<CDStockData[]> {
+  query: string = '',
+  page: number = 1,
+  noPagination: boolean = false,
+  sortKey?: string,
+  sortDirection?: 'asc' | 'desc'
+): Promise<CDStockData[]> {
   const limit = noPagination ? '' : 'LIMIT 10';
   const offset = noPagination ? '' : `OFFSET ${(page - 1) * 10}`;
-  
+  const validSortKeys = ['SKU', 'STOCKERP', 'STOCKWMS', 'MINSTOCK'];
+
+  let orderByClause = 'ORDER BY SKU';
+  if (sortKey && validSortKeys.includes(sortKey.toUpperCase())) {
+    orderByClause = `ORDER BY ${sortKey.toUpperCase()} ${sortDirection === 'desc' ? 'DESC' : 'ASC'}`;
+  }
 
   const sqlText = `
     SELECT
@@ -263,12 +272,12 @@ export async function fetchCDStockData(
       AND erp.INVENTORYWAREHOUSEID = 'CD'
       AND UPPER(erp.INVENTORYSTATUSID) = 'DISPONIBLE'
     GROUP BY erp.SKU
-    ORDER BY erp.SKU
-    ${limit} ${offset};
+    ${orderByClause}
+    ${limit}
+    ${offset};
   `;
 
   const binds = [`%${query.toUpperCase()}%`];
-
   return await executeQuery<CDStockData>(sqlText, binds);
 }
 
