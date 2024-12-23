@@ -1,7 +1,14 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/pages/api/auth/[...nextauth]';
 import { saveReplenishment } from '@/app/lib/stock-planning/data';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const session = await getServerSession(req, res, authOptions);
+  if (!session) {
+    console.log('UNAUTHORIZED. YOU MUST LOG IN.');
+    return res.status(401).json({ MESSAGE: 'UNAUTHORIZED. YOU MUST LOG IN.' });
+  }
   if (req.method !== 'POST') {
     return res.status(405).json({ MESSAGE: 'METHOD NOT ALLOWED' });
   }
