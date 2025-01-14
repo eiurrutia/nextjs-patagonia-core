@@ -102,6 +102,7 @@ export default function SegmentationDetailTable() {
   };
 
   if (loading) return <CardSkeleton />;
+  if (!segmentation.length) return null;
 
   return (
     <div>

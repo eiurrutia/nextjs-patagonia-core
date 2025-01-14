@@ -33,6 +33,7 @@ export default function ReplenishmentTable({
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isProcessingReplenishment, setIsProcessingReplenishment] = useState(false);
   const [saveDeliveriesSelected, setSaveDeliveriesSelected] = useState(true);
+  const [saveSegmentationHistory, setSaveSegmentationHistory] = useState(false);
   const [selectedStores, setSelectedStores] = useState<string[]>([]);
   const [createERPchecked, setCreateERPChecked] = useState(false);
   const [storeList, setStoreList] = useState<string[]>([]);
@@ -214,8 +215,10 @@ export default function ReplenishmentTable({
     if (saveDeliveriesSelected) {
       initialSteps.push({ message: 'Guardando selección de deliveries', completed: false, level: 1 });
     }
+    if (saveSegmentationHistory) {
+      initialSteps.push({ message: 'Guardando historial de segmentación', completed: false, level: 1 });
+    }
     initialSteps.push(
-      { message: 'Guardando historial de segmentación', completed: false, level: 1 },
       { message: 'Guardando registro de reposición', completed: false, level: 1 }
     );
     if (createERPchecked) {
@@ -247,7 +250,7 @@ export default function ReplenishmentTable({
       }
 
       // Save segmentation history in batches
-      {
+      if (saveSegmentationHistory) {
         const batchStartTime = Date.now();
         for (let i = 0; i < segmentationData.length; i += batchSize) {
           const batch = segmentationData.slice(i, i + batchSize);
@@ -630,6 +633,14 @@ export default function ReplenishmentTable({
                         onChange={(e) => setSaveDeliveriesSelected(e.target.checked)}
                       />
                       <span>Guardar selección de deliveries</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={saveSegmentationHistory}
+                        onChange={(e) => setSaveSegmentationHistory(e.target.checked)}
+                      />
+                      <span>Guardar registro de segmentación utilizada</span>
                     </label>
                     <label className="flex items-center space-x-2">
                       <input type="checkbox"/>
