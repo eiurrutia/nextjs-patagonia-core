@@ -284,6 +284,8 @@ export type CDStockData = {
 export type  SalesData = {
   SKU: string;
   CD: number;
+  ECOM: number;
+  ADMIN: number;
   COYHAIQUE: number;
   LASCONDES: number;
   MALLSPORT: number;
