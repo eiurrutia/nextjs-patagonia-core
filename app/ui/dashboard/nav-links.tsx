@@ -50,7 +50,7 @@ const links = [
     name: 'Stock Planning',
     href: '/dashboard/stock-planning',
     icon: AdjustmentsVerticalIcon,
-    roles: ['admin'],
+    roles: ['admin', 'user'],
   },
   { 
     name: 'Users',
