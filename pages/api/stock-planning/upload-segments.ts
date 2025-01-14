@@ -22,10 +22,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const data = req.body;
-    await truncateSegmentationTable();
+    const { data, isFirstBatch } = req.body;
+
+    if (isFirstBatch) {
+      console.log('Truncating segmentation table');
+      await truncateSegmentationTable();
+    }
+
+    console.log(`Received ${data.length} segments`);
     await uploadStockSegments(data);
-    res.status(200).json({ message: 'Upload successful' });
+
+    res.status(200).json({ message: 'Batch uploaded successfully' });
   } catch (error) {
     console.error('Upload error:', error);
     res.status(500).json({ message: 'Internal Server Error' });

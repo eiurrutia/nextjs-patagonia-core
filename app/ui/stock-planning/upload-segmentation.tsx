@@ -46,27 +46,32 @@ export default function UploadSegmentation({ onUploadComplete }: { onUploadCompl
         return segment;
       });
 
-      try {
-        const response = await fetch('/api/stock-planning/upload-segments', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to upload stock segmentation');
+      const batchSize = 7000;
+      for (let i = 0; i < data.length; i += batchSize) {
+        const batch = data.slice(i, i + batchSize);
+        const isFirstBatch = i === 0;
+  
+        try {
+          const response = await fetch('/api/stock-planning/upload-segments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: batch, isFirstBatch }),
+          });
+  
+          if (!response.ok) {
+            throw new Error('Failed to upload batch');
+          }
+        } catch (error) {
+          console.error('Error uploading batch:', error);
+          alert('Failed to upload batch.');
+          return;
         }
-
-        alert('File uploaded successfully!');
-        onUploadComplete();
-      } catch (error) {
-        console.error('Error uploading file:', error);
-        alert('Failed to upload file.');
-      } finally {
-        setIsUploading(false);
-        setFile(null);
-        setIsModalOpen(false);
       }
+      alert('File uploaded successfully!');
+      onUploadComplete();
+      setIsUploading(false);
+      setIsModalOpen(false);
+      setFile(null);
     };
 
     reader.readAsText(file);

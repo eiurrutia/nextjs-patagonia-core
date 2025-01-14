@@ -96,7 +96,7 @@ export default function SalesTable({ startDate, endDate, query, currentPage, set
           <tr>
             {[
               'SKU',
-              'CD',
+              'ECOM',
               'COYHAIQUE',
               'LASCONDES',
               'MALLSPORT',
@@ -109,6 +109,7 @@ export default function SalesTable({ startDate, endDate, query, currentPage, set
               'OSORNO',
               'ALERCE',
               'BNAVENTURA',
+              'ADMIN',
             ].map((column) => (
               <th
                 key={column}
@@ -124,7 +125,7 @@ export default function SalesTable({ startDate, endDate, query, currentPage, set
           {sortedData.map((sale) => (
             <tr key={sale.SKU}>
               <td className="border px-4 py-2">{sale.SKU}</td>
-              <td className="border px-4 py-2">{sale.CD}</td>
+              <td className="border px-4 py-2">{sale.ECOM}</td>
               <td className="border px-4 py-2">{sale.COYHAIQUE}</td>
               <td className="border px-4 py-2">{sale.LASCONDES}</td>
               <td className="border px-4 py-2">{sale.MALLSPORT}</td>
@@ -137,6 +138,7 @@ export default function SalesTable({ startDate, endDate, query, currentPage, set
               <td className="border px-4 py-2">{sale.OSORNO}</td>
               <td className="border px-4 py-2">{sale.ALERCE}</td>
               <td className="border px-4 py-2">{sale.BNAVENTURA}</td>
+              <td className="border px-4 py-2">{sale.ADMIN}</td>
             </tr>
           ))}
         </tbody>
