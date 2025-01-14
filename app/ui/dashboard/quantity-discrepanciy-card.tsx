@@ -24,7 +24,6 @@ export default function QuantityDiscrepancyCard({
         )}&endDate=${encodeURIComponent(endDate)}`
       );
       const data = await response.json();
-      console.log('# discrepanciass', data);
       setDiscrepancies(data);
       setLoading(false);
     }
