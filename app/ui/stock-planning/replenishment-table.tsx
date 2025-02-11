@@ -349,7 +349,7 @@ export default function ReplenishmentTable({
                 ProductStyleId: line.PRODUCTSTYLEID,
                 OrderedInventoryStatusId: line.ORDEREDINVENTORYSTATUSID,
                 ShippingWarehouseLocationId: line.SHIPPINGWAREHOUSELOCATIONID,
-                TransferQuantity: line.REPLENISHMENT,
+                TransferQuantity: line.TRANSFERQUANTITY,
                 RequestedReceiptDate: new Date().toISOString(),
                 RequestedShippingDate: new Date().toISOString(),
                 SalesTaxItemGroupCodeShipment: 'IVA',
