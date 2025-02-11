@@ -314,11 +314,15 @@ export async function fetchQuantityDiscrepancy(
          GROUP BY
             s.PURCHORDERFORMNUM) AS erp
     ON
-        shop.ORDER_NAME = TRY_TO_NUMBER(erp.PURCHORDERFORMNUM)
+        CAST(shop.ORDER_NAME AS STRING) = CAST(erp.PURCHORDERFORMNUM AS STRING)
+        AND erp.PURCHORDERFORMNUM IS NOT NULL 
+        AND erp.PURCHORDERFORMNUM <> ''
     LEFT JOIN
         PATAGONIA.CORE_TEST.OMS_SUBORDERS oms
     ON
-        shop.ORDER_NAME = oms.ECOMMERCE_NAME
+        CAST(shop.ORDER_NAME AS STRING) = CAST(oms.ECOMMERCE_NAME AS STRING)
+        AND oms.ECOMMERCE_NAME IS NOT NULL 
+        AND oms.ECOMMERCE_NAME <> ''
     WHERE
         shop.total_cantidad_SHOPIFY != erp.total_cantidad_ERP
         AND NOT EXISTS (
@@ -332,7 +336,7 @@ export async function fetchQuantityDiscrepancy(
             WHERE e.PURCHORDERFORMNUM = CONCAT(shop.ORDER_NAME, '1')
         )
     ORDER BY
-        TRY_TO_NUMBER(erp.PURCHORDERFORMNUM) ASC;
+        erp.PURCHORDERFORMNUM ASC;
   `;
 
   const binds = [startDate, endDate];
