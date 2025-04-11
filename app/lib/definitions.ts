@@ -337,6 +337,7 @@ export type ReplenishmentData = {
   ACTUAL_STOCK: number;
   ORDERED_QTY: number;
   REPLENISHMENT: number;
+  DELIVERY: string;
 }
 
 export type ReplenishmentRecord = {

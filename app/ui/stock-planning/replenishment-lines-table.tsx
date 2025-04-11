@@ -12,7 +12,7 @@ export default function ReplenishmentLinesTable() {
   const [filteredLines, setFilteredLines] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [groupBy, setGroupBy] = useState<'SKU' | 'CC' | 'TEAM' | 'CATEGORY'>('SKU');
+  const [groupBy, setGroupBy] = useState<'SKU' | 'CC' | 'TEAM' | 'CATEGORY'| 'DELIVERY'>('SKU');
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const itemsPerPage = 10;
 
@@ -105,11 +105,11 @@ export default function ReplenishmentLinesTable() {
       <div className="flex justify-between items-center mb-4">
         {/* Group By Buttons */}
         <div className="flex gap-2">
-          {['SKU', 'CC', 'TEAM', 'CATEGORY'].map((option) => (
+          {['SKU', 'CC', 'TEAM', 'CATEGORY', 'DELIVERY'].map((option) => (
             <button
               key={option}
               onClick={() => {
-                setGroupBy(option as 'SKU' | 'CC' | 'TEAM' | 'CATEGORY');
+                setGroupBy(option as 'SKU' | 'CC' | 'TEAM' | 'CATEGORY' | 'DELIVERY');
                 setCurrentPage(1);
               }}
               className={`px-4 py-2 rounded ${

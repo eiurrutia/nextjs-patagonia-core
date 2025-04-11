@@ -92,6 +92,7 @@ export async function calculateReplenishment(
           ACTUAL_STOCK: stockActual,
           ORDERED_QTY: orderedQuantity,
           REPLENISHMENT: replenishment,
+          DELIVERY: segmentsMap.get(SKU)?.DELIVERY || '',
         });
         remainingCDStock -= replenishment;
       }
