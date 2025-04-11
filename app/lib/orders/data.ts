@@ -237,8 +237,8 @@ export async function fetchInShopifyNoOmsDifference(startDate: string, endDate: 
   const sqlText = `
     SELECT
         SH.*
-    FROM PATAGONIA.CORE_TEST.SHOPIFY_ORDERS SH
-    LEFT JOIN PATAGONIA.CORE_TEST.OMS_SUBORDERS OMS
+    FROM SHOPIFY_ORDERS SH
+    LEFT JOIN OMS_SUBORDERS OMS
       ON SH.NAME = OMS.ECOMMERCE_NAME
     WHERE OMS.ORDER_ID IS NULL
       AND SH.FINANCIAL_STATUS = 'paid'
