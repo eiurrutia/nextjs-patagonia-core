@@ -434,9 +434,9 @@ export async function saveReplenishment(record: ReplenishmentRecord): Promise<vo
 
   const sqlInsertReplenishmentLine = `
     INSERT INTO PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS_LINE (
-      REPLENISHMENT_ID, SKU, STORE, SEGMENT, SALES, ACTUAL_STOCK, ORDERED_QTY, REPLENISHMENT, SNOWFLAKE_CREATED_AT
+      REPLENISHMENT_ID, SKU, STORE, SEGMENT, SALES, ACTUAL_STOCK, ORDERED_QTY, REPLENISHMENT, DELIVERY, SNOWFLAKE_CREATED_AT
     )
-    VALUES ${REPLENISHMENT_DATA.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)').join(', ')};
+    VALUES ${REPLENISHMENT_DATA.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)').join(', ')};
   `;
 
   const replenishmentLineBinds = REPLENISHMENT_DATA.flatMap((line) => [
@@ -448,6 +448,7 @@ export async function saveReplenishment(record: ReplenishmentRecord): Promise<vo
     line.ACTUAL_STOCK,
     line.ORDERED_QTY,
     line.REPLENISHMENT,
+    line.DELIVERY,
   ]);
 
   try {
@@ -622,6 +623,7 @@ export async function getReplenishmentLines(id: string, groupBy: string) {
     CC: 'product.ESTILOCOLOR',
     TEAM: 'product.TEAM',
     CATEGORY: 'product.CATEGORY',
+    DELIVERY: 'line.DELIVERY',
   }[groupBy || 'SKU'];
 
   const selectGroupBy = groupBy
@@ -771,6 +773,7 @@ export async function getOperationReplenishment(id: string) {
       prod.TEAM,
       prod.CATEGORY,
       prod.PRODUCTNAME,
+      rpl.DELIVERY,
       rpl.ERP_TR_ID,
       rpl.ERP_LINE_ID
     FROM PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS_LINE rpl

@@ -393,13 +393,6 @@ export default function ReplenishmentTable({
         setProgressSteps(prev => prev.map(step =>
           step.message === 'Cargando repos en ERP' ? { ...step, completed: true, level: 1 } : step
         ));
-  
-        console.log('Aqui va el updateERPInfo');
-        console.log({
-          repID: replenishmentID,
-          erpTRs: erpTRNumbers.join(', '),
-          lines: erpLinesWithInfo
-        });
 
         // Update ERP info in BD
         setProgressSteps(prev => [...prev, { message: 'Actualizando ERP info en BD', completed: false, level: 1 }]);
@@ -461,6 +454,9 @@ export default function ReplenishmentTable({
               <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('STORE')}>
                 Tienda {sortConfig?.key === 'STORE' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
               </th>
+              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('DELIVERY')}>
+                Delivery {sortConfig?.key === 'DELIVERY' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
+              </th>
               <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('SEGMENT')}>
                 Segmentación {sortConfig?.key === 'SEGMENT' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
               </th>
@@ -483,6 +479,7 @@ export default function ReplenishmentTable({
                 <tr key={`${item.SKU}-${item.STORE || index}`}>
                     <td className="border px-4 py-2">{item.SKU}</td>
                     <td className="border px-4 py-2">{item.STORE}</td>
+                    <td className="border px-4 py-2">{item.DELIVERY}</td>
                     <td className="border px-4 py-2">{item.SEGMENT}</td>
                     <td className="border px-4 py-2">{item.SALES}</td>
                     <td className="border px-4 py-2">{item.ACTUAL_STOCK}</td>
