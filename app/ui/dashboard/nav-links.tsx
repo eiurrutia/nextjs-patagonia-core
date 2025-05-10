@@ -16,6 +16,8 @@ import {
   CalculatorIcon,
   RectangleGroupIcon,
   PresentationChartBarIcon,
+  ChartBarSquareIcon,
+  SquaresPlusIcon
 } from '@heroicons/react/24/outline';
 
 const navItems = [
@@ -24,7 +26,6 @@ const navItems = [
     icon: UserGroupIcon,
     roles: ['admin', 'user'],
     items: [
-      { name: 'Dashboard', href: null, icon: PresentationChartBarIcon, roles: ['admin', 'user'] },
       { name: 'Orders', href: '/dashboard/orders', icon: DocumentDuplicateIcon, roles: ['admin', 'user'] },
       { name: 'Customers', href: '/dashboard/customers', icon: UserGroupIcon, roles: ['admin', 'user'] },
       { name: 'Incidences', href: '/dashboard/incidences', icon: BellAlertIcon, roles: ['admin', 'user'] },
@@ -35,7 +36,8 @@ const navItems = [
     icon: RectangleGroupIcon,
     roles: ['admin'],
     items: [
-      { name: 'Stock Planning', href: '/dashboard/stock-planning', icon: CalculatorIcon, roles: ['admin'] },
+      { name: 'Registros Stock Planning', href: '/dashboard/stock-planning', icon: CalculatorIcon, roles: ['admin'] },
+      { name: 'Nueva Reposición', href: '/dashboard/stock-planning/new', icon: SquaresPlusIcon, roles: ['admin'] },
     ],
   },
   {
@@ -44,6 +46,14 @@ const navItems = [
     roles: ['admin'],
     items: [
       { name: 'Registros', href: '/trade-in', icon: DocumentDuplicateIcon, roles: ['admin'] },
+    ],
+  },
+  {
+    name: 'Analytics',
+    icon: ChartBarSquareIcon,
+    roles: ['admin', 'user'],
+    items: [
+      { name: 'Dashboard', href: '/dashboard/analytics', icon: PresentationChartBarIcon, roles: ['admin', 'user'] },
     ],
   },
   { 
