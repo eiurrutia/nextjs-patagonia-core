@@ -284,6 +284,8 @@ export type CDStockData = {
 export type  SalesData = {
   SKU: string;
   CD: number;
+  ECOM: number;
+  ADMIN: number;
   COYHAIQUE: number;
   LASCONDES: number;
   MALLSPORT: number;
@@ -335,6 +337,7 @@ export type ReplenishmentData = {
   ACTUAL_STOCK: number;
   ORDERED_QTY: number;
   REPLENISHMENT: number;
+  DELIVERY: string;
 }
 
 export type ReplenishmentRecord = {

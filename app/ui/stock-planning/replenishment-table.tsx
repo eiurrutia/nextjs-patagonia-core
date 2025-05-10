@@ -33,6 +33,7 @@ export default function ReplenishmentTable({
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isProcessingReplenishment, setIsProcessingReplenishment] = useState(false);
   const [saveDeliveriesSelected, setSaveDeliveriesSelected] = useState(true);
+  const [saveSegmentationHistory, setSaveSegmentationHistory] = useState(false);
   const [selectedStores, setSelectedStores] = useState<string[]>([]);
   const [createERPchecked, setCreateERPChecked] = useState(false);
   const [storeList, setStoreList] = useState<string[]>([]);
@@ -214,8 +215,10 @@ export default function ReplenishmentTable({
     if (saveDeliveriesSelected) {
       initialSteps.push({ message: 'Guardando selección de deliveries', completed: false, level: 1 });
     }
+    if (saveSegmentationHistory) {
+      initialSteps.push({ message: 'Guardando historial de segmentación', completed: false, level: 1 });
+    }
     initialSteps.push(
-      { message: 'Guardando historial de segmentación', completed: false, level: 1 },
       { message: 'Guardando registro de reposición', completed: false, level: 1 }
     );
     if (createERPchecked) {
@@ -247,7 +250,7 @@ export default function ReplenishmentTable({
       }
 
       // Save segmentation history in batches
-      {
+      if (saveSegmentationHistory) {
         const batchStartTime = Date.now();
         for (let i = 0; i < segmentationData.length; i += batchSize) {
           const batch = segmentationData.slice(i, i + batchSize);
@@ -346,7 +349,7 @@ export default function ReplenishmentTable({
                 ProductStyleId: line.PRODUCTSTYLEID,
                 OrderedInventoryStatusId: line.ORDEREDINVENTORYSTATUSID,
                 ShippingWarehouseLocationId: line.SHIPPINGWAREHOUSELOCATIONID,
-                TransferQuantity: line.REPLENISHMENT,
+                TransferQuantity: line.TRANSFERQUANTITY,
                 RequestedReceiptDate: new Date().toISOString(),
                 RequestedShippingDate: new Date().toISOString(),
                 SalesTaxItemGroupCodeShipment: 'IVA',
@@ -390,13 +393,6 @@ export default function ReplenishmentTable({
         setProgressSteps(prev => prev.map(step =>
           step.message === 'Cargando repos en ERP' ? { ...step, completed: true, level: 1 } : step
         ));
-  
-        console.log('Aqui va el updateERPInfo');
-        console.log({
-          repID: replenishmentID,
-          erpTRs: erpTRNumbers.join(', '),
-          lines: erpLinesWithInfo
-        });
 
         // Update ERP info in BD
         setProgressSteps(prev => [...prev, { message: 'Actualizando ERP info en BD', completed: false, level: 1 }]);
@@ -458,6 +454,9 @@ export default function ReplenishmentTable({
               <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('STORE')}>
                 Tienda {sortConfig?.key === 'STORE' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
               </th>
+              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('DELIVERY')}>
+                Delivery {sortConfig?.key === 'DELIVERY' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
+              </th>
               <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('SEGMENT')}>
                 Segmentación {sortConfig?.key === 'SEGMENT' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
               </th>
@@ -480,6 +479,7 @@ export default function ReplenishmentTable({
                 <tr key={`${item.SKU}-${item.STORE || index}`}>
                     <td className="border px-4 py-2">{item.SKU}</td>
                     <td className="border px-4 py-2">{item.STORE}</td>
+                    <td className="border px-4 py-2">{item.DELIVERY}</td>
                     <td className="border px-4 py-2">{item.SEGMENT}</td>
                     <td className="border px-4 py-2">{item.SALES}</td>
                     <td className="border px-4 py-2">{item.ACTUAL_STOCK}</td>
@@ -630,6 +630,14 @@ export default function ReplenishmentTable({
                         onChange={(e) => setSaveDeliveriesSelected(e.target.checked)}
                       />
                       <span>Guardar selección de deliveries</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={saveSegmentationHistory}
+                        onChange={(e) => setSaveSegmentationHistory(e.target.checked)}
+                      />
+                      <span>Guardar registro de segmentación utilizada</span>
                     </label>
                     <label className="flex items-center space-x-2">
                       <input type="checkbox"/>

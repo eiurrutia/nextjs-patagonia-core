@@ -22,7 +22,7 @@ export default function CDStockTable({ query, currentPage, setPage }: CDStockTab
       setLoading(true);
       try {
         const response = await fetch(
-          `/api/stock-planning/stock-cd?query=${encodeURIComponent(query)}&page=${currentPage}`
+          `/api/stock-planning/stock-cd?query=${encodeURIComponent(query)}&page=${currentPage}&sortKey=${sortConfig?.key || ''}&sortDirection=${sortConfig?.direction || ''}`
         );
         const data: CDStockData[] = await response.json();
         setStockData(data);
@@ -47,11 +47,11 @@ export default function CDStockTable({ query, currentPage, setPage }: CDStockTab
 
     fetchCDStockData();
     fetchTotalPages();
-  }, [query, currentPage]);
+  }, [query, currentPage, sortConfig]);
 
   const handleSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+    if (sortConfig?.key === key && sortConfig.direction === 'asc') {
       direction = 'desc';
     }
     setSortConfig({ key, direction });

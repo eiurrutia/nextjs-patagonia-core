@@ -2,11 +2,15 @@ import snowflake from 'snowflake-sdk';
 import { unstable_noStore as noStore } from 'next/cache';
 
 // Snowflake connection pool configuration
+const privateKey = process.env.SNOWFLAKE_PRIVATEKEY?.replace(/\\n/g, '\n') || '';
 const poolConfig = {
   account: process.env.SNOWFLAKE_ACCOUNT || '',
   username: process.env.SNOWFLAKE_USERNAME || '',
-  password: process.env.SNOWFLAKE_PASSWORD || '',
+  authenticator: 'SNOWFLAKE_JWT',
+  privateKey: privateKey,
   warehouse: process.env.SNOWFLAKE_WAREHOUSE || '',
+  schema: process.env.SNOWFLAKE_SCHEMA || '',
+  database: process.env.SNOWFLAKE_DATABASE || '',
   application: 'NEXTJS_PATAGONIA_CORE',
 };
 

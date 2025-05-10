@@ -46,7 +46,7 @@ const navItems = [
       { name: 'Registros', href: '/trade-in', icon: DocumentDuplicateIcon, roles: ['admin'] },
     ],
   },
-  {
+  { 
     name: 'Settings',
     icon: Cog8ToothIcon,
     roles: ['admin', 'user'],

@@ -22,7 +22,7 @@ export default function StoresStockTable({ query, currentPage, setPage }: Stores
       setLoading(true);
       try {
         const response = await fetch(
-          `/api/stock-planning/stock-stores?query=${encodeURIComponent(query)}&page=${currentPage}`
+          `/api/stock-planning/stock-stores?query=${encodeURIComponent(query)}&page=${currentPage}&sortKey=${sortConfig?.key || ''}&sortDirection=${sortConfig?.direction || ''}`
         );
         const data: StoresStockData[] = await response.json();
         setStoresStockData(data);
@@ -47,11 +47,11 @@ export default function StoresStockTable({ query, currentPage, setPage }: Stores
 
     fetchStoresStockData();
     fetchTotalPages();
-  }, [query, currentPage]);
+  }, [query, currentPage, sortConfig]);
 
   const handleSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+    if (sortConfig?.key === key && sortConfig.direction === 'asc') {
       direction = 'desc';
     }
     setSortConfig({ key, direction });

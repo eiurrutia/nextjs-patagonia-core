@@ -147,36 +147,54 @@ export async function fetchAllDeliveryOptions(): Promise<string[]> {
  * Function to fetch sales data from the database with pivot.
  */
 export async function fetchSalesData(
-    query: string, startDate: string, endDate: string, page: number, noPagination: boolean = false
-  ): Promise<SalesData[]> {
+  query: string,
+  startDate: string,
+  endDate: string,
+  page: number,
+  noPagination: boolean = false,
+  sortKey?: string,
+  sortDirection?: 'asc' | 'desc'
+): Promise<SalesData[]> {
   const limit = noPagination ? '' : 'LIMIT 10';
   const offset = noPagination ? '' : `OFFSET ${(page - 1) * 10}`;
+  const validSortKeys = [
+    'SKU', 'ECOM', 'ADMIN', 'COYHAIQUE', 'LASCONDES', 'MALLSPORT', 'COSTANERA', 
+    'CONCEPCION', 'PTOVARAS', 'LADEHESA', 'PUCON', 'TEMUCO', 
+    'OSORNO', 'ALERCE', 'BNAVENTURA'
+  ];
+
+  let orderByClause = 'ORDER BY SKU';
+  if (sortKey && validSortKeys.includes(sortKey.toUpperCase())) {
+    orderByClause = `ORDER BY ${sortKey.toUpperCase()} ${sortDirection === 'desc' ? 'DESC' : 'ASC'}`;
+  }
+
   const sqlText = `
     SELECT 
       SKU,
-      SUM(CASE WHEN INVENTLOCATIONID = 'CD' THEN QTY ELSE 0 END) AS CD,
-      SUM(CASE WHEN INVENTLOCATIONID = 'COYHAIQUE' THEN QTY ELSE 0 END) AS COYHAIQUE,
-      SUM(CASE WHEN INVENTLOCATIONID = 'LASCONDES' THEN QTY ELSE 0 END) AS LASCONDES,
-      SUM(CASE WHEN INVENTLOCATIONID = 'MALLSPORT' THEN QTY ELSE 0 END) AS MALLSPORT,
-      SUM(CASE WHEN INVENTLOCATIONID = 'COSTANERA' THEN QTY ELSE 0 END) AS COSTANERA,
-      SUM(CASE WHEN INVENTLOCATIONID = 'CONCEPCION' THEN QTY ELSE 0 END) AS CONCEPCION,
-      SUM(CASE WHEN INVENTLOCATIONID = 'PTOVARAS' THEN QTY ELSE 0 END) AS PTOVARAS,
-      SUM(CASE WHEN INVENTLOCATIONID = 'LADEHESA' THEN QTY ELSE 0 END) AS LADEHESA,
-      SUM(CASE WHEN INVENTLOCATIONID = 'PUCON' THEN QTY ELSE 0 END) AS PUCON,
-      SUM(CASE WHEN INVENTLOCATIONID = 'TEMUCO' THEN QTY ELSE 0 END) AS TEMUCO,
-      SUM(CASE WHEN INVENTLOCATIONID = 'OSORNO' THEN QTY ELSE 0 END) AS OSORNO,
-      SUM(CASE WHEN INVENTLOCATIONID = 'ALERCE' THEN QTY ELSE 0 END) AS ALERCE,
-      SUM(CASE WHEN INVENTLOCATIONID = 'BNAVENTURA' THEN QTY ELSE 0 END) AS BNAVENTURA
+      SUM(CASE WHEN UPPER(CANAL) = 'ECOMERCE' THEN QTY ELSE 0 END) AS ECOM,
+      SUM(CASE WHEN UPPER(CANAL) = 'ADMINISTRACIÓN' THEN QTY ELSE 0 END) AS ADMIN,
+      SUM(CASE WHEN UPPER(CANAL) = 'COYHAIQUE' THEN QTY ELSE 0 END) AS COYHAIQUE,
+      SUM(CASE WHEN UPPER(CANAL) = 'ALTO LAS CONDES' THEN QTY ELSE 0 END) AS LASCONDES,
+      SUM(CASE WHEN UPPER(CANAL) = 'MALL SPORT' THEN QTY ELSE 0 END) AS MALLSPORT,
+      SUM(CASE WHEN UPPER(CANAL) = 'COSTANERA' THEN QTY ELSE 0 END) AS COSTANERA,
+      SUM(CASE WHEN UPPER(CANAL) = 'CONCEPCION' THEN QTY ELSE 0 END) AS CONCEPCION,
+      SUM(CASE WHEN UPPER(CANAL) = 'PUERTO VARAS' THEN QTY ELSE 0 END) AS PTOVARAS,
+      SUM(CASE WHEN UPPER(CANAL) = 'LA DEHESA' THEN QTY ELSE 0 END) AS LADEHESA,
+      SUM(CASE WHEN UPPER(CANAL) = 'PUCON' THEN QTY ELSE 0 END) AS PUCON,
+      SUM(CASE WHEN UPPER(CANAL) = 'TEMUCO' THEN QTY ELSE 0 END) AS TEMUCO,
+      SUM(CASE WHEN UPPER(CANAL) = 'OSORNO' THEN QTY ELSE 0 END) AS OSORNO,
+      SUM(CASE WHEN UPPER(CANAL) = 'ALERCE' THEN QTY ELSE 0 END) AS ALERCE,
+      SUM(CASE WHEN UPPER(CANAL) = 'BUEN AVENTURA' THEN QTY ELSE 0 END) AS BNAVENTURA
     FROM PATAGONIA.CORE_TEST.ERP_PROCESSED_SALESLINE
     WHERE INVOICEDATE BETWEEN ? AND ?
       AND UPPER(SKU) LIKE ?
       AND (
         INVOICEID LIKE '39-%'
         OR INVOICEID LIKE '33-%'
-    )
+        OR INVOICEID LIKE '61-%'
+      )
     GROUP BY SKU
-    ORDER BY SKU
-    ${limit} ${offset};
+    ${orderByClause} ${limit} ${offset};
   `;
 
   const binds = [startDate, endDate, `%${query.toUpperCase()}%`];
@@ -227,18 +245,36 @@ export async function fetchSalesCount(
  * @returns A promise with the stock data.
  */
 export async function fetchCDStockData(
-    query: string = '', page: number = 1, noPagination: boolean = false
-  ): Promise<CDStockData[]> {
+  query: string = '',
+  page: number = 1,
+  noPagination: boolean = false,
+  sortKey?: string,
+  sortDirection?: 'asc' | 'desc'
+): Promise<CDStockData[]> {
   const limit = noPagination ? '' : 'LIMIT 10';
   const offset = noPagination ? '' : `OFFSET ${(page - 1) * 10}`;
-  
+  const validSortKeys = ['SKU', 'STOCKERP', 'STOCKWMS', 'MINSTOCK'];
+
+  let orderByClause = 'ORDER BY SKU';
+  if (sortKey && validSortKeys.includes(sortKey.toUpperCase())) {
+    orderByClause = `ORDER BY ${sortKey.toUpperCase()} ${sortDirection === 'desc' ? 'DESC' : 'ASC'}`;
+  }
 
   const sqlText = `
     SELECT
       REPLACE(erp.SKU, '-', '') AS SKU,
-      SUM(erp.AVAILABLEONHANDQUANTITY) AS StockERP,
+      LEAST(
+        SUM(erp.AVAILABLEONHANDQUANTITY), 
+        SUM(erp.TOTALAVAILABLEQUANTITY)
+      ) AS StockERP,
       COALESCE(SUM(wms.QTYSTOCK - wms.QTYPENDINGPICKING), 0) AS StockWMS,
-      LEAST(SUM(erp.AVAILABLEONHANDQUANTITY), COALESCE(SUM(wms.QTYSTOCK - wms.QTYPENDINGPICKING), 0)) AS MinStock
+      LEAST(
+        LEAST(
+          SUM(erp.AVAILABLEONHANDQUANTITY), 
+          SUM(erp.TOTALAVAILABLEQUANTITY)
+        ),
+        COALESCE(SUM(wms.QTYSTOCK - wms.QTYPENDINGPICKING), 0)
+      ) AS MinStock
     FROM PATAGONIA.CORE_TEST.ERP_INVENTORY AS erp
     LEFT JOIN PATAGONIA.CORE_TEST.WMS_INVENTORY AS wms 
       ON REPLACE(erp.SKU, '-', '') = wms.ITEMCODE
@@ -246,12 +282,12 @@ export async function fetchCDStockData(
       AND erp.INVENTORYWAREHOUSEID = 'CD'
       AND UPPER(erp.INVENTORYSTATUSID) = 'DISPONIBLE'
     GROUP BY erp.SKU
-    ORDER BY erp.SKU
-    ${limit} ${offset};
+    ${orderByClause}
+    ${limit}
+    ${offset};
   `;
 
   const binds = [`%${query.toUpperCase()}%`];
-
   return await executeQuery<CDStockData>(sqlText, binds);
 }
 
@@ -288,10 +324,28 @@ export async function fetchCDStockCount(query: string): Promise<number> {
  * @example
  * const storesStockData = await fetchStoresStockData('sku', 1);
  */
-export async function fetchStoresStockData(query: string = '', page: number, noPagination: boolean = false): Promise<StoresStockData[]> {
+export async function fetchStoresStockData(
+  query: string = '',
+  page: number,
+  noPagination: boolean = false,
+  sortKey?: string,
+  sortDirection?: 'asc' | 'desc'
+): Promise<StoresStockData[]> {
   const limit = noPagination ? '' : 'LIMIT 10';
   const offset = noPagination ? '' : `OFFSET ${(page - 1) * 10}`;
-  
+  const validSortKeys = [
+    'SKU',
+    'COYHAIQUE_AVAILABLE', 'LASCONDES_AVAILABLE', 'MALLSPORT_AVAILABLE',
+    'COSTANERA_AVAILABLE', 'CONCEPCION_AVAILABLE', 'PTOVARAS_AVAILABLE',
+    'LADEHESA_AVAILABLE', 'PUCON_AVAILABLE', 'TEMUCO_AVAILABLE',
+    'OSORNO_AVAILABLE', 'ALERCE_AVAILABLE', 'BNAVENTURA_AVAILABLE'
+  ];
+
+  let orderByClause = 'ORDER BY SKU';
+  if (sortKey && validSortKeys.includes(sortKey.toUpperCase())) {
+    orderByClause = `ORDER BY ${sortKey.toUpperCase()} ${sortDirection === 'desc' ? 'DESC' : 'ASC'}`;
+  }
+
   const sqlText = `
     SELECT
       REPLACE(SKU, '-', '') AS SKU,
@@ -322,7 +376,7 @@ export async function fetchStoresStockData(query: string = '', page: number, noP
     FROM PATAGONIA.CORE_TEST.ERP_INVENTORY
     WHERE UPPER(REPLACE(SKU, '-', '')) LIKE ?
     GROUP BY SKU
-    ORDER BY SKU
+    ${orderByClause}
     ${limit} ${offset};
   `;
 
@@ -380,9 +434,9 @@ export async function saveReplenishment(record: ReplenishmentRecord): Promise<vo
 
   const sqlInsertReplenishmentLine = `
     INSERT INTO PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS_LINE (
-      REPLENISHMENT_ID, SKU, STORE, SEGMENT, SALES, ACTUAL_STOCK, ORDERED_QTY, REPLENISHMENT, SNOWFLAKE_CREATED_AT
+      REPLENISHMENT_ID, SKU, STORE, SEGMENT, SALES, ACTUAL_STOCK, ORDERED_QTY, REPLENISHMENT, DELIVERY, SNOWFLAKE_CREATED_AT
     )
-    VALUES ${REPLENISHMENT_DATA.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)').join(', ')};
+    VALUES ${REPLENISHMENT_DATA.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)').join(', ')};
   `;
 
   const replenishmentLineBinds = REPLENISHMENT_DATA.flatMap((line) => [
@@ -394,6 +448,7 @@ export async function saveReplenishment(record: ReplenishmentRecord): Promise<vo
     line.ACTUAL_STOCK,
     line.ORDERED_QTY,
     line.REPLENISHMENT,
+    line.DELIVERY,
   ]);
 
   try {
@@ -568,6 +623,7 @@ export async function getReplenishmentLines(id: string, groupBy: string) {
     CC: 'product.ESTILOCOLOR',
     TEAM: 'product.TEAM',
     CATEGORY: 'product.CATEGORY',
+    DELIVERY: 'line.DELIVERY',
   }[groupBy || 'SKU'];
 
   const selectGroupBy = groupBy
@@ -717,6 +773,7 @@ export async function getOperationReplenishment(id: string) {
       prod.TEAM,
       prod.CATEGORY,
       prod.PRODUCTNAME,
+      rpl.DELIVERY,
       rpl.ERP_TR_ID,
       rpl.ERP_LINE_ID
     FROM PATAGONIA.CORE_TEST.PATCORE_REPLENISHMENTS_LINE rpl
