@@ -1,5 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { UserGroupIcon, RectangleGroupIcon, ArrowPathIcon, ChartBarSquareIcon } from '@heroicons/react/24/outline';
 import { lusitana } from '@/app/ui/fonts';
  
@@ -32,7 +33,7 @@ export default function Page() {
         {
             title: 'ANALYTICS',
             description: 'Accede a la gestión de analytics.',
-            route: '/analytics',
+            route: '/dashboard/analytics',
             color: 'bg-orange-500',
             icon: ChartBarSquareIcon,
         },
@@ -41,7 +42,17 @@ export default function Page() {
     return (
         <main>
             <div className="flex flex-col items-center justify-center min-h-screen">
-                <h1 className={`${lusitana.className} mb-8 text-8xl font-bold  md:text-6xl`}>
+                <div className="mb-4 w-48 h-48">
+                    <Image
+                        src="/patagonia_logo_bear.png"
+                        alt="Patagonia Logo"
+                        width={192}
+                        height={192}
+                        className="object-contain"
+                        priority
+                    />
+                </div>
+                <h1 className={`${lusitana.className} mb-8 text-8xl font-bold md:text-6xl`}>
                     Patagonia Core
                 </h1>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-5xl">

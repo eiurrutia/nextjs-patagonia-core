@@ -5,23 +5,45 @@ import PatagoniaLogo from '@/app/ui/patagonia-logo';
 import { PowerIcon } from '@heroicons/react/24/outline';
 import { signOut } from 'next-auth/react';
 
-export default function SideNav() {
+interface SideNavProps {
+  onPin?: () => void;
+  isPinned?: boolean;
+}
+
+export default function SideNav({ onPin, isPinned = false }: SideNavProps) {
   const handleSignOut = async () => {
     console.log('Signing out...');
     await signOut({ redirect: true, callbackUrl: '/login' });
   };
 
   return (
-    <div className="flex h-full flex-col px-3 py-4 md:px-2">
-      <Link
-        className="mb-2 flex items-center justify-center rounded-md bg-steelblue p-4"
-        href="/"
-      >
-        <div className="relative w-full max-w-xs">
-          <PatagoniaLogo />
-        </div>
-      </Link>
-      <div className="flex grow flex-row justify-between space-x-2 md:flex-col md:space-x-0">
+    <div className="flex h-full flex-col px-3 py-4 md:px-2 bg-white shadow-lg">
+      <div className="flex items-center justify-between">
+        <Link
+          className="flex-1 flex items-center justify-center rounded-md bg-steelblue p-4"
+          href="/home"
+        >
+          <div className="relative w-full max-w-xs">
+            <PatagoniaLogo />
+          </div>
+        </Link>
+        
+        {/* Pin button */}
+        {onPin && (
+          <button
+            onClick={onPin}
+            className={`ml-2 p-2 rounded-full ${isPinned ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100'}`}
+            aria-label={isPinned ? 'Unpin sidebar' : 'Pin sidebar'}
+            title={isPinned ? 'Unpin sidebar' : 'Pin sidebar'}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 19.5 15-15m0 0H8.25m11.25 0v11.25" transform={isPinned ? 'rotate(0)' : 'rotate(45 12 12)'} />
+            </svg>
+          </button>
+        )}
+      </div>
+      
+      <div className="flex grow flex-row justify-between space-x-2 md:flex-col md:space-x-0 mt-2">
         <NavLinks />
         <div className="hidden h-auto w-full grow rounded-md bg-gray-50 mt-0 md:block"></div>
         <button
