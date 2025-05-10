@@ -3,12 +3,57 @@ const ERP_URL = process.env.NEXT_PUBLIC_ERP_URL || '';
 const ERP_CLIENT_ID = process.env.ERP_CLIENT_ID || '';
 const ERP_CLIENT_SECRET = process.env.ERP_CLIENT_SECRET || '';
 
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeout: number = 15000 // default: 10 segundos
+): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    return response;
+  } finally {
+    clearTimeout(id);
+  }
+}
+
+async function fetchWithRetries(
+  url: string,
+  options: RequestInit = {},
+  retries: number = 3,
+  timeout: number = 15000
+): Promise<Response> {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      return await fetchWithTimeout(url, options, timeout);
+    } catch (err) {
+      const isLastAttempt = attempt === retries - 1;
+      const isAbortError = err instanceof DOMException && err.name === 'AbortError';
+
+      console.warn(`[Fetch Retry] Attempt ${attempt + 1} failed (${isAbortError ? 'timeout' : err}).`);
+      
+      if (isLastAttempt) throw err;
+
+      // Espera antes de reintentar (ej. backoff simple)
+      await new Promise((res) => setTimeout(res, 100 * (attempt + 1)));
+    }
+  }
+
+  throw new Error('All retries failed');
+}
+
 /**
  * Gets an ERP token.
  * @returns The ERP token.
  * @throws If an error occurs.
  */
 export async function getERPToken(): Promise<string> {
+    console.log('[ERP-OData] Getting ERP token');
     const formData = new FormData();
     formData.append('grant_type', 'client_credentials');
     formData.append('client_id', ERP_CLIENT_ID);
@@ -45,19 +90,20 @@ export async function getERPToken(): Promise<string> {
       "RequestedShippingDate": new Date().toISOString(),
       "TransferOrderStockTransferPriceType": "CostPrice"
     };
-  
-    const response = await fetch(`${ERP_URL}/data/TransferOrderHeaders`, {
+    console.log('[ERP-OData] Creating header for transfer order');
+    const response = await fetchWithRetries(`${ERP_URL}/data/TransferOrderHeaders`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify(body)
-    });
+    }, 3, 10000);
   
     if (!response.ok) {
       throw new Error(`Error al crear cabecera para ${receivingWarehouseId}`);
     }
+    console.log('[ERP-OData] Header created successfully');
   
     const data = await response.json();
     return data.TransferOrderNumber;
@@ -138,19 +184,22 @@ export async function getERPToken(): Promise<string> {
       "VATPriceType": "CostPrice"
     };
   
-    const response = await fetch(`${ERP_URL}/data/TransferOrderLines`, {
+    console.log('[ERP-OData] Creating line for transfer order');
+    const response = await fetchWithRetries(`${ERP_URL}/data/TransferOrderLines`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify(body)
-    });
+    }, 3, 10000);
   
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Error al crear línea para TR ${transferOrderNumber}: ${response.status} ${response.statusText} - ${errorText}`);
+      throw new Error(`Error al crear línea con sku ${lineData.ItemNumber}-${lineData.ProductColorId}-${lineData.ProductSizeId}
+        en TR ${transferOrderNumber}: ${response.status} ${response.statusText} - ${errorText}`);
     }
+    console.log('[ERP-OData] Line created successfully');
   
     const data = await response.json();
     return { ERP_LINE_ID: data.ShippingInventoryLotId };

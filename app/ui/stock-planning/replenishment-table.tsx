@@ -290,6 +290,7 @@ export default function ReplenishmentTable({
       }
 
       // Create ERP replenishments if the option is checked
+      const erroredLines: { SKU: string; STORE: string; TRANSFER_ORDER: string; ERROR: string }[] = [];
       if (createERPchecked) {
         const linesResponse = await fetch(`/api/stock-planning/operation-replenishment?id=${replenishmentID}`, {
           method: 'GET',
@@ -358,29 +359,40 @@ export default function ReplenishmentTable({
                 LineNumber: i + 1
               }
             };
-            
-            // Create line in ERP request
-            const lineResp = await fetch('/api/stock-planning/create-erp-replenishment-line', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(lineData)
-            });
-            if (!lineResp.ok) throw new Error(`Error al crear línea ${i + 1} para la tienda ${store}`);
-  
-            const lineResult = await lineResp.json();
-            erpLinesWithInfo.push({
-              SKU: line.SKU,
-              STORE: line.TIENDA,
-              ERP_TR_ID: transferOrderNumber,
-              ERP_LINE_ID: lineResult.ERP_LINE_ID
-            });
-  
-            // Update the step with the current progress (i+1 / totalLines)
-            setProgressSteps(prev => prev.map(step =>
-              step.message.startsWith(lineStepBase)
-                ? { ...step, message: `${lineStepBase} (${i + 1}/${totalLines})`, level: 3 }
-                : step
-            ));
+
+            try {
+               // Create line in ERP request
+                const lineResp = await fetch('/api/stock-planning/create-erp-replenishment-line', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(lineData)
+                });
+                if (!lineResp.ok) throw new Error(`Error al crear línea ${i + 1} para la tienda ${store}`);
+      
+                const lineResult = await lineResp.json();
+                erpLinesWithInfo.push({
+                  SKU: line.SKU,
+                  STORE: line.TIENDA,
+                  ERP_TR_ID: transferOrderNumber,
+                  ERP_LINE_ID: lineResult.ERP_LINE_ID
+                });
+      
+                // Update the step with the current progress (i+1 / totalLines)
+                setProgressSteps(prev => prev.map(step =>
+                  step.message.startsWith(lineStepBase)
+                    ? { ...step, message: `${lineStepBase} (${i + 1}/${totalLines})`, level: 3 }
+                    : step
+                ));
+              
+            } catch (err) {
+              console.error('Error al crear línea ERP:', err);
+              erroredLines.push({
+                SKU: line.SKU,
+                STORE: line.TIENDA,
+                TRANSFER_ORDER: transferOrderNumber,
+                ERROR: (err as Error).message
+              });
+            }
           }
   
           // Check if the lines were created successfully
@@ -416,7 +428,16 @@ export default function ReplenishmentTable({
       }
   
       setTimeout(() => {
-        alert('Reposición confirmada exitosamente');
+        let errorSummary = '';
+        if (erroredLines.length > 0) {
+          errorSummary = erroredLines
+            .map(err => `[SKU] ${err.SKU} en tienda ${err.STORE} (TR: ${err.TRANSFER_ORDER}): ${err.ERROR}`)
+            .join('\n');
+
+            alert(`Hubo errores al crear algunas líneas en ERP:\n\n${errorSummary}`);
+        } else {
+          alert('Reposición confirmada exitosamente');
+        }
         router.push('/dashboard/stock-planning');
       }, 1000);
     } catch (error) {
