@@ -38,6 +38,10 @@ module.exports = withPWA({
       // This captures any route that starts with these keywords and any subroute
       // For example, /orders/:path* will capture /orders, /orders/123, /orders/123/edit, etc.
       {
+        source: '/ccss/:path*',
+        destination: '/dashboard/ccss/:path*',
+      },
+      {
         source: '/orders/:path*',
         destination: '/dashboard/orders/:path*',
       },
