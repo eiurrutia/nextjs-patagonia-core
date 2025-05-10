@@ -17,7 +17,7 @@ export default function SideNav({ onPin, isPinned = false }: SideNavProps) {
   };
 
   return (
-    <div className="flex h-full flex-col px-3 py-4 md:px-2 bg-white shadow-lg">
+    <div className="flex h-full flex-col px-3 py-4 md:px-2 bg-gray-50 shadow-lg">
       <div className="flex items-center justify-between">
         <Link
           className="flex-1 flex items-center justify-center rounded-md bg-steelblue p-4"
