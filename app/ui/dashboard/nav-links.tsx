@@ -26,9 +26,9 @@ const navItems = [
     icon: UserGroupIcon,
     roles: ['admin', 'user'],
     items: [
-      { name: 'Orders', href: '/dashboard/orders', icon: DocumentDuplicateIcon, roles: ['admin', 'user'] },
-      { name: 'Customers', href: '/dashboard/customers', icon: UserGroupIcon, roles: ['admin', 'user'] },
-      { name: 'Incidences', href: '/dashboard/incidences', icon: BellAlertIcon, roles: ['admin', 'user'] },
+      { name: 'Orders', href: '/orders', icon: DocumentDuplicateIcon, roles: ['admin', 'user'] },
+      { name: 'Customers', href: '/customers', icon: UserGroupIcon, roles: ['admin', 'user'] },
+      { name: 'Incidences', href: '/incidences', icon: BellAlertIcon, roles: ['admin', 'user'] },
     ],
   },
   {
@@ -36,8 +36,8 @@ const navItems = [
     icon: RectangleGroupIcon,
     roles: ['admin'],
     items: [
-      { name: 'Registros Stock Planning', href: '/dashboard/stock-planning', icon: CalculatorIcon, roles: ['admin'] },
-      { name: 'Nueva Reposición', href: '/dashboard/stock-planning/new', icon: SquaresPlusIcon, roles: ['admin'] },
+      { name: 'Registros Stock Planning', href: '/stock-planning', icon: CalculatorIcon, roles: ['admin'] },
+      { name: 'Nueva Reposición', href: '/stock-planning/new', icon: SquaresPlusIcon, roles: ['admin'] },
     ],
   },
   {
@@ -61,8 +61,8 @@ const navItems = [
     icon: Cog8ToothIcon,
     roles: ['admin', 'user'],
     items: [
-      { name: 'Users', href: '/dashboard/users', icon: UserIcon, roles: ['admin'] },
-      { name: 'Parámetros', href: '/dashboard/configs', icon: AdjustmentsVerticalIcon, roles: ['admin', 'user'] },
+      { name: 'Users', href: '/users', icon: UserIcon, roles: ['admin'] },
+      { name: 'Parámetros', href: '/configs', icon: AdjustmentsVerticalIcon, roles: ['admin', 'user'] },
     ],
   },
 ];
@@ -85,7 +85,7 @@ export default function NavLinks() {
     <div>
       {/* Home */}
       <Link
-        href="/dashboard"
+        href="/home"
         className='flex items-center gap-2 px-3 py-4 rounded-md font-medium text-gray-700 bg-gray-50 hover:bg-sky-100 hover:text-blue-600'
       >
         <HomeIcon className="w-5 h-5 text-gray-500" />

@@ -417,7 +417,7 @@ export default function ReplenishmentTable({
   
       setTimeout(() => {
         alert('Reposición confirmada exitosamente');
-        router.push('/dashboard/stock-planning');
+        router.push('/stock-planning');
       }, 1000);
     } catch (error) {
       console.error('Error al guardar la reposición:', error);

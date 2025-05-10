@@ -10,8 +10,8 @@ export default function IncidenceDetailPage({ params }: { params: { id: string }
     <div className="w-full">
       <Breadcrumbs
         breadcrumbs={[
-          { label: 'Incidencias', href: '/dashboard/incidences' },
-          { label: `Incidencia ${id}`, href: `/dashboard/incidences/${id}/detail`, active: true },
+          { label: 'Incidencias', href: '/incidences' },
+          { label: `Incidencia ${id}`, href: `/incidences/${id}/detail`, active: true },
         ]}
       />
 

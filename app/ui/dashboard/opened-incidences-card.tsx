@@ -88,7 +88,7 @@ export default function OpenedIncidencesCard({
               <div className="flex items-center space-x-2 text-sm">
                 <UserIcon className="h-5 w-5 text-gray-500" />
                 <a
-                  href={`/dashboard/customers/${encodeURIComponent(incidence.PARTNER_VAT)}/detail`}
+                  href={`/customers/${encodeURIComponent(incidence.PARTNER_VAT)}/detail`}
                   className="text-blue-500 hover:underline"
                   target="_blank"
                   rel="noopener noreferrer"

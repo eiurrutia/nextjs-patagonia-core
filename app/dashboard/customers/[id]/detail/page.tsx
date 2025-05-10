@@ -26,10 +26,10 @@ return (
   <div className="w-full">
     <Breadcrumbs
             breadcrumbs={[
-            { label: 'Customers', href: '/dashboard/customers' },
+            { label: 'Customers', href: '/customers' },
             {
                 label: `Rut ${id}`,
-                href: `/dashboard/customers/${id}/detail`,
+                href: `/customers/${id}/detail`,
                 active: true,
             },
             ]}

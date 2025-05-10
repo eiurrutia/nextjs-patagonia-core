@@ -29,7 +29,7 @@ export default function CreateUserPage() {
         throw new Error('Error creating user');
       }
 
-      router.push('/dashboard/users');
+      router.push('/users');
     } catch (error) {
       setError('Failed to create user');
       console.error(error);
