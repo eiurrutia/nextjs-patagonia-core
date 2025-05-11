@@ -666,17 +666,20 @@ export default function ReplenishmentTable({
                       {selectedStores.length === storeList.length ? 'Deseleccionar todas' : 'Seleccionar todas'}
                     </button>
                   </div>
-                  <div className="mb-4 grid grid-cols-5 gap-4">
-                    {storeList.map(store => (
-                      <label key={store} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          checked={selectedStores.includes(store)}
-                          onChange={() => handleToggleStore(store)}
-                        />
-                        <span>{store}</span>
-                      </label>
-                    ))}
+                  <div className="mb-4 max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-4">
+                    <div className="grid grid-cols-3 gap-x-6 gap-y-3">
+                      {storeList.map(store => (
+                        <label key={store} className="flex items-center hover:bg-gray-50 p-2 rounded-md transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={selectedStores.includes(store)}
+                            onChange={() => handleToggleStore(store)}
+                            className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                          />
+                          <span className="ml-3 text-gray-700">{store}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
                   
                   {/* Checkboxes */}
@@ -697,10 +700,6 @@ export default function ReplenishmentTable({
                         onChange={(e) => setSaveSegmentationHistory(e.target.checked)}
                       />
                       <span>Guardar registro de segmentación utilizada</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox"/>
-                      <span>Enviar mail con archivo</span>
                     </label>
                     <label className="flex items-center space-x-2">
                       <input
@@ -727,10 +726,6 @@ export default function ReplenishmentTable({
                           }}
                       />
                       <span>Crear reposiciones en ERP en segundo plano (Airflow)</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox"/>
-                      <span>Enviar agrupado de CC</span>
                     </label>
                   </div>
                 </>
