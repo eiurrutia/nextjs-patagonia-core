@@ -39,8 +39,8 @@ export default function CcssPage() {
           Centro de Control y Servicio al Cliente
         </h1>
         <p className="text-xl text-gray-600 text-center max-w-2xl">
-          Gestiona u00f3rdenes, clientes e incidencias en un solo lugar, centralizando 
-          toda la informaciu00f3n relevante para el servicio al cliente.
+          Gestiona Órdenes, Clientes e Incidencias en un solo lugar, centralizando 
+          toda la información relevante para el servicio al cliente.
         </p>
       </div>
       
