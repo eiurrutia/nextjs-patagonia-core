@@ -1,11 +1,28 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
-/**
- * API endpoint para disparar DAGs en Airflow
- * 
- * Este endpoint recibe un dagId, dagRunId y parámetros de configuración opcionales
- * y los envía al servidor de Airflow para programar la ejecución del DAG.
- */
+  /**
+   * Trigger an Airflow DAG
+   *
+   * @param {NextApiRequest} req - The HTTP request
+   * @param {NextApiResponse} res - The HTTP response
+   *
+   * @returns {Promise<NextApiResponse>>} The HTTP response
+   *
+   * The request body must contain the following properties:
+   * - `dagId`: The ID of the DAG to trigger
+   * - `dagRunId`: The ID of the DAG run (optional)
+   * - `conf`: An object with additional configurations for the DAG run (optional)
+   *
+   * If the DAG is successfully triggered, a response with an object containing:
+   * - `success`: A boolean indicating if the trigger was successful
+   * - `message`: A confirmation message
+   * - `dagRunId`: The ID of the DAG run
+   * - `airflowResponse`: The response from the Airflow API
+   *
+   * If an error occurs, a response with an object containing:
+   * - `error`: An error message
+   * - `details`: An object with additional details about the error
+   */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
@@ -21,16 +38,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Crear un ID de ejecución único si no se proporciona uno
     const uniqueDagRunId = dagRunId || `manual_run_${new Date().getTime()}`;
 
-    // Definir las credenciales y URL base de Airflow
-    // Estas configuraciones podrían venir de variables de entorno
-    // Para Docker, usar el nombre del host donde corre Airflow o la IP de la máquina host
-    // 'host.docker.internal' funciona en Docker para Mac/Windows para acceder al host
     const AIRFLOW_BASE_URL = process.env.AIRFLOW_BASE_URL || 'http://host.docker.internal:8000';
-    // Alternativas: 
-    // - 'http://airflow-webserver:8000' (si airflow-webserver es el nombre del servicio)
-    // - 'http://172.17.0.1:8000' (asumiendo que la IP de tu host Docker es 172.17.0.1)
-    const AIRFLOW_USERNAME = process.env.AIRFLOW_USERNAME || 'airflow';
-    const AIRFLOW_PASSWORD = process.env.AIRFLOW_PASSWORD || 'airflow';
+    const AIRFLOW_USERNAME = process.env.AIRFLOW_USERNAME;
+    const AIRFLOW_PASSWORD = process.env.AIRFLOW_PASSWORD;
 
     // Preparar la autorización básica
     const authHeader = 'Basic ' + Buffer.from(`${AIRFLOW_USERNAME}:${AIRFLOW_PASSWORD}`).toString('base64');
