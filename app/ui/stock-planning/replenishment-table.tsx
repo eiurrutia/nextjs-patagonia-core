@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { CardSkeleton } from '../skeletons';
 import { ChevronRightIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { ReplenishmentData, BreakData, StockSegment } from '@/app/lib/definitions';
@@ -22,6 +23,7 @@ export default function ReplenishmentTable({
     storePriority: string[];
   }) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [replenishmentData, setReplenishmentData] = useState<ReplenishmentData[]>([]);
   const [breakData, setBreakData] = useState<BreakData[]>([]);
   const [segmentationData, setSegmentationData] = useState<StockSegment[]>([]);
@@ -302,7 +304,7 @@ export default function ReplenishmentTable({
           // Prepare a unique DAG run ID using the replenishmentID
           const dagRunId = `create_erp_${replenishmentID.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`;
           
-          // Trigger the Airflow DAG passing the replenishmentID as configuration
+          // Trigger the Airflow DAG passing the replenishmentID and user info as configuration
           const airflowResp = await fetch('/api/airflow/trigger-dag', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -311,7 +313,7 @@ export default function ReplenishmentTable({
               dagRunId,
               conf: {
                 replenishmentID,
-                storesConsidered
+                user: session?.user?.email || 'unknown'
               }
             }),
           });
