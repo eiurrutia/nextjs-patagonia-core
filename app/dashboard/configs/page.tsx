@@ -56,7 +56,7 @@ export default function ConfigsPage() {
                 </tbody>
             </table>
             <div className="mt-4">
-                <Link href="/dashboard/configs/new" className="bg-blue-600 text-white px-4 py-2 rounded">Create New Configuration</Link>
+                <Link href="/configs/new" className="bg-blue-600 text-white px-4 py-2 rounded">Create New Configuration</Link>
             </div>
         </div>
     );

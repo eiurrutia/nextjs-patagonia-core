@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // Define protected and public routes
-const protectedRoutes = ['/dashboard']; // Routes that require authentication
-const adminRoutes = ['/dashboard/users']; // Routes that only admins can access
+const protectedRoutes = ['/dashboard', '/home', '/orders', '/customers', '/incidences', '/stock-planning', '/users', '/configs', '/ccss']; // Routes that require authentication
+const adminRoutes = ['/dashboard/users', '/users', '/stock-planning']; // Routes that only admins can access
 const publicRoutes = ['/login', '/signup', '/']; // Public routes
 
 // Middleware to handle authentication and role-based authorization
@@ -25,15 +25,15 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/login', req.nextUrl));
   }
 
-  // If the user has a session and is on a public route (login or signup), redirect to /dashboard
+  // If the user has a session and is on a public route (login or signup), redirect to /home
   if (session?.user && isPublicRoute) {
-    return NextResponse.redirect(new URL('/dashboard', req.nextUrl));
+    return NextResponse.redirect(new URL('/home', req.nextUrl));
   }
 
-  // If the route is for admins only and the user is not an admin, redirect to /dashboard
+  // If the route is for admins only and the user is not an admin, redirect to /home
   const isAdminRoute = adminRoutes.some(route => path.startsWith(route));
   if (isAdminRoute && session?.user?.role !== 'admin') {
-    return NextResponse.redirect(new URL('/dashboard', req.nextUrl));
+    return NextResponse.redirect(new URL('/home', req.nextUrl));
   }
 
   // Allow the user to proceed if they are authenticated or if the route is public

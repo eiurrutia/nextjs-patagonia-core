@@ -48,7 +48,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         throw new Error('Failed to update user');
       }
 
-      router.push('/dashboard/users');
+      router.push('/users');
     } catch (error) {
       setError('Failed to update user');
       console.error(error);

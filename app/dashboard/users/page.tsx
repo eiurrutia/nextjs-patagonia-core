@@ -44,7 +44,7 @@ export default function UsersPage() {
                 <td className="border-b px-4 py-2">{user.email}</td>
                 <td className="border-b px-4 py-2">{user.role}</td>
                 <td className="border-b px-4 py-2">
-                <Link href={`/dashboard/users/edit/${user.id}`}
+                <Link href={`/users/edit/${user.id}`}
                     className="text-blue-500 hover:underline">Edit</Link>
                 </td>
             </tr>
@@ -52,7 +52,7 @@ export default function UsersPage() {
         </tbody>
         </table>
         <div className="mt-4">
-        <Link href="/dashboard/users/new" className="bg-blue-600 text-white px-4 py-2 rounded">Create New User</Link>
+        <Link href="/users/new" className="bg-blue-600 text-white px-4 py-2 rounded">Create New User</Link>
         </div>
     </div>
     );

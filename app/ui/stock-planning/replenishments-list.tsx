@@ -84,7 +84,7 @@ export default function ReplenishmentsList() {
               <td className="border px-4 py-2">{formatDate(item.CREATED_AT, true, false)}</td>
               <td className="border px-4 py-2 text-center">
                 <button
-                  onClick={() => router.push(`/dashboard/stock-planning/${item.ID}/detail`)}
+                  onClick={() => router.push(`/stock-planning/${item.ID}/detail`)}
                   className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
                 >
                   <ArrowRightCircleIcon className="h-6 w-6" />

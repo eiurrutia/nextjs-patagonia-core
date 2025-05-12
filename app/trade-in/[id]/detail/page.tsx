@@ -40,7 +40,7 @@ export default function TradeInDetailPage({ params }: { params: { id: string } }
           <Breadcrumbs
               breadcrumbs={[
                   { label: 'Trade-Ins', href: '/trade-in' },
-                  { label: `Trade-In ${id}`, href: `/dashboard/trade-in/${id}/detail`, active: true }
+                  { label: `Trade-In ${id}`, href: `/trade-in/${id}/detail`, active: true }
               ]}
           />
 

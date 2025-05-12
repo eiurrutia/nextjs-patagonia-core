@@ -27,4 +27,44 @@ module.exports = withPWA({
   images: {
     domains: ['cdn.shopify.com'],
   },
+  async rewrites() {
+    return [
+      // Home - redirigir /home a /dashboard
+      {
+        source: '/home',
+        destination: '/dashboard',
+      },
+      // Generic rules for all main sections
+      // This captures any route that starts with these keywords and any subroute
+      // For example, /orders/:path* will capture /orders, /orders/123, /orders/123/edit, etc.
+      {
+        source: '/ccss/:path*',
+        destination: '/dashboard/ccss/:path*',
+      },
+      {
+        source: '/orders/:path*',
+        destination: '/dashboard/orders/:path*',
+      },
+      {
+        source: '/customers/:path*',
+        destination: '/dashboard/customers/:path*',
+      },
+      {
+        source: '/incidences/:path*',
+        destination: '/dashboard/incidences/:path*',
+      },
+      {
+        source: '/stock-planning/:path*',
+        destination: '/dashboard/stock-planning/:path*',
+      },
+      {
+        source: '/users/:path*',
+        destination: '/dashboard/users/:path*',
+      },
+      {
+        source: '/configs/:path*',
+        destination: '/dashboard/configs/:path*',
+      },
+    ];
+  },
 });

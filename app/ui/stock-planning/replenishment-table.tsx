@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { CardSkeleton } from '../skeletons';
 import { ChevronRightIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { ReplenishmentData, BreakData, StockSegment } from '@/app/lib/definitions';
@@ -22,6 +23,7 @@ export default function ReplenishmentTable({
     storePriority: string[];
   }) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [replenishmentData, setReplenishmentData] = useState<ReplenishmentData[]>([]);
   const [breakData, setBreakData] = useState<BreakData[]>([]);
   const [segmentationData, setSegmentationData] = useState<StockSegment[]>([]);
@@ -36,6 +38,7 @@ export default function ReplenishmentTable({
   const [saveSegmentationHistory, setSaveSegmentationHistory] = useState(false);
   const [selectedStores, setSelectedStores] = useState<string[]>([]);
   const [createERPchecked, setCreateERPChecked] = useState(false);
+  const [createERPBackgroundChecked, setCreateERPBackgroundChecked] = useState(false);
   const [storeList, setStoreList] = useState<string[]>([]);
   const [progressSteps, setProgressSteps] = useState<{ message: string; completed: boolean; level: number }[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -226,6 +229,11 @@ export default function ReplenishmentTable({
         { message: 'Cargando repos en ERP', completed: false, level: 1 }
       );
     }
+    if (createERPBackgroundChecked) {
+      initialSteps.push(
+        { message: 'Programando creación de repos en ERP en segundo plano', completed: false, level: 1 }
+      );
+    }
     setProgressSteps(initialSteps);
     try {
       console.log('Saving replenishment record:', record);
@@ -287,6 +295,43 @@ export default function ReplenishmentTable({
         setProgressSteps(prev => prev.map(step =>
           step.message === savingRecordStep ? { ...step, completed: true, level: 1 } : step
         ));
+      }
+      
+      // Trigger Airflow DAG for background ERP creation if the option is checked
+      if (createERPBackgroundChecked) {
+        const airflowStep = 'Programando creación de repos en ERP en segundo plano';
+        try {
+          // Prepare a unique DAG run ID using the replenishmentID
+          const dagRunId = `create_erp_${replenishmentID.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`;
+          
+          // Trigger the Airflow DAG passing the replenishmentID and user info as configuration
+          const airflowResp = await fetch('/api/airflow/trigger-dag', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              dagId: 'erp_create_replenishments',
+              dagRunId,
+              conf: {
+                replenishmentID,
+                user: session?.user?.email || 'unknown'
+              }
+            }),
+          });
+          
+          if (!airflowResp.ok) {
+            throw new Error('Error al programar la creación en ERP en segundo plano');
+          }
+          
+          const airflowData = await airflowResp.json();
+          console.log('DAG programado exitosamente:', airflowData);
+          
+          setProgressSteps(prev => prev.map(step =>
+            step.message === airflowStep ? { ...step, completed: true, level: 1 } : step
+          ));
+        } catch (error) {
+          console.error('Error al programar el DAG de Airflow:', error);
+          throw new Error('Error al programar la creación en ERP en segundo plano');
+        }
       }
 
       // Create ERP replenishments if the option is checked
@@ -417,7 +462,7 @@ export default function ReplenishmentTable({
   
       setTimeout(() => {
         alert('Reposición confirmada exitosamente');
-        router.push('/dashboard/stock-planning');
+        router.push('/stock-planning');
       }, 1000);
     } catch (error) {
       console.error('Error al guardar la reposición:', error);
@@ -606,18 +651,35 @@ export default function ReplenishmentTable({
                 <h3 className="text-xl font-bold mb-4">¿Está seguro de confirmar la reposición?</h3>
 
                   {/* Stores to consider */}
-                  <h4 className="text-lg font-semibold mb-2">Tiendas a Considerar</h4>
-                  <div className="mb-4 grid grid-cols-5 gap-4">
-                    {storeList.map(store => (
-                      <label key={store} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          checked={selectedStores.includes(store)}
-                          onChange={() => handleToggleStore(store)}
-                        />
-                        <span>{store}</span>
-                      </label>
-                    ))}
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="text-lg font-semibold">Tiendas a Considerar</h4>
+                    <button
+                      onClick={() => {
+                        if (selectedStores.length === storeList.length) {
+                          setSelectedStores([]);
+                        } else {
+                          setSelectedStores([...storeList]);
+                        }
+                      }}
+                      className="text-sm px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-700 transition-colors duration-200"
+                    >
+                      {selectedStores.length === storeList.length ? 'Deseleccionar todas' : 'Seleccionar todas'}
+                    </button>
+                  </div>
+                  <div className="mb-4 max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-4">
+                    <div className="grid grid-cols-3 gap-x-6 gap-y-3">
+                      {storeList.map(store => (
+                        <label key={store} className="flex items-center hover:bg-gray-50 p-2 rounded-md transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={selectedStores.includes(store)}
+                            onChange={() => handleToggleStore(store)}
+                            className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                          />
+                          <span className="ml-3 text-gray-700">{store}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
                   
                   {/* Checkboxes */}
@@ -640,20 +702,30 @@ export default function ReplenishmentTable({
                       <span>Guardar registro de segmentación utilizada</span>
                     </label>
                     <label className="flex items-center space-x-2">
-                      <input type="checkbox"/>
-                      <span>Enviar mail con archivo</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
                       <input
                           type="checkbox"
                           checked={createERPchecked} 
-                          onChange={(e) => setCreateERPChecked(e.target.checked)}
+                          onChange={(e) => {
+                            setCreateERPChecked(e.target.checked);
+                            if (e.target.checked) {
+                              setCreateERPBackgroundChecked(false);
+                            }
+                          }}
                       />
                       <span>Crear reposiciones en ERP</span>
                     </label>
                     <label className="flex items-center space-x-2">
-                      <input type="checkbox"/>
-                      <span>Enviar agrupado de CC</span>
+                      <input
+                          type="checkbox"
+                          checked={createERPBackgroundChecked} 
+                          onChange={(e) => {
+                            setCreateERPBackgroundChecked(e.target.checked);
+                            if (e.target.checked) {
+                              setCreateERPChecked(false);
+                            }
+                          }}
+                      />
+                      <span>Crear reposiciones en ERP en segundo plano (Airflow)</span>
                     </label>
                   </div>
                 </>

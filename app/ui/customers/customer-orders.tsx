@@ -41,7 +41,7 @@ export default async function CustomerOrders({
                   },
                 )}
               >
-                <Link href={`/dashboard/orders/${encodeURIComponent(order.SALESID)}/detail`}>                
+                <Link href={`/orders/${encodeURIComponent(order.SALESID)}/detail`}>                
                   <div className="flex items-center">
                       <Image
                         src={

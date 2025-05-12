@@ -25,7 +25,7 @@ export default function NewConfigPage() {
         throw new Error(errorData.message || 'Error creating config');
       }
 
-      router.push('/dashboard/configs');
+      router.push('/configs');
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);

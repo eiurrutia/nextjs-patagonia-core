@@ -26,7 +26,7 @@ export default function Page({
   const [isSegmentationCollapsed, setIsSegmentationCollapsed] = useState(true);
 
   const handleNewStockPlanning = () => {
-    router.push('/dashboard/stock-planning/new');
+    router.push('/stock-planning/new');
   };
 
   const handleUploadComplete = () => {
