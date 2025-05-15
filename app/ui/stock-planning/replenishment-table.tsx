@@ -610,7 +610,7 @@ export default function ReplenishmentTable({
           />
         </div>
         
-        {/* Botones de agrupación */}
+        {/* Grouping buttons */}
         <div className="flex flex-wrap gap-2 mb-4">
           {['SKU', 'CC', 'DELIVERY', 'CATEGORY', 'TEAM', 'STORE'].map((option) => (
             <button
@@ -619,7 +619,7 @@ export default function ReplenishmentTable({
                 setGroupBy(option as 'SKU' | 'CC' | 'TEAM' | 'CATEGORY' | 'DELIVERY' | 'STORE');
                 setCurrentPage(1);
               }}
-              className={`px-3 py-1 rounded text-sm ${
+              className={`px-3 py-3 rounded text-s ${
                 groupBy === option ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'
               } hover:bg-blue-400 hover:text-white`}
             >
