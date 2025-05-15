@@ -65,10 +65,6 @@ export default function ReplenishmentTable({
         });
         const data = await response.json();
         
-        // Filter and log objects with SKU = 'O2857'
-        const filteredItems = data.replenishmentTable.filter(item => item.SKU === 'O2857');
-        console.log('Items with SKU O2857:', filteredItems);
-        
         setReplenishmentData(data.replenishmentTable);
         setBreakData(data.breakData);
         setSegmentationData(data.stockSegments);
@@ -122,9 +118,39 @@ export default function ReplenishmentTable({
         return acc;
       }, {} as Record<string, Record<string, number>>)
     ).sort(([a], [b]) => a.localeCompare(b));
+    
+    // Identificar SKUs que no existen en el ERP (tienen CATEGORY, TEAM y CC vacíos)
+    const missingSkus = replenishmentData
+      .filter(item => item.CATEGORY === "" && item.TEAM === "" && item.CC === "")
+      .reduce((acc, item) => {
+        if (!acc[item.SKU]) {
+          acc[item.SKU] = [];
+        }
+        if (!acc[item.SKU].includes(item.STORE)) {
+          acc[item.SKU].push(item.STORE);
+        }
+        return acc;
+      }, {} as Record<string, string[]>);
 
-    return { totalReplenishment, totalSales, replenishmentByStore, totalInOrdered, totalBreakQty, breakByStore, breakByStoreSku };
+    return { 
+      totalReplenishment, 
+      totalSales, 
+      replenishmentByStore, 
+      totalInOrdered, 
+      totalBreakQty, 
+      breakByStore, 
+      breakByStoreSku,
+      missingSkus
+    };
   }, [replenishmentData, breakData]);
+  
+  // Estado para controlar la expansión de la advertencia de SKUs faltantes
+  const [isMissingSkusExpanded, setIsMissingSkusExpanded] = useState(false);
+  
+  // Verificar si hay SKUs faltantes en el ERP
+  const hasMissingSkus = useMemo(() => {
+    return Object.keys(summary.missingSkus || {}).length > 0;
+  }, [summary.missingSkus]);
 
   // Data filtering, grouping and sorting
   const filteredData = useMemo(() => {
@@ -641,6 +667,41 @@ export default function ReplenishmentTable({
             ))}
           </tbody>
         </table>
+
+        {/* Warning for missing SKUs */}
+        {hasMissingSkus && (
+          <div className="mt-4 mb-4 p-4 border border-red-500 rounded-md bg-red-50">
+            <div 
+              className="flex items-center cursor-pointer" 
+              onClick={() => setIsMissingSkusExpanded(!isMissingSkusExpanded)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span className="font-bold text-red-600">
+                Advertencia: Tu ejercicio de reposición contempla SKUs que no existen en el ERP
+              </span>
+              {isMissingSkusExpanded ? (
+                <ChevronDownIcon className="h-5 w-5 text-red-500 ml-2" />
+              ) : (
+                <ChevronRightIcon className="h-5 w-5 text-red-500 ml-2" />
+              )}
+            </div>
+            
+            {isMissingSkusExpanded && (
+              <div className="mt-3 ml-8">
+                <p className="text-red-600 mb-2">Los siguientes SKUs no se encontraron en el ERP:</p>
+                <ul className="list-disc ml-5">
+                  {Object.entries(summary.missingSkus).map(([sku, stores]) => (
+                    <li key={sku} className="text-red-600 mb-1">
+                      <span className="font-semibold">{sku}</span> - Presente en tiendas: {stores.join(', ')}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Pagination */}
         <div className="mt-5 flex w-full justify-center">
