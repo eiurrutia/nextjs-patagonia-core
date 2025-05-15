@@ -1,7 +1,7 @@
 import { executeQuery } from '@/app/lib/snowflakeClient';
 import { unstable_noStore as noStore } from 'next/cache';
 import {
-  StockSegment, CDStockData, StoresStockData, SalesData, ReplenishmentRecord
+  StockSegment, CDStockData, StoresStockData, SalesData, ReplenishmentRecord, ERPProduct
 } from './../definitions';
 
 /**
@@ -784,6 +784,42 @@ export async function getOperationReplenishment(id: string) {
   `;
 
   return await executeQuery(sql, [id]);
+}
+
+/**
+ * Function to fetch ERP products data (TEAM, CATEGORY, ESTILOCOLOR information)
+ * @param skuList - Array of SKUs to retrieve information for
+ * @returns Promise with ERP product data for the specified SKUs
+ */
+export async function fetchERPProducts(skuList: string[]): Promise<ERPProduct[]> {
+  noStore();
+  
+  // Si no hay SKUs, devolvemos un array vacío
+  if (!skuList.length) {
+    return [];
+  }
+  
+  // Construir la consulta SQL utilizando IN con los SKUs proporcionados
+  let sqlText = `
+    SELECT 
+      SKU,
+      ITEMNUMBER,
+      COLOR,
+      CONFIGURATION,
+      SIZE,
+      PRODUCTNAME,
+      TEAM,
+      CATEGORY,
+      ESTILOCOLOR
+    FROM PATAGONIA.CORE_TEST.ERP_PRODUCTS
+    WHERE SKU IN (${skuList.map(() => '?').join(',')})
+  `;
+  
+  // Los SKUs serán los binds para la consulta
+  const binds = [...skuList];
+  
+  const result = await executeQuery(sqlText, binds);
+  return result as ERPProduct[];
 }
 
 /**

@@ -42,6 +42,7 @@ export default function ReplenishmentTable({
   const [storeList, setStoreList] = useState<string[]>([]);
   const [progressSteps, setProgressSteps] = useState<{ message: string; completed: boolean; level: number }[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [groupBy, setGroupBy] = useState<'SKU' | 'CC' | 'TEAM' | 'CATEGORY' | 'DELIVERY' | 'STORE'>('SKU');
   const itemsPerPage = 20;
 
   // Fetch replenishment data
@@ -63,6 +64,7 @@ export default function ReplenishmentTable({
           }),
         });
         const data = await response.json();
+        
         setReplenishmentData(data.replenishmentTable);
         setBreakData(data.breakData);
         setSegmentationData(data.stockSegments);
@@ -116,22 +118,140 @@ export default function ReplenishmentTable({
         return acc;
       }, {} as Record<string, Record<string, number>>)
     ).sort(([a], [b]) => a.localeCompare(b));
+    
+    // Identificar SKUs que no existen en el ERP (tienen CATEGORY, TEAM y CC vacíos)
+    const missingSkus = replenishmentData
+      .filter(item => item.CATEGORY === "" && item.TEAM === "" && item.CC === "")
+      .reduce((acc, item) => {
+        if (!acc[item.SKU]) {
+          acc[item.SKU] = [];
+        }
+        if (!acc[item.SKU].includes(item.STORE)) {
+          acc[item.SKU].push(item.STORE);
+        }
+        return acc;
+      }, {} as Record<string, string[]>);
 
-    return { totalReplenishment, totalSales, replenishmentByStore, totalInOrdered, totalBreakQty, breakByStore, breakByStoreSku };
+    return { 
+      totalReplenishment, 
+      totalSales, 
+      replenishmentByStore, 
+      totalInOrdered, 
+      totalBreakQty, 
+      breakByStore, 
+      breakByStoreSku,
+      missingSkus
+    };
   }, [replenishmentData, breakData]);
+  
+  const [isMissingSkusExpanded, setIsMissingSkusExpanded] = useState(false);
+  const [isUpdatingErpProducts, setIsUpdatingErpProducts] = useState(false);
+  const [updateErpStatus, setUpdateErpStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [updateErpMessage, setUpdateErpMessage] = useState('');
+  const [showUpdateConfirmModal, setShowUpdateConfirmModal] = useState(false);
+  
+  const hasMissingSkus = useMemo(() => {
+    return Object.keys(summary.missingSkus || {}).length > 0;
+  }, [summary.missingSkus]);
+  
+  function handleUpdateErpProductsClick() {
+    setShowUpdateConfirmModal(true);
+  }
+  
+  async function updateErpProducts() {
+    setShowUpdateConfirmModal(false); 
+    
+    try {
+      setIsUpdatingErpProducts(true);
+      setUpdateErpStatus('loading');
+      setUpdateErpMessage('Actualizando base de datos de productos...');
+      
+      const response = await fetch('/api/airflow/trigger-dag', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          dagId: 'erp_products_data',
+          conf: {}
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        setUpdateErpStatus('success');
+        setUpdateErpMessage('Base de datos de productos actualizada. Se reflejará en la próxima carga.');
+      } else {
+        throw new Error(data.error || 'Error al actualizar productos');
+      }
+    } catch (error) {
+      console.error('Error al actualizar productos ERP:', error);
+      setUpdateErpStatus('error');
+      setUpdateErpMessage('Error al actualizar la base de datos de productos.');
+    } finally {
+      setTimeout(() => {
+        setIsUpdatingErpProducts(false);
+      }, 3000);
+    }
+  }
 
-  // Data filtering and sorting
   const filteredData = useMemo(() => {
-    let data = replenishmentData;
+    let data = [...replenishmentData];
     if (query) {
       data = data.filter(item =>
-            item.SKU.toUpperCase().includes(query.toUpperCase()) ||
-            item.STORE.toUpperCase().includes(query.toUpperCase())
+        (item.SKU && item.SKU.toString().toUpperCase().includes(query.toUpperCase())) ||
+        (item.STORE && item.STORE.toString().toUpperCase().includes(query.toUpperCase()))
       );
     }
 
+    const groupedMap = new Map();
+    data.forEach(item => {
+      let groupKey;
+      let uniqueKey;
+      
+      if (groupBy === 'STORE') {
+        uniqueKey = item.STORE;
+      } else {
+        const groupValue = item[groupBy] || 'Sin asignar';
+        uniqueKey = `${groupValue}|${item.STORE}`;
+        groupKey = groupValue;
+      }
+      
+      let groupItem = groupedMap.get(uniqueKey);
+      
+      if (!groupItem) {
+        groupItem = {
+          SEGMENT: 0,
+          SALES: 0,
+          ACTUAL_STOCK: 0,
+          ORDERED_QTY: 0,
+          REPLENISHMENT: 0,
+          STORE: item.STORE
+        };
+        
+        if (groupBy !== 'STORE') {
+          groupItem[groupBy] = groupKey;
+          
+          if (groupBy === 'SKU' && item.DELIVERY) {
+            groupItem.DELIVERY = item.DELIVERY;
+          }
+        }
+        
+        groupedMap.set(uniqueKey, groupItem);
+      }
+      
+      groupItem.SEGMENT += Number(item.SEGMENT) || 0;
+      groupItem.SALES += Number(item.SALES) || 0;
+      groupItem.ACTUAL_STOCK += Number(item.ACTUAL_STOCK) || 0;
+      groupItem.ORDERED_QTY += Number(item.ORDERED_QTY) || 0;
+      groupItem.REPLENISHMENT += Number(item.REPLENISHMENT) || 0;
+    });
+    
+    let result = Array.from(groupedMap.values());
+    
     if (sortConfig) {
-      data = [...data].sort((a, b) => {
+      result = result.sort((a, b) => {
         const aValue = a[sortConfig.key];
         const bValue = b[sortConfig.key];
         
@@ -141,8 +261,8 @@ export default function ReplenishmentTable({
       });
     }
 
-    return data;
-  }, [query, replenishmentData, sortConfig]);
+    return result;
+  }, [query, replenishmentData, sortConfig, groupBy]);
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -489,19 +609,49 @@ export default function ReplenishmentTable({
             className="border rounded p-2 w-full"
           />
         </div>
+        
+        {/* Grouping buttons */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {['SKU', 'CC', 'DELIVERY', 'CATEGORY', 'TEAM', 'STORE'].map((option) => (
+            <button
+              key={option}
+              onClick={() => {
+                setGroupBy(option as 'SKU' | 'CC' | 'TEAM' | 'CATEGORY' | 'DELIVERY' | 'STORE');
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-3 rounded text-s ${
+                groupBy === option ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'
+              } hover:bg-blue-400 hover:text-white`}
+            >
+              {`Agrupar por ${option}`}
+            </button>
+          ))}
+        </div>
+        
         {/* Table */}
         <table className="min-w-full border-collapse border border-gray-300">
           <thead>
             <tr>
-              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('SKU')}>
-                SKU {sortConfig?.key === 'SKU' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
-              </th>
+              {/* Mostrar campo de agrupación - solo cuando no sea STORE */}
+              {groupBy !== 'STORE' && (
+                <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort(groupBy)}>
+                  {groupBy} {sortConfig?.key === groupBy && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
+                </th>
+              )}
+              
+              {/* Mostrar Delivery solo cuando agrupamos por SKU */}
+              {groupBy === 'SKU' && (
+                <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('DELIVERY')}>
+                  Delivery {sortConfig?.key === 'DELIVERY' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
+                </th>
+              )}
+              
+              {/* Tienda siempre visible */}
               <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('STORE')}>
                 Tienda {sortConfig?.key === 'STORE' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
               </th>
-              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('DELIVERY')}>
-                Delivery {sortConfig?.key === 'DELIVERY' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
-              </th>
+              
+              {/* Columnas numéricas siempre visibles */}
               <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('SEGMENT')}>
                 Segmentación {sortConfig?.key === 'SEGMENT' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
               </th>
@@ -521,10 +671,21 @@ export default function ReplenishmentTable({
           </thead>
           <tbody>
             {currentPageData.map((item, index) => (
-                <tr key={`${item.SKU}-${item.STORE || index}`}>
-                    <td className="border px-4 py-2">{item.SKU}</td>
+                <tr key={index}>
+                    {/* Campo de agrupación cuando no es STORE */}
+                    {groupBy !== 'STORE' && (
+                        <td className="border px-4 py-2">{item[groupBy]}</td>
+                    )}
+                    
+                    {/* Mostrar Delivery solo cuando agrupamos por SKU */}
+                    {groupBy === 'SKU' && (
+                        <td className="border px-4 py-2">{item.DELIVERY}</td>
+                    )}
+                    
+                    {/* Tienda siempre visible */}
                     <td className="border px-4 py-2">{item.STORE}</td>
-                    <td className="border px-4 py-2">{item.DELIVERY}</td>
+                    
+                    {/* Columnas numéricas siempre visibles */}
                     <td className="border px-4 py-2">{item.SEGMENT}</td>
                     <td className="border px-4 py-2">{item.SALES}</td>
                     <td className="border px-4 py-2">{item.ACTUAL_STOCK}</td>
@@ -534,6 +695,105 @@ export default function ReplenishmentTable({
             ))}
           </tbody>
         </table>
+
+        {/* Warning for missing SKUs */}
+        {hasMissingSkus && (
+          <div className="mt-4 mb-4 p-4 border border-red-500 rounded-md bg-red-50">
+            <div 
+              className="flex items-center cursor-pointer" 
+              onClick={() => setIsMissingSkusExpanded(!isMissingSkusExpanded)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span className="font-bold text-red-600">
+                Advertencia: Tu ejercicio de reposición contempla SKUs que no existen en el ERP
+              </span>
+              {isMissingSkusExpanded ? (
+                <ChevronDownIcon className="h-5 w-5 text-red-500 ml-2" />
+              ) : (
+                <ChevronRightIcon className="h-5 w-5 text-red-500 ml-2" />
+              )}
+            </div>
+            
+            {/* Status update message */}
+            {isUpdatingErpProducts && (
+              <div className={`mt-2 p-2 rounded text-sm ${
+                updateErpStatus === 'loading' ? 'bg-blue-50 text-blue-700' : 
+                updateErpStatus === 'success' ? 'bg-green-50 text-green-700' : 
+                updateErpStatus === 'error' ? 'bg-red-100 text-red-700' : ''
+              }`}>
+                {updateErpMessage}
+              </div>
+            )}
+            
+            {isMissingSkusExpanded && (
+              <div className="mt-3 ml-8">
+                <p className="text-red-600 mb-2">Los siguientes SKUs no se encontraron en el ERP:</p>
+                <ul className="list-disc ml-5">
+                  {Object.entries(summary.missingSkus).map(([sku, stores]) => (
+                    <li key={sku} className="text-red-600 mb-1">
+                      <span className="font-semibold">{sku}</span> - Presente en tiendas: {stores.join(', ')}
+                    </li>
+                  ))}
+                </ul>
+                
+                {/* Update ERP products button */}
+                <div className="flex justify-end mt-4">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); 
+                      handleUpdateErpProductsClick();
+                    }}
+                    disabled={isUpdatingErpProducts}
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      isUpdatingErpProducts 
+                        ? 'bg-gray-300 text-gray-600 cursor-not-allowed' 
+                        : 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-300'
+                    }`}
+                  >
+                    {isUpdatingErpProducts ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-700 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Actualizando...
+                      </>
+                    ) : (
+                      'Actualizar tabla de productos del ERP en Snowflake'
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Update ERP products confirmation modal */}
+        {showUpdateConfirmModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+              <h3 className="text-lg font-medium mb-4">Confirmar actualización</h3>
+              <p className="mb-4">¿Estás seguro que deseas actualizar la tabla de productos del ERP en Snowflake?</p>
+              <p className="mb-4 text-sm text-gray-600">El proceso se ejecutará en segundo plano y toma entre 2 a 3 minutos. En caso de que el problema persista favor contactarse con quien administra la base de BYOD de productos del ERP.</p>
+              <div className="flex justify-end space-x-3">
+                <button 
+                  onClick={() => setShowUpdateConfirmModal(false)} 
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={updateErpProducts} 
+                  className="px-4 py-2 bg-blue-100 text-blue-700 border border-blue-300 rounded-md hover:bg-blue-200"
+                >
+                  Confirmar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Pagination */}
         <div className="mt-5 flex w-full justify-center">

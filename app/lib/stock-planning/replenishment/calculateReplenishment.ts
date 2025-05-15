@@ -3,6 +3,7 @@ import {
   fetchCDStockData,
   fetchStoresStockData,
   fetchStockSegments,
+  fetchERPProducts,
 } from '../data';
 import {
   ReplenishmentData,
@@ -45,6 +46,12 @@ export async function calculateReplenishment(
     selectedDeliveryOptions,
     true
   );
+  
+  // Obtener la lista única de SKUs de los datos de stock para consultar solo los productos necesarios
+  const uniqueSkus = Array.from(new Set(storesStockData.map(item => item.SKU)));
+
+  // Obtener datos de ERP_PRODUCTS para enriquecer con TEAM, CATEGORY y ESTILOCOLOR (CC)
+  const erpProducts = await fetchERPProducts(uniqueSkus);
 
   // Merge fetched stockSegments with editedSegments
   const stockSegments = fetchedStockSegments.map((segment) => {
@@ -56,6 +63,9 @@ export async function calculateReplenishment(
   const cdStockMap = new Map(cdStockData.map((cd) => [cd.SKU, cd.MINSTOCK]));
   const salesMap = new Map(salesData.map((s) => [s.SKU, s]));
   const segmentsMap = new Map(stockSegments.map((s) => [s.SKU, s]));
+  
+  // Crear un mapa para los productos ERP para poder acceder a CC, TEAM, CATEGORY
+  const erpProductsMap = new Map(erpProducts.map((prod) => [prod.SKU, prod]));
 
   const replenishmentTable: ReplenishmentData[] = [];
   const breakData: BreakData[] = [];
@@ -84,6 +94,9 @@ export async function calculateReplenishment(
       let breakQty = replenishmentNeeded - replenishment;
 
       if (replenishment > 0) {
+        // Obtener información adicional del producto desde ERP_PRODUCTS
+        const erpProduct = erpProductsMap.get(SKU);
+        
         replenishmentTable.push({
           SKU,
           STORE: storeName,
@@ -93,6 +106,10 @@ export async function calculateReplenishment(
           ORDERED_QTY: orderedQuantity,
           REPLENISHMENT: replenishment,
           DELIVERY: segmentsMap.get(SKU)?.DELIVERY || '',
+          // Añadir información del ERP si está disponible
+          CATEGORY: erpProduct?.CATEGORY || '',
+          TEAM: erpProduct?.TEAM || '',
+          CC: erpProduct?.ESTILOCOLOR || '',
         });
         remainingCDStock -= replenishment;
       }
