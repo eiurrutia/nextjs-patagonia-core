@@ -42,6 +42,7 @@ export default function ReplenishmentTable({
   const [storeList, setStoreList] = useState<string[]>([]);
   const [progressSteps, setProgressSteps] = useState<{ message: string; completed: boolean; level: number }[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [groupBy, setGroupBy] = useState<'SKU' | 'CC' | 'TEAM' | 'CATEGORY' | 'DELIVERY' | 'STORE'>('SKU');
   const itemsPerPage = 20;
 
   // Fetch replenishment data
@@ -63,6 +64,11 @@ export default function ReplenishmentTable({
           }),
         });
         const data = await response.json();
+        
+        // Filter and log objects with SKU = 'O2857'
+        const filteredItems = data.replenishmentTable.filter(item => item.SKU === 'O2857');
+        console.log('Items with SKU O2857:', filteredItems);
+        
         setReplenishmentData(data.replenishmentTable);
         setBreakData(data.breakData);
         setSegmentationData(data.stockSegments);
@@ -120,18 +126,78 @@ export default function ReplenishmentTable({
     return { totalReplenishment, totalSales, replenishmentByStore, totalInOrdered, totalBreakQty, breakByStore, breakByStoreSku };
   }, [replenishmentData, breakData]);
 
-  // Data filtering and sorting
+  // Data filtering, grouping and sorting
   const filteredData = useMemo(() => {
-    let data = replenishmentData;
+    // Paso 1: Filtrar por query si se proporciona
+    let data = [...replenishmentData];
     if (query) {
       data = data.filter(item =>
-            item.SKU.toUpperCase().includes(query.toUpperCase()) ||
-            item.STORE.toUpperCase().includes(query.toUpperCase())
+        (item.SKU && item.SKU.toString().toUpperCase().includes(query.toUpperCase())) ||
+        (item.STORE && item.STORE.toString().toUpperCase().includes(query.toUpperCase()))
       );
     }
 
+    // Paso 2: Aplicar agrupación según la opción seleccionada
+    
+    // Crear un mapa para almacenar los elementos agrupados
+    const groupedMap = new Map();
+    
+    // Procesar cada elemento para la agrupación
+    data.forEach(item => {
+      let groupKey;
+      let uniqueKey;
+      
+      if (groupBy === 'STORE') {
+        // Cuando agrupamos por STORE, solo usamos STORE como clave
+        uniqueKey = item.STORE;
+      } else {
+        // Para otras agrupaciones, usamos combinación de valor de grupo y STORE como clave
+        const groupValue = item[groupBy] || 'Sin asignar';
+        uniqueKey = `${groupValue}|${item.STORE}`;
+        groupKey = groupValue;
+      }
+      
+      // Obtener o crear entrada de grupo
+      let groupItem = groupedMap.get(uniqueKey);
+      
+      if (!groupItem) {
+        // Inicializar nuevo elemento de grupo con valores predeterminados
+        groupItem = {
+          SEGMENT: 0,
+          SALES: 0,
+          ACTUAL_STOCK: 0,
+          ORDERED_QTY: 0,
+          REPLENISHMENT: 0,
+          STORE: item.STORE
+        };
+        
+        // Agregar campo de agrupación si no estamos agrupando por STORE
+        if (groupBy !== 'STORE') {
+          groupItem[groupBy] = groupKey;
+          
+          // Si estamos agrupando por SKU, mantener también el campo DELIVERY
+          if (groupBy === 'SKU' && item.DELIVERY) {
+            groupItem.DELIVERY = item.DELIVERY;
+          }
+        }
+        
+        groupedMap.set(uniqueKey, groupItem);
+      }
+      
+      // Acumular valores numéricos
+      groupItem.SEGMENT += Number(item.SEGMENT) || 0;
+      groupItem.SALES += Number(item.SALES) || 0;
+      groupItem.ACTUAL_STOCK += Number(item.ACTUAL_STOCK) || 0;
+      groupItem.ORDERED_QTY += Number(item.ORDERED_QTY) || 0;
+      groupItem.REPLENISHMENT += Number(item.REPLENISHMENT) || 0;
+    });
+    
+    // Convertir mapa a array
+    let result = Array.from(groupedMap.values());
+    
+    // Aplicar ordenamiento si está configurado
     if (sortConfig) {
-      data = [...data].sort((a, b) => {
+      result = result.sort((a, b) => {
         const aValue = a[sortConfig.key];
         const bValue = b[sortConfig.key];
         
@@ -141,8 +207,8 @@ export default function ReplenishmentTable({
       });
     }
 
-    return data;
-  }, [query, replenishmentData, sortConfig]);
+    return result;
+  }, [query, replenishmentData, sortConfig, groupBy]);
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -489,19 +555,49 @@ export default function ReplenishmentTable({
             className="border rounded p-2 w-full"
           />
         </div>
+        
+        {/* Botones de agrupación */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {['SKU', 'CC', 'DELIVERY', 'CATEGORY', 'TEAM', 'STORE'].map((option) => (
+            <button
+              key={option}
+              onClick={() => {
+                setGroupBy(option as 'SKU' | 'CC' | 'TEAM' | 'CATEGORY' | 'DELIVERY' | 'STORE');
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1 rounded text-sm ${
+                groupBy === option ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'
+              } hover:bg-blue-400 hover:text-white`}
+            >
+              {`Agrupar por ${option}`}
+            </button>
+          ))}
+        </div>
+        
         {/* Table */}
         <table className="min-w-full border-collapse border border-gray-300">
           <thead>
             <tr>
-              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('SKU')}>
-                SKU {sortConfig?.key === 'SKU' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
-              </th>
+              {/* Mostrar campo de agrupación - solo cuando no sea STORE */}
+              {groupBy !== 'STORE' && (
+                <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort(groupBy)}>
+                  {groupBy} {sortConfig?.key === groupBy && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
+                </th>
+              )}
+              
+              {/* Mostrar Delivery solo cuando agrupamos por SKU */}
+              {groupBy === 'SKU' && (
+                <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('DELIVERY')}>
+                  Delivery {sortConfig?.key === 'DELIVERY' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
+                </th>
+              )}
+              
+              {/* Tienda siempre visible */}
               <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('STORE')}>
                 Tienda {sortConfig?.key === 'STORE' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
               </th>
-              <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('DELIVERY')}>
-                Delivery {sortConfig?.key === 'DELIVERY' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
-              </th>
+              
+              {/* Columnas numéricas siempre visibles */}
               <th className="border px-4 py-2 cursor-pointer" onClick={() => handleSort('SEGMENT')}>
                 Segmentación {sortConfig?.key === 'SEGMENT' && (sortConfig.direction === 'asc' ? '🔼' : '🔽')}
               </th>
@@ -521,10 +617,21 @@ export default function ReplenishmentTable({
           </thead>
           <tbody>
             {currentPageData.map((item, index) => (
-                <tr key={`${item.SKU}-${item.STORE || index}`}>
-                    <td className="border px-4 py-2">{item.SKU}</td>
+                <tr key={index}>
+                    {/* Campo de agrupación cuando no es STORE */}
+                    {groupBy !== 'STORE' && (
+                        <td className="border px-4 py-2">{item[groupBy]}</td>
+                    )}
+                    
+                    {/* Mostrar Delivery solo cuando agrupamos por SKU */}
+                    {groupBy === 'SKU' && (
+                        <td className="border px-4 py-2">{item.DELIVERY}</td>
+                    )}
+                    
+                    {/* Tienda siempre visible */}
                     <td className="border px-4 py-2">{item.STORE}</td>
-                    <td className="border px-4 py-2">{item.DELIVERY}</td>
+                    
+                    {/* Columnas numéricas siempre visibles */}
                     <td className="border px-4 py-2">{item.SEGMENT}</td>
                     <td className="border px-4 py-2">{item.SALES}</td>
                     <td className="border px-4 py-2">{item.ACTUAL_STOCK}</td>
