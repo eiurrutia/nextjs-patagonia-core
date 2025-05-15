@@ -338,7 +338,25 @@ export type ReplenishmentData = {
   ORDERED_QTY: number;
   REPLENISHMENT: number;
   DELIVERY: string;
+  CATEGORY?: string;
+  TEAM?: string;
+  CC?: string;
+  // Campos adicionales para agrupación
+  GROUPED_VALUE?: string;
+  GROUP_BY?: string;
 }
+
+export type ERPProduct = {
+  SKU: string;
+  ITEMNUMBER: string;
+  COLOR: string;
+  CONFIGURATION: string;
+  SIZE: string;
+  PRODUCTNAME: string;
+  TEAM: string;
+  CATEGORY: string;
+  ESTILOCOLOR?: string;
+};
 
 export type ReplenishmentRecord = {
   ID: string;
