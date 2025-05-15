@@ -144,17 +144,59 @@ export default function ReplenishmentTable({
     };
   }, [replenishmentData, breakData]);
   
-  // Estado para controlar la expansión de la advertencia de SKUs faltantes
   const [isMissingSkusExpanded, setIsMissingSkusExpanded] = useState(false);
+  const [isUpdatingErpProducts, setIsUpdatingErpProducts] = useState(false);
+  const [updateErpStatus, setUpdateErpStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [updateErpMessage, setUpdateErpMessage] = useState('');
+  const [showUpdateConfirmModal, setShowUpdateConfirmModal] = useState(false);
   
-  // Verificar si hay SKUs faltantes en el ERP
   const hasMissingSkus = useMemo(() => {
     return Object.keys(summary.missingSkus || {}).length > 0;
   }, [summary.missingSkus]);
+  
+  function handleUpdateErpProductsClick() {
+    setShowUpdateConfirmModal(true);
+  }
+  
+  async function updateErpProducts() {
+    setShowUpdateConfirmModal(false); 
+    
+    try {
+      setIsUpdatingErpProducts(true);
+      setUpdateErpStatus('loading');
+      setUpdateErpMessage('Actualizando base de datos de productos...');
+      
+      const response = await fetch('/api/airflow/trigger-dag', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          dagId: 'erp_products_data',
+          conf: {}
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        setUpdateErpStatus('success');
+        setUpdateErpMessage('Base de datos de productos actualizada. Se reflejará en la próxima carga.');
+      } else {
+        throw new Error(data.error || 'Error al actualizar productos');
+      }
+    } catch (error) {
+      console.error('Error al actualizar productos ERP:', error);
+      setUpdateErpStatus('error');
+      setUpdateErpMessage('Error al actualizar la base de datos de productos.');
+    } finally {
+      setTimeout(() => {
+        setIsUpdatingErpProducts(false);
+      }, 3000);
+    }
+  }
 
-  // Data filtering, grouping and sorting
   const filteredData = useMemo(() => {
-    // Paso 1: Filtrar por query si se proporciona
     let data = [...replenishmentData];
     if (query) {
       data = data.filter(item =>
@@ -163,31 +205,22 @@ export default function ReplenishmentTable({
       );
     }
 
-    // Paso 2: Aplicar agrupación según la opción seleccionada
-    
-    // Crear un mapa para almacenar los elementos agrupados
     const groupedMap = new Map();
-    
-    // Procesar cada elemento para la agrupación
     data.forEach(item => {
       let groupKey;
       let uniqueKey;
       
       if (groupBy === 'STORE') {
-        // Cuando agrupamos por STORE, solo usamos STORE como clave
         uniqueKey = item.STORE;
       } else {
-        // Para otras agrupaciones, usamos combinación de valor de grupo y STORE como clave
         const groupValue = item[groupBy] || 'Sin asignar';
         uniqueKey = `${groupValue}|${item.STORE}`;
         groupKey = groupValue;
       }
       
-      // Obtener o crear entrada de grupo
       let groupItem = groupedMap.get(uniqueKey);
       
       if (!groupItem) {
-        // Inicializar nuevo elemento de grupo con valores predeterminados
         groupItem = {
           SEGMENT: 0,
           SALES: 0,
@@ -197,11 +230,9 @@ export default function ReplenishmentTable({
           STORE: item.STORE
         };
         
-        // Agregar campo de agrupación si no estamos agrupando por STORE
         if (groupBy !== 'STORE') {
           groupItem[groupBy] = groupKey;
           
-          // Si estamos agrupando por SKU, mantener también el campo DELIVERY
           if (groupBy === 'SKU' && item.DELIVERY) {
             groupItem.DELIVERY = item.DELIVERY;
           }
@@ -210,7 +241,6 @@ export default function ReplenishmentTable({
         groupedMap.set(uniqueKey, groupItem);
       }
       
-      // Acumular valores numéricos
       groupItem.SEGMENT += Number(item.SEGMENT) || 0;
       groupItem.SALES += Number(item.SALES) || 0;
       groupItem.ACTUAL_STOCK += Number(item.ACTUAL_STOCK) || 0;
@@ -218,10 +248,8 @@ export default function ReplenishmentTable({
       groupItem.REPLENISHMENT += Number(item.REPLENISHMENT) || 0;
     });
     
-    // Convertir mapa a array
     let result = Array.from(groupedMap.values());
     
-    // Aplicar ordenamiento si está configurado
     if (sortConfig) {
       result = result.sort((a, b) => {
         const aValue = a[sortConfig.key];
@@ -688,6 +716,17 @@ export default function ReplenishmentTable({
               )}
             </div>
             
+            {/* Status update message */}
+            {isUpdatingErpProducts && (
+              <div className={`mt-2 p-2 rounded text-sm ${
+                updateErpStatus === 'loading' ? 'bg-blue-50 text-blue-700' : 
+                updateErpStatus === 'success' ? 'bg-green-50 text-green-700' : 
+                updateErpStatus === 'error' ? 'bg-red-100 text-red-700' : ''
+              }`}>
+                {updateErpMessage}
+              </div>
+            )}
+            
             {isMissingSkusExpanded && (
               <div className="mt-3 ml-8">
                 <p className="text-red-600 mb-2">Los siguientes SKUs no se encontraron en el ERP:</p>
@@ -698,8 +737,61 @@ export default function ReplenishmentTable({
                     </li>
                   ))}
                 </ul>
+                
+                {/* Update ERP products button */}
+                <div className="flex justify-end mt-4">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); 
+                      handleUpdateErpProductsClick();
+                    }}
+                    disabled={isUpdatingErpProducts}
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      isUpdatingErpProducts 
+                        ? 'bg-gray-300 text-gray-600 cursor-not-allowed' 
+                        : 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-300'
+                    }`}
+                  >
+                    {isUpdatingErpProducts ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-700 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Actualizando...
+                      </>
+                    ) : (
+                      'Actualizar tabla de productos del ERP en Snowflake'
+                    )}
+                  </button>
+                </div>
               </div>
             )}
+          </div>
+        )}
+        
+        {/* Update ERP products confirmation modal */}
+        {showUpdateConfirmModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+              <h3 className="text-lg font-medium mb-4">Confirmar actualización</h3>
+              <p className="mb-4">¿Estás seguro que deseas actualizar la tabla de productos del ERP en Snowflake?</p>
+              <p className="mb-4 text-sm text-gray-600">El proceso se ejecutará en segundo plano y toma entre 2 a 3 minutos. En caso de que el problema persista favor contactarse con quien administra la base de BYOD de productos del ERP.</p>
+              <div className="flex justify-end space-x-3">
+                <button 
+                  onClick={() => setShowUpdateConfirmModal(false)} 
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={updateErpProducts} 
+                  className="px-4 py-2 bg-blue-100 text-blue-700 border border-blue-300 rounded-md hover:bg-blue-200"
+                >
+                  Confirmar
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
