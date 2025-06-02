@@ -110,7 +110,7 @@ export async function getERPToken(): Promise<string> {
       "PriceType": lineData.PriceType,
       // Fixed fields
       "ATPTimeFenceDays": 0,
-      "AllowedUnderdeliveryPercentage": 0,
+      "AllowedUnderdeliveryPercentage": 100,
       "WillProductReceivingCrossDockProducts": "No",
       "OverrideFEFODateControl": "No",
       "IntrastatCostAmount": 0,
