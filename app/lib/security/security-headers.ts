@@ -11,7 +11,7 @@ export function addSecurityHeaders(req: NextRequest, res: NextResponse): NextRes
   // Content-Security-Policy: Define fuentes de contenido permitidas
   responseHeaders.set(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self';"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://cdn.shopify.com https://9m64zfqkzfk3ohy7.public.blob.vercel-storage.com https://maps.gstatic.com; font-src 'self' data:; connect-src 'self' https://maps.googleapis.com;"
   );
 
   // X-Content-Type-Options: Previene "MIME type sniffing"

@@ -28,6 +28,15 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Error fetching trade-in config:', error);
+    
+    // If the patcore_configurations table doesn't exist, return default values
+    if (error.code === '42P01' || error.message?.includes('relation "patcore_configurations" does not exist')) {
+      console.log('patcore_configurations table does not exist, returning default values');
+      return res.status(200).json({
+        imageDetectionEnabled: false // Default to false when table doesn't exist
+      });
+    }
+    
     return res.status(500).json({ 
       message: 'Internal server error',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined

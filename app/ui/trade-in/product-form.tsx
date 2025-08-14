@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Button } from '@/app/ui/button';
 import ConditionAssessment from './condition-assessment';
@@ -50,8 +50,13 @@ export default function ProductForm({
 }: ProductFormProps) {
   const [formData, setFormData] = useState<ProductFormState>(initialFormState);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
-  const [matchedImageUrl, setMatchedImageUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [matchedImageUrl, setMatchedImageUrl] = useState<string | null>(null);
+
+  // Refs for form fields to enable scrolling to errors
+  const productStyleRef = useRef<HTMLInputElement>(null);
+  const productSizeRef = useRef<HTMLInputElement>(null);
+  const conditionAssessmentRef = useRef<HTMLDivElement>(null);
 
   // Load editing product data
   useEffect(() => {
@@ -114,6 +119,33 @@ export default function ProductForm({
     }
   };
 
+  const scrollToFirstError = (errorFields: string[]) => {
+    const fieldRefMap: Record<string, React.RefObject<HTMLElement>> = {
+      'product_style': productStyleRef,
+      'product_size': productSizeRef,
+      'usage_signs': conditionAssessmentRef,
+      'pilling_level': conditionAssessmentRef,
+      'tears_holes_level': conditionAssessmentRef,
+      'repairs_level': conditionAssessmentRef,
+    };
+
+    // Find the first error field that has a ref
+    for (const field of errorFields) {
+      const ref = fieldRefMap[field];
+      if (ref?.current) {
+        ref.current.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+        // Focus the input if it's focusable
+        if (ref.current instanceof HTMLInputElement) {
+          ref.current.focus();
+        }
+        break;
+      }
+    }
+  };
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, boolean> = {};
 
@@ -128,7 +160,14 @@ export default function ProductForm({
     if (!formData.repairs_level) newErrors.repairs_level = true;
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    
+    // Scroll to first error if validation fails
+    const errorFields = Object.keys(newErrors);
+    if (errorFields.length > 0) {
+      setTimeout(() => scrollToFirstError(errorFields), 100);
+    }
+    
+    return errorFields.length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -201,6 +240,7 @@ export default function ProductForm({
               Product Style (Estilo-Color) <span className="text-red-500">*</span>
             </label>
             <input
+              ref={productStyleRef}
               type="text"
               id="product_style"
               value={formData.product_style}
@@ -208,7 +248,7 @@ export default function ProductForm({
               className={`block w-full rounded-md border px-3 py-2 text-sm ${
                 errors.product_style ? 'border-red-500' : 'border-gray-300'
               } focus:border-blue-500 focus:ring-blue-500`}
-              placeholder="Ej: FJORD-NVYB, BETTER-BLKW, etc."
+              placeholder="Ej: 25528-BLK, 50155-STH, etc."
               list="style-suggestions"
             />
             <datalist id="style-suggestions">
@@ -228,6 +268,7 @@ export default function ProductForm({
                     src={matchedImageUrl}
                     alt="Producto encontrado"
                     fill
+                    sizes="128px"
                     className="object-cover"
                   />
                 </div>
@@ -242,6 +283,7 @@ export default function ProductForm({
               Talla <span className="text-red-500">*</span>
             </label>
             <input
+              ref={productSizeRef}
               type="text"
               id="product_size"
               value={formData.product_size}
@@ -273,11 +315,13 @@ export default function ProductForm({
         </div>
 
         {/* Condition Assessment */}
-        <ConditionAssessment
-          values={conditionValues}
-          onChange={handleConditionChange}
-          errors={errors}
-        />
+        <div ref={conditionAssessmentRef}>
+          <ConditionAssessment
+            values={conditionValues}
+            onChange={handleConditionChange}
+            errors={errors}
+          />
+        </div>
 
         {/* Form Actions */}
         <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">

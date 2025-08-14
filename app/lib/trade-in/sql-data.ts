@@ -206,7 +206,7 @@ export async function updateTradeInRequestStatus(id: number, status: string, adm
 export async function getConfigValue(key: string): Promise<string | null> {
   try {
     const result = await sql`
-      SELECT config_value FROM configs WHERE config_key = ${key}
+      SELECT config_value FROM patcore_configurations WHERE config_key = ${key}
     `;
     
     return result.rows.length > 0 ? result.rows[0].config_value : null;

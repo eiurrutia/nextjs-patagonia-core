@@ -82,6 +82,10 @@ module.exports = withPWA({
         source: '/security/:path*',
         destination: '/dashboard/security/:path*',
       },
+      {
+        source: '/api/auth/:path*',
+        destination: '/api/auth/:path*',
+      },
     ];
   },
 });
