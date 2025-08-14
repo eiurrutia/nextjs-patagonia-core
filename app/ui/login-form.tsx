@@ -9,7 +9,6 @@ import { ArrowRightIcon } from '@heroicons/react/20/solid';
 import { Button } from './button';
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
-
 export default function LoginForm() {
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,9 +21,8 @@ export default function LoginForm() {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
-    console.log('Submitting login form with:', { email, password });
 
-    // Llamar a signIn desde el cliente
+    // Call signIn from the client
     const result = await signIn('credentials', {
       redirect: false,
       email,

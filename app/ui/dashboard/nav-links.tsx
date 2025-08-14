@@ -17,7 +17,8 @@ import {
   RectangleGroupIcon,
   PresentationChartBarIcon,
   ChartBarSquareIcon,
-  SquaresPlusIcon
+  SquaresPlusIcon,
+  ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 
 const navItems = [
@@ -62,6 +63,7 @@ const navItems = [
     roles: ['admin', 'user'],
     items: [
       { name: 'Users', href: '/users', icon: UserIcon, roles: ['admin'] },
+      { name: 'Seguridad', href: '/security', icon: ShieldCheckIcon, roles: ['admin'] },
       { name: 'Parámetros', href: '/configs', icon: AdjustmentsVerticalIcon, roles: ['admin', 'user'] },
     ],
   },

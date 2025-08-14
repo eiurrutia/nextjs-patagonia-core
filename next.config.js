@@ -65,6 +65,10 @@ module.exports = withPWA({
         source: '/configs/:path*',
         destination: '/dashboard/configs/:path*',
       },
+      {
+        source: '/security/:path*',
+        destination: '/dashboard/security/:path*',
+      },
     ];
   },
 });

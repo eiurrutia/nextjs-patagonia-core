@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { addSecurityHeaders } from '@/app/lib/security/security-headers';
 
 // Define protected and public routes
 const protectedRoutes = ['/dashboard', '/home', '/orders', '/customers', '/incidences', '/stock-planning', '/users', '/configs', '/ccss']; // Routes that require authentication
@@ -10,12 +11,12 @@ export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
 
   // Fetch the session from NextAuth API
-  const response = await fetch(`${req.nextUrl.origin}/api/auth/session`, {
+  const sessionResponse = await fetch(`${req.nextUrl.origin}/api/auth/session`, {
     headers: {
       cookie: req.headers.get('cookie') || ''
     }
   });
-  const session = await response.json();
+  const session = await sessionResponse.json();
 
   // Check if the current route is a public route
   const isPublicRoute = publicRoutes.includes(path);
@@ -37,7 +38,10 @@ export default async function middleware(req: NextRequest) {
   }
 
   // Allow the user to proceed if they are authenticated or if the route is public
-  return NextResponse.next();
+  const nextResponse = NextResponse.next();
+  
+  // Añadir cabeceras de seguridad a la respuesta
+  return addSecurityHeaders(req, nextResponse);
 }
 
 // Matcher configuration
