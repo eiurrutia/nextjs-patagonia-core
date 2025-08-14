@@ -191,11 +191,13 @@ const TradeInFormPage = () => {
   };
 
   // Handle address selection from Google Maps Autocomplete
-  const handleAddressSelect = (place: google.maps.places.PlaceResult) => {
-    const formattedAddress = place.formatted_address || '';
+  const handleAddressSelect = (addressData: { address: string; region: string; comuna: string; place: google.maps.places.PlaceResult }) => {
+    console.log('Address data received:', addressData); // Para debugging
     setFormData((prevFormData) => ({
       ...prevFormData,
-      address: formattedAddress,
+      address: addressData.address,
+      region: addressData.region,
+      comuna: addressData.comuna,
     }));
   };
 
@@ -580,7 +582,20 @@ const TradeInFormPage = () => {
                   required
                 />
               </div>
+            </div>
 
+            {/* Address */}
+            <div className="mt-4">
+              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                Dirección <span className="text-red-500">*</span>
+              </label>
+              <AddressAutocomplete
+                onPlaceSelected={handleAddressSelect}
+              />
+            </div>
+
+            {/* Region and Comuna */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               {/* Region */}
               <div>
                 <label htmlFor="region" className="block text-sm font-medium text-gray-700 mb-1">
@@ -616,16 +631,6 @@ const TradeInFormPage = () => {
               </div>
             </div>
 
-            {/* Address */}
-            <div className="mt-4">
-              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                Dirección <span className="text-red-500">*</span>
-              </label>
-              <AddressAutocomplete
-                onPlaceSelected={handleAddressSelect}
-              />
-            </div>
-
             {/* House Details */}
             <div className="mt-4">
               <label htmlFor="houseDetails" className="block text-sm font-medium text-gray-700 mb-1">
@@ -642,58 +647,84 @@ const TradeInFormPage = () => {
             </div>
 
             {/* Delivery Method */}
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-gray-700 mb-4">
                 Método de Entrega <span className="text-red-500">*</span>
               </label>
-              <RadioGroup value={deliveryOption} onChange={setDeliveryOption}>
-                <div className="space-y-2">
-                  <Radio value="pickup" className="group relative flex cursor-pointer rounded-lg px-5 py-4 text-white shadow-md transition focus:outline-none data-[focus]:outline-1 data-[focus]:outline-white data-[checked]:bg-white/10">
-                    <div className="flex w-full items-center justify-between">
-                      <div className="text-sm/6">
-                        <p className="font-semibold text-gray-900">Retiro en tienda</p>
-                        <div className="flex gap-2 text-gray-600">
-                          <div>Retira tu producto en nuestra tienda</div>
-                        </div>
-                      </div>
-                      <div className="size-4 fill-white opacity-0 transition group-data-[checked]:opacity-100">
-                        <svg viewBox="0 0 14 14" fill="none">
-                          <path d="m3 8 2.5 2.5L12 4" strokeWidth={2} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </div>
+              <div className="space-y-4">
+                {/* Shipping Option */}
+                <div 
+                  onClick={() => setDeliveryOption('shipping')}
+                  className={`cursor-pointer rounded-lg border-2 p-4 transition-all ${
+                    deliveryOption === 'shipping' 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-start space-x-3">
+                    <div className={`mt-1 h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                      deliveryOption === 'shipping' 
+                        ? 'border-blue-500 bg-blue-500' 
+                        : 'border-gray-300'
+                    }`}>
+                      {deliveryOption === 'shipping' && (
+                        <div className="h-2 w-2 rounded-full bg-white"></div>
+                      )}
                     </div>
-                  </Radio>
-                  <Radio value="delivery" className="group relative flex cursor-pointer rounded-lg px-5 py-4 text-white shadow-md transition focus:outline-none data-[focus]:outline-1 data-[focus]:outline-white data-[checked]:bg-white/10">
-                    <div className="flex w-full items-center justify-between">
-                      <div className="text-sm/6">
-                        <p className="font-semibold text-gray-900">Entrega a domicilio</p>
-                        <div className="flex gap-2 text-gray-600">
-                          <div>Enviamos el producto a tu dirección</div>
-                        </div>
-                      </div>
-                      <div className="size-4 fill-white opacity-0 transition group-data-[checked]:opacity-100">
-                        <svg viewBox="0 0 14 14" fill="none">
-                          <path d="m3 8 2.5 2.5L12 4" strokeWidth={2} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900">Envíos por Chilexpress o Blue Express</h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Te enviaremos una etiqueta digital para que puedas realizar el envío gratuito desde cualquier sucursal.
+                      </p>
                     </div>
-                  </Radio>
+                  </div>
                 </div>
-              </RadioGroup>
+
+                {/* Pickup Option */}
+                <div 
+                  onClick={() => setDeliveryOption('pickup')}
+                  className={`cursor-pointer rounded-lg border-2 p-4 transition-all ${
+                    deliveryOption === 'pickup' 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-start space-x-3">
+                    <div className={`mt-1 h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                      deliveryOption === 'pickup' 
+                        ? 'border-blue-500 bg-blue-500' 
+                        : 'border-gray-300'
+                    }`}>
+                      {deliveryOption === 'pickup' && (
+                        <div className="h-2 w-2 rounded-full bg-white"></div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900">Retiros a domicilio</h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Te contactaremos para coordinar el retiro de tu producto en un plazo de 5 días hábiles desde que ingresaste la solicitud entre las 09:00 y las 18:00
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Client Comment */}
-            <div className="mt-4">
+            <div className="mt-6">
               <label htmlFor="client_comment" className="block text-sm font-medium text-gray-700 mb-1">
-                Comentarios Adicionales
+                Cuéntanos algo más sobre la historia de tu(s) producto(s)
               </label>
+              <p className="text-xs text-gray-500 mb-2">
+                Nos interesa mucho saber las historias que viviste con el producto y las historias que él tiene para contarnos!
+              </p>
               <textarea
                 id="client_comment"
-                rows={3}
+                rows={4}
                 value={formData.client_comment}
                 onChange={(e) => handleInputChange('client_comment', e.target.value)}
                 className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Agrega cualquier comentario adicional sobre tu solicitud..."
+                placeholder="Comparte la historia de tu producto: aventuras, momentos especiales, lugares que visitaste con él..."
               />
             </div>
           </div>
