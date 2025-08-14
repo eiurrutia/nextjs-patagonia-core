@@ -9,6 +9,7 @@ import { lusitana } from '@/app/ui/fonts';
 import ProductForm from '@/app/ui/trade-in/product-form';
 import ProductsTable, { ProductFormData } from '@/app/ui/trade-in/products-table';
 import AddressAutocomplete from '@/app/ui/address-autocomplete';
+import { conditionQuestions } from '@/app/lib/trade-in/condition-images';
 import {
   ChevronRightIcon, ChevronDownIcon,
   HomeIcon, MapPinIcon, PlusIcon, CheckCircleIcon
@@ -44,7 +45,8 @@ const TradeInFormPage = () => {
   const [products, setProducts] = useState<ProductFormData[]>([]);
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductFormData | null>(null);
-  const [imageDetectionEnabled, setImageDetectionEnabled] = useState(true);
+  const [imageDetectionEnabled, setImageDetectionEnabled] = useState(false);
+  const [configLoaded, setConfigLoaded] = useState(false);
   const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -75,6 +77,25 @@ const TradeInFormPage = () => {
   useEffect(() => {
     fetchTradeInConfig();
     fetchItemColorSuggestions();
+    
+    // Preload ALL condition images immediately
+    const preloadAllImages = () => {
+      conditionQuestions.forEach(question => {
+        question.options.forEach(option => {
+          const img = new window.Image();
+          img.src = option.imageUrl;
+          // Force load by adding to DOM temporarily
+          img.style.display = 'none';
+          document.body.appendChild(img);
+          img.onload = () => {
+            document.body.removeChild(img);
+          };
+        });
+      });
+    };
+    
+    // Small delay to ensure DOM is ready
+    setTimeout(preloadAllImages, 100);
   }, []);
 
   // Fetch trade-in configuration
@@ -83,8 +104,12 @@ const TradeInFormPage = () => {
       const response = await fetch('/api/trade-in/config');
       const data = await response.json();
       setImageDetectionEnabled(data.imageDetectionEnabled || false);
+      setConfigLoaded(true);
     } catch (error) {
       console.error('Error fetching trade-in config:', error);
+      // Default to false if config fails
+      setImageDetectionEnabled(false);
+      setConfigLoaded(true);
     }
   };
 
@@ -332,7 +357,7 @@ const TradeInFormPage = () => {
 
         <div className="space-y-8">
           {/* Image Detection Section (if enabled) */}
-          {imageDetectionEnabled && (
+          {configLoaded && imageDetectionEnabled && (
             <div className="bg-white rounded-lg shadow-sm border border-gray-200">
               <button
                 type="button"

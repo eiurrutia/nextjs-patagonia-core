@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { conditionQuestions, ConditionQuestion, ConditionOption } from '@/app/lib/trade-in/condition-images';
+import { conditionQuestions } from '@/app/lib/trade-in/condition-images';
 
 interface ConditionAssessmentProps {
   values: Record<string, string>;
@@ -81,16 +81,18 @@ export default function ConditionAssessment({ values, onChange, errors = {} }: C
                     onClick={() => handleOptionSelect(question.id, option.value)}
                   >
                     {/* Option Image */}
-                    <div className="relative h-32 mb-3 bg-gray-100 rounded overflow-hidden">
+                    <div className="relative h-32 mb-3 bg-gray-50 rounded overflow-hidden">
                       <Image
                         src={option.imageUrl}
                         alt={`${question.question} - ${option.label}`}
                         fill
                         className="object-cover"
+                        priority={true}
+                        unoptimized={false}
                         onError={(e) => {
                           // Fallback to placeholder if image doesn't exist
                           const target = e.target as HTMLImageElement;
-                          target.src = '/images/placeholder-condition.jpg';
+                          target.src = '/images/trade-in/placeholder-condition.svg';
                         }}
                       />
                     </div>
