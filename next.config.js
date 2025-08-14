@@ -25,7 +25,20 @@ module.exports = withPWA({
     TRANSFORMERS_OFFLINE: '1',
   },
   images: {
-    domains: ['cdn.shopify.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'cdn.shopify.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '9m64zfqkzfk3ohy7.public.blob.vercel-storage.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
   },
   async rewrites() {
     return [
