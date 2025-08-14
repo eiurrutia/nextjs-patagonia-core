@@ -9,8 +9,9 @@ RUN apt-get update --allow-insecure-repositories \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 # Instalar dependencias de Python (Torch, Transformers, Pillow)
-RUN pip3 install --upgrade pip
-RUN pip3 install torch transformers Pillow
+
+## RUN pip3 install --upgrade pip
+## RUN pip3 install torch transformers Pillow
 
 # Instalar dependencias de Node
 COPY package.json package-lock.json ./
@@ -60,8 +61,9 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/scripts ./scripts
 
 # Instalar dependencias necesarias para producción (si aplica)
-RUN apt-get update && apt-get install -y python3 python3-pip
-RUN pip3 install torch transformers Pillow
+
+## RUN apt-get update && apt-get install -y python3 python3-pip
+## RUN pip3 install torch transformers Pillow
 
 # Configuración de entorno para producción
 ENV NODE_ENV=production

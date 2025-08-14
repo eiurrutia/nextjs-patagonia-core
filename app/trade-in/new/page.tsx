@@ -6,25 +6,25 @@ import { SimilarImage } from '@/app/lib/definitions';
 import { Button } from '@/app/ui/button';
 import { RadioGroup, Radio } from '@headlessui/react';
 import { lusitana } from '@/app/ui/fonts';
-import TradeInForm from '@/app/ui/trade-in/trade-in-form';
+import ProductForm from '@/app/ui/trade-in/product-form';
+import ProductsTable, { ProductFormData } from '@/app/ui/trade-in/products-table';
 import AddressAutocomplete from '@/app/ui/address-autocomplete';
 import {
   ChevronRightIcon, ChevronDownIcon,
-  HomeIcon, MapPinIcon
+  HomeIcon, MapPinIcon, PlusIcon, CheckCircleIcon
 } from '@heroicons/react/24/outline';
 
 interface FormData {
-    firstName: string;
-    lastName: string;
-    rut: string;
-    email: string;
-    phone: string;
-    selectedItemColor: string;
-    address: string;
-    houseDetails: string;
-    client_comment: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  region: string;
+  comuna: string;
+  address: string;
+  houseDetails: string;
+  client_comment: string;
 }
-
 
 const TradeInFormPage = () => {
   const router = useRouter();
@@ -32,25 +32,30 @@ const TradeInFormPage = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [similarImages, setSimilarImages] = useState<SimilarImage[]>([]);
   const [loading, setLoading] = useState(false);
-  const [loadingForm, setLoadingForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [processing, setProcessing] = useState(false);
   const [itemColorSuggestions, setItemColorSuggestions] = useState<
     { itemColor: string; imageSrc: string }[]
   >([]);
-  const [matchedImageUrl, setMatchedImageUrl] = useState<string | null>(null);
   const [isImageSectionCollapsed, setImageSectionCollapsed] = useState(true);
   const firstNameInputRef = useRef<HTMLInputElement>(null);
   const [deliveryOption, setDeliveryOption] = useState<string>('');
+  
+  // New state for enhanced functionality
+  const [products, setProducts] = useState<ProductFormData[]>([]);
+  const [showProductForm, setShowProductForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<ProductFormData | null>(null);
+  const [imageDetectionEnabled, setImageDetectionEnabled] = useState(true);
+  const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Estado para los datos del formulario y errores
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
     lastName: '',
-    rut: '',
     email: '',
     phone: '',
-    selectedItemColor: '',
+    region: '',
+    comuna: '',
     address: '',
     houseDetails: '',
     client_comment: ''
@@ -59,21 +64,28 @@ const TradeInFormPage = () => {
   const [errors, setErrors] = useState({
     firstName: false,
     lastName: false,
-    rut: false,
     email: false,
     phone: false,
-    selectedItemColor: false,
+    region: false,
+    comuna: false,
     address: false,
   });
 
-  // Fetch ITEM_COLOR suggestions for autocomplete along with IMAGE_SRC on page load
+  // Fetch configuration and autocomplete data on page load
   useEffect(() => {
-    fetchItemColorSuggestions(); // Autocomplete should work from the beginning
+    fetchTradeInConfig();
+    fetchItemColorSuggestions();
   }, []);
 
-  // Toggle collapse for the image upload section
-  const toggleImageSection = () => {
-    setImageSectionCollapsed(!isImageSectionCollapsed);
+  // Fetch trade-in configuration
+  const fetchTradeInConfig = async () => {
+    try {
+      const response = await fetch('/api/trade-in/config');
+      const data = await response.json();
+      setImageDetectionEnabled(data.imageDetectionEnabled || false);
+    } catch (error) {
+      console.error('Error fetching trade-in config:', error);
+    }
   };
 
   // Fetch ITEM_COLOR suggestions for autocomplete along with IMAGE_SRC
@@ -81,25 +93,15 @@ const TradeInFormPage = () => {
     try {
       const response = await fetch('/api/trade-in/autocomplete');
       const data = await response.json();
-      setItemColorSuggestions(data.itemColors || []); // Ensure it is always an array
+      setItemColorSuggestions(data.itemColors || []);
     } catch (error) {
-      console.error(
-        'Error fetching ITEM_COLOR and IMAGE_SRC suggestions:',
-        error
-      );
+      console.error('Error fetching ITEM_COLOR and IMAGE_SRC suggestions:', error);
     }
   };
 
-  // Fetch the image if ITEM_COLOR matches by looking up the suggestion list
-  const fetchItemColorMatch = (itemColor: string) => {
-    const match = itemColorSuggestions.find(
-      (item) => item.itemColor === itemColor
-    );
-    if (match) {
-      setMatchedImageUrl(match.imageSrc); // Set the image URL to display below the input
-    } else {
-      setMatchedImageUrl(null); // Clear the image if no match is found
-    }
+  // Toggle collapse for the image upload section
+  const toggleImageSection = () => {
+    setImageSectionCollapsed(!isImageSectionCollapsed);
   };
 
   // Handles file selection and generates preview URL
@@ -109,27 +111,24 @@ const TradeInFormPage = () => {
       setFile(selectedFile);
       setPreviewUrl(URL.createObjectURL(selectedFile));
       setSimilarImages([]);
-      setProcessing(false);
     }
   };
 
   // Handles form submission for image processing
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleImageSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!file) return;
 
     setLoading(true);
     setError(null);
-    setProcessing(true); // Show form immediately when the button is pressed
 
-    const formData = new FormData();
-    firstNameInputRef.current?.focus();
-    formData.append('image', file);
+    const formDataUpload = new FormData();
+    formDataUpload.append('image', file);
 
     try {
       const response = await fetch('/api/trade-in/upload', {
         method: 'POST',
-        body: formData,
+        body: formDataUpload,
       });
 
       if (!response.ok) {
@@ -137,9 +136,7 @@ const TradeInFormPage = () => {
       }
 
       const data = await response.json();
-      setSimilarImages(data.similarImages); // Save similar images once processing is done
-
-      // No longer collapse image section after processing, only after selecting a similar image
+      setSimilarImages(data.similarImages);
     } catch (error) {
       setError('Error uploading image. Please try again.');
     } finally {
@@ -147,367 +144,545 @@ const TradeInFormPage = () => {
     }
   };
 
-    // Handle image selection and update ITEM_COLOR field
-    const handleImageSelect = (itemColor: string) => {
-        setFormData((prevFormData) => ({
-        ...prevFormData,
-        selectedItemColor: itemColor,
-        }));
-        fetchItemColorMatch(itemColor); // Fetch the image if ITEM_COLOR matches
-        setImageSectionCollapsed(true); // Collapse the image upload section when an image is selected
-    };
+  // Handle image selection and create product from it
+  const handleImageSelect = (itemColor: string) => {
+    const newProduct: ProductFormData = {
+      id: Date.now().toString(),
+      product_style: '',
 
-    // Handle manual typing in the ITEM_COLOR field
-    const handleItemColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setFormData((prevFormData) => ({
-        ...prevFormData,
-        selectedItemColor: value,
-        }));
-        if (value.length > 0) {
-        fetchItemColorMatch(value); // Trigger match check when typing
-        } else {
-        setMatchedImageUrl(null); // Clear the image if input is cleared
-        }
+      product_size: '',
+      credit_range: '',
+      usage_signs: '',
+      pilling_level: '',
+      tears_holes_level: '',
+      repairs_level: '',
+      meets_minimum_requirements: true,
+      product_images: []
     };
+    
+    setEditingProduct(newProduct);
+    setShowProductForm(true);
+    setImageSectionCollapsed(true);
+  };
 
-    // Handle client comment change
-    const handleClientCommentChange = (
-        e: React.ChangeEvent<HTMLTextAreaElement>
-    ) => {
-        const value = e.target.value;
-        setFormData((prevFormData) => ({
-        ...prevFormData,
-        client_comment: value,
-        }));
-    };
+  // Handle address selection from Google Maps Autocomplete
+  const handleAddressSelect = (place: google.maps.places.PlaceResult) => {
+    const formattedAddress = place.formatted_address || '';
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      address: formattedAddress,
+    }));
+  };
 
-    // Handle address selection from Google Maps Autocomplete
-    const handleAddressSelect = (place: google.maps.places.PlaceResult) => {
-        const formattedAddress = place.formatted_address || '';
-        setFormData((prevFormData) => ({
-        ...prevFormData,
-        address: formattedAddress,
-        }));
-    };
+  // Handle form input changes
+  const handleInputChange = (field: keyof FormData, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
 
-    // Handle house details change
-    const handleHouseDetailsChange = (
-        e: React.ChangeEvent<HTMLInputElement>
-    ) => {
-        const value = e.target.value;
-        setFormData((prevFormData) => ({
-        ...prevFormData,
-        houseDetails: value,
-        }));
-    };
+    // Clear error when user starts typing
+    if (errors[field as keyof typeof errors]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: false
+      }));
+    }
+  };
 
-  const handleFormSubmit = async () => {
-    // Validación de campos
+  // Product management functions
+  const handleAddProduct = (product: ProductFormData) => {
+    setProducts(prev => [...prev, product]);
+    setShowProductForm(false);
+    setEditingProduct(null);
+  };
+
+  const handleUpdateProduct = (updatedProduct: ProductFormData) => {
+    setProducts(prev => 
+      prev.map(p => p.id === updatedProduct.id ? updatedProduct : p)
+    );
+    setShowProductForm(false);
+    setEditingProduct(null);
+  };
+
+  const handleEditProduct = (productId: string) => {
+    const product = products.find(p => p.id === productId);
+    if (product) {
+      setEditingProduct(product);
+      setShowProductForm(true);
+    }
+  };
+
+  const handleDeleteProduct = (productId: string) => {
+    setProducts(prev => prev.filter(p => p.id !== productId));
+  };
+
+  const handleCancelProductForm = () => {
+    setShowProductForm(false);
+    setEditingProduct(null);
+  };
+
+  // Validate main form
+  const validateMainForm = (): boolean => {
     const newErrors = {
-      firstName: !formData.firstName,
-      lastName: !formData.lastName,
-      rut: !formData.rut,
-      email: !formData.email,
-      phone: !formData.phone,
-      selectedItemColor: !formData.selectedItemColor,
-      address: !formData.address,
+      firstName: !formData.firstName.trim(),
+      lastName: !formData.lastName.trim(),
+      email: !formData.email.trim(),
+      phone: !formData.phone.trim(),
+      region: !formData.region.trim(),
+      comuna: !formData.comuna.trim(),
+      address: !formData.address.trim(),
     };
+
     setErrors(newErrors);
+    return !Object.values(newErrors).some(Boolean);
+  };
 
-    setLoadingForm(true);
-
-    // Check errors
-    const hasErrors = Object.values(newErrors).some((error) => error);
-    if (hasErrors) {
+  // Submit the complete trade-in request
+  const handleSubmitTradeInRequest = async () => {
+    if (!validateMainForm()) {
+      setError('Por favor completa todos los campos obligatorios');
       return;
     }
 
-    // Send form data to the server
+    if (products.length === 0) {
+      setError('Debes agregar al menos un producto');
+      return;
+    }
+
+    setIsSubmittingRequest(true);
+    setError(null);
+
     try {
-      const response = await fetch('/api/trade-in/new', {
+      const requestData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        region: formData.region,
+        comuna: formData.comuna,
+        deliveryMethod: deliveryOption,
+        address: formData.address,
+        houseDetails: formData.houseDetails,
+        clientComment: formData.client_comment,
+        products: products
+      };
+
+      const response = await fetch('/api/trade-in/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {
-        throw new Error('Error submitting form');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error creating trade-in request');
       }
 
-      console.log('Trade-In submitted successfully');
-      router.push('/trade-in');
+      const result = await response.json();
+      setSuccessMessage(`¡Solicitud creada exitosamente! Número de solicitud: ${result.requestNumber}`);
+      
+      // Reset form after successful submission
+      setTimeout(() => {
+        router.push('/trade-in');
+      }, 3000);
+
     } catch (error) {
-      console.error('Error submitting Trade-In form:', error);
+      console.error('Error submitting trade-in request:', error);
+      setError(error instanceof Error ? error.message : 'Error al crear la solicitud');
     } finally {
-      setLoadingForm(false);
+      setIsSubmittingRequest(false);
     }
   };
 
-  // Handle delivery option change
-  const handleDeliveryOptionChange = (option: string) => {
-    setDeliveryOption(option);
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      deliveryOption: option,
-    }));
-  };
+  if (successMessage) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+          <CheckCircleIcon className="h-16 w-16 text-green-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Solicitud Enviada!</h2>
+          <p className="text-gray-600 mb-4">{successMessage}</p>
+          <p className="text-sm text-gray-500">Serás redirigido automáticamente...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center w-full h-full">
-      <div className="flex w-full items-center max-w-5xl p-4 gap-8">
-        <h1 className={`${lusitana.className} text-4xl`}>Trade - In</h1>
-      </div>
-      <div className="flex w-full max-w-5xl gap-8">
-        {/* Left section: Image upload and similar products */}
-        <div className="w-1/2">
-          {/* ITEM_COLOR Field (always visible on the left side) */}
-          <div className="rounded-md bg-gray-50 p-4 md:p-6 mt-8">
-            <label
-              htmlFor="itemColor"
-              className="block text-lg font-bold mb-2"
-            >
-              Product Style
-            </label>
-            <input
-              type="text"
-              id="itemColor"
-              name="selectedItemColor"
-              value={formData.selectedItemColor}
-              onChange={handleItemColorChange}
-              className={`block w-full rounded-md border py-3 text-lg ${
-                errors.selectedItemColor ? 'border-red-500' : 'border-gray-400'
-              }`}
-              placeholder="Enter or select product code"
-              list="itemColorSuggestions"
-            />
-            <datalist id="itemColorSuggestions">
-              {itemColorSuggestions.map((item, index) => (
-                <option key={index} value={item.itemColor}>
-                  {item.itemColor}
-                </option>
-              ))}
-            </datalist>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className={`${lusitana.className} text-3xl font-bold text-gray-900 mb-2`}>
+            Nueva Solicitud Trade-in
+          </h1>
+          <p className="text-gray-600">
+            Completa la información de tu solicitud y agrega los productos que deseas incluir
+          </p>
+        </div>
 
-            {matchedImageUrl && (
-              <div className="mt-4">
-                <Image
-                  layout="intrinsic"
-                  width={300}
-                  height={300}
-                  src={matchedImageUrl}
-                  alt="Matched Product"
-                  className="w-48 h-48 object-cover"
-                />
-              </div>
-            )}
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-700">{error}</p>
           </div>
+        )}
 
-          <div
-            className="mb-4 flex items-center cursor-pointer"
-            onClick={toggleImageSection}
-          >
-            {isImageSectionCollapsed ? (
-              <ChevronRightIcon className="h-6 w-6 text-gray-600" />
-            ) : (
-              <ChevronDownIcon className="h-6 w-6 text-gray-600" />
-            )}
-            <h2 className="text-xl font-medium ml-2 pt-5">
-              Carga una imagen de tu producto y buscaremos!
-            </h2>
-          </div>
-
-          {/* Collapsible Image Upload Section */}
-          {!isImageSectionCollapsed && (
-            <div className="rounded-md bg-gray-50 p-4 md:p-6">
-              <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                  <label
-                    htmlFor="image"
-                    className="mb-2 block text-sm font-medium"
-                  >
-                    Upload Image
-                  </label>
-                  <input
-                    id="image"
-                    name="image"
-                    type="file"
-                    accept="image/*"
-                    className="block w-full rounded-md border border-gray-200 py-2 text-sm"
-                    onChange={handleFileChange}
-                  />
+        <div className="space-y-8">
+          {/* Image Detection Section (if enabled) */}
+          {imageDetectionEnabled && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <button
+                type="button"
+                onClick={toggleImageSection}
+                className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50"
+              >
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Detección de Producto por Imagen (Opcional)
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Sube una imagen para detectar automáticamente el código del producto
+                  </p>
                 </div>
-
-                {previewUrl && (
-                  <div className="mb-4">
-                    <h3 className="text-sm font-medium">Image Preview:</h3>
-                    <Image
-                      layout="intrinsic"
-                      width={200}
-                      height={200}
-                      src={previewUrl}
-                      alt="Image Preview"
-                      className="w-32 h-32 object-cover mt-2"
-                    />
-                  </div>
+                {isImageSectionCollapsed ? (
+                  <ChevronRightIcon className="h-5 w-5 text-gray-400" />
+                ) : (
+                  <ChevronDownIcon className="h-5 w-5 text-gray-400" />
                 )}
+              </button>
 
-                {loading && (
-                  <p className="text-sm text-gray-600">Processing image...</p>
-                )}
-                {error && <p className="text-sm text-red-500">{error}</p>}
-
-                <div className="mt-6">
-                  <Button type="submit" disabled={loading}>
-                    {loading ? 'Processing...' : 'Upload Image'}
-                  </Button>
-                </div>
-              </form>
-
-              {similarImages.length > 0 && (
-                <div className="mt-8">
-                  <h3 className="text-lg font-medium">Similar Products:</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                    {similarImages.map((image, index) => (
-                      <div
-                        key={index}
-                        className={`flex flex-col items-center cursor-pointer p-2 border rounded-md ${
-                          formData.selectedItemColor === image.item_color
-                            ? 'border-blue-500'
-                            : 'border-gray-300'
-                        }`}
-                        onClick={() => handleImageSelect(image.item_color)}
+              {!isImageSectionCollapsed && (
+                <div className="px-6 pb-6 border-t border-gray-200">
+                  <form onSubmit={handleImageSubmit} className="mt-4">
+                    <div className="flex items-center justify-center w-full">
+                      <label
+                        htmlFor="dropzone-file"
+                        className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
                       >
-                        <Image
-                          layout="intrinsic"
-                          width={400}
-                          height={400}
-                          src={image.image_src}
-                          alt={`Similar image ${index + 1}`}
-                          className="w-32 h-32 object-cover mb-2"
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <svg
+                            className="w-8 h-8 mb-4 text-gray-500"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 20 16"
+                          >
+                            <path
+                              stroke="currentColor"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
+                            />
+                          </svg>
+                          <p className="mb-2 text-sm text-gray-500">
+                            <span className="font-semibold">Click para subir</span> o arrastra y suelta
+                          </p>
+                          <p className="text-xs text-gray-500">PNG, JPG o JPEG</p>
+                        </div>
+                        <input
+                          id="dropzone-file"
+                          type="file"
+                          className="hidden"
+                          onChange={handleFileChange}
+                          accept="image/*"
                         />
-                        <p>{image.item_color}</p>
+                      </label>
+                    </div>
+
+                    {previewUrl && (
+                      <div className="mt-4">
+                        <div className="relative h-48 w-48 mx-auto">
+                          <Image
+                            src={previewUrl}
+                            alt="Preview"
+                            fill
+                            className="object-cover rounded-lg"
+                          />
+                        </div>
+                        <div className="mt-4 text-center">
+                          <Button type="submit" disabled={loading}>
+                            {loading ? 'Procesando...' : 'Detectar Producto'}
+                          </Button>
+                        </div>
                       </div>
-                    ))}
-                  </div>
+                    )}
+                  </form>
+
+                  {/* Similar Images Results */}
+                  {similarImages.length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="text-lg font-medium text-gray-900 mb-4">
+                        Productos Detectados
+                      </h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {similarImages.map((image, index) => (
+                          <div
+                            key={index}
+                            className="border border-gray-200 rounded-lg p-3 cursor-pointer hover:border-blue-500 hover:shadow-md transition-all"
+                            onClick={() => handleImageSelect(image.item_color)}
+                          >
+                            <div className="relative h-32 mb-2">
+                              <Image
+                                src={image.image_src}
+                                alt={image.item_color}
+                                fill
+                                className="object-cover rounded"
+                              />
+                            </div>
+                            <p className="text-sm font-medium text-gray-900 text-center">
+                              {image.item_color}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          )}       
-        </div>
+          )}
 
-        {/* Right section: TradeIn form */}
-        <div className="w-1/2 mt-8">
-            <TradeInForm
-                formData={formData}
-                setFormData={setFormData}
-                errors={errors}
-                firstNameRef={firstNameInputRef}
-            />
+          {/* Products Section */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-gray-900">Productos</h2>
+              <Button
+                type="button"
+                onClick={() => setShowProductForm(true)}
+                className="flex items-center space-x-2"
+              >
+                <PlusIcon className="h-4 w-4" />
+                <span>Agregar Producto</span>
+              </Button>
+            </div>
 
-            {/* Opción de Entrega o Retiro */}
-            <div className="rounded-md bg-gray-50 p-4 md:p-6 mt-8">
-              <h3 className="text-lg font-medium mb-4">¿Cómo deseas entregar tu prenda?</h3>
-
-              <RadioGroup value={deliveryOption} onChange={handleDeliveryOptionChange}>
-                <div className="space-y-2">
-                  {/* Opción: Retiro en Domicilio */}
-                  <Radio value="Retiro en Domicilio">
-                    {({ checked }) => (
-                      <div
-                        className={`relative flex items-center p-4 border rounded-md cursor-pointer transition-colors ${
-                          checked ? 'bg-white border-blue-500' : 'border-gray-300 bg-gray-50'
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="deliveryOption"
-                          value="Retiro en Domicilio"
-                          checked={checked}
-                          onChange={() => handleDeliveryOptionChange('Retiro en Domicilio')}
-                          className="h-5 w-5 border-gray-300 rounded-full cursor-pointer mr-4"
-                        />
-                        <HomeIcon className="h-6 w-6 mr-2 text-gray-600" />
-                        <span className="text-sm font-medium">Retiro en Domicilio</span>
-                      </div>
-                    )}
-                  </Radio>
-
-                  {/* Opción: Entrega en Sucursal Chilexpress */}
-                  <Radio value="Entrega en Sucursal Chilexpress">
-                    {({ checked }) => (
-                      <div
-                        className={`relative flex items-center p-4 border rounded-md cursor-pointer transition-colors ${
-                          checked ? 'bg-white border-blue-500' : 'border-gray-300 bg-gray-50'
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="deliveryOption"
-                          value="Entrega en Sucursal Chilexpress"
-                          checked={checked}
-                          onChange={() => handleDeliveryOptionChange('Entrega en Sucursal Chilexpress')}
-                          className="h-5 w-5 border-gray-300 rounded-full cursor-pointer mr-4"
-                        />
-                        <MapPinIcon className="h-6 w-6 mr-2 text-gray-600" />
-                        <span className="text-sm font-medium">Entrega en Sucursal Chilexpress</span>
-                      </div>
-                    )}
-                  </Radio>
-                </div>
-              </RadioGroup>
-            </div> 
-
-            {/* Address Autocomplete Field */}
-            {deliveryOption === 'Retiro en Domicilio' && (
-              <div className="rounded-md bg-gray-50 p-4 md:p-6 mt-8">
-                <label htmlFor="address" className="block text-sm font-medium font-bold mb-2">
-                  Dirección
-                </label>
-                <AddressAutocomplete onPlaceSelected={handleAddressSelect} />
-
-                {errors.address && (
-                  <p className="text-red-500 text-sm mt-1">La dirección es requerida.</p>
-                )}
-
-                <input
-                  type="text"
-                  id="houseDetails"
-                  name="houseDetails"
-                  value={formData.houseDetails}
-                  onChange={handleHouseDetailsChange}
-                  className="block w-full rounded-md border border-gray-400 font-medium py-3 text-sm mt-4"
-                  placeholder="Número de casa, apto, etc. (opcional)"
+            {/* Product Form */}
+            {showProductForm && (
+              <div className="mb-6">
+                <ProductForm
+                  onAddProduct={handleAddProduct}
+                  onUpdateProduct={handleUpdateProduct}
+                  onCancel={handleCancelProductForm}
+                  editingProduct={editingProduct}
+                  itemColorSuggestions={itemColorSuggestions}
+                  imageDetectionEnabled={imageDetectionEnabled}
                 />
               </div>
             )}
 
-            {/* Comment Card */}
-            <div className="rounded-md bg-gray-50 p-4 md:p-6 mt-8">
-                <label
-                htmlFor="client_comment"
-                className="block text-sm font-medium font-bold mb-2"
-                >
-                Share Your Story (Optional)
+            {/* Products Table */}
+            <ProductsTable
+              products={products}
+              onEdit={handleEditProduct}
+              onDelete={handleDeleteProduct}
+            />
+          </div>
+
+          {/* Customer Information */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">Datos del Cliente</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* First Name */}
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                  Nombre <span className="text-red-500">*</span>
                 </label>
-                <textarea
+                <input
+                  type="text"
+                  id="firstName"
+                  ref={firstNameInputRef}
+                  value={formData.firstName}
+                  onChange={(e) => handleInputChange('firstName', e.target.value)}
+                  className={`block w-full rounded-md border px-3 py-2 text-sm ${
+                    errors.firstName ? 'border-red-500' : 'border-gray-300'
+                  } focus:border-blue-500 focus:ring-blue-500`}
+                  required
+                />
+              </div>
+
+              {/* Last Name */}
+              <div>
+                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                  Apellido <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="lastName"
+                  value={formData.lastName}
+                  onChange={(e) => handleInputChange('lastName', e.target.value)}
+                  className={`block w-full rounded-md border px-3 py-2 text-sm ${
+                    errors.lastName ? 'border-red-500' : 'border-gray-300'
+                  } focus:border-blue-500 focus:ring-blue-500`}
+                  required
+                />
+              </div>
+
+              {/* Email */}
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  Correo Electrónico <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  className={`block w-full rounded-md border px-3 py-2 text-sm ${
+                    errors.email ? 'border-red-500' : 'border-gray-300'
+                  } focus:border-blue-500 focus:ring-blue-500`}
+                  required
+                />
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                  Teléfono <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  className={`block w-full rounded-md border px-3 py-2 text-sm ${
+                    errors.phone ? 'border-red-500' : 'border-gray-300'
+                  } focus:border-blue-500 focus:ring-blue-500`}
+                  required
+                />
+              </div>
+
+              {/* Region */}
+              <div>
+                <label htmlFor="region" className="block text-sm font-medium text-gray-700 mb-1">
+                  Región <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="region"
+                  value={formData.region}
+                  onChange={(e) => handleInputChange('region', e.target.value)}
+                  className={`block w-full rounded-md border px-3 py-2 text-sm ${
+                    errors.region ? 'border-red-500' : 'border-gray-300'
+                  } focus:border-blue-500 focus:ring-blue-500`}
+                  required
+                />
+              </div>
+
+              {/* Comuna */}
+              <div>
+                <label htmlFor="comuna" className="block text-sm font-medium text-gray-700 mb-1">
+                  Comuna <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="comuna"
+                  value={formData.comuna}
+                  onChange={(e) => handleInputChange('comuna', e.target.value)}
+                  className={`block w-full rounded-md border px-3 py-2 text-sm ${
+                    errors.comuna ? 'border-red-500' : 'border-gray-300'
+                  } focus:border-blue-500 focus:ring-blue-500`}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Address */}
+            <div className="mt-4">
+              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                Dirección <span className="text-red-500">*</span>
+              </label>
+              <AddressAutocomplete
+                onPlaceSelected={handleAddressSelect}
+              />
+            </div>
+
+            {/* House Details */}
+            <div className="mt-4">
+              <label htmlFor="houseDetails" className="block text-sm font-medium text-gray-700 mb-1">
+                Detalles de la Dirección
+              </label>
+              <input
+                type="text"
+                id="houseDetails"
+                value={formData.houseDetails}
+                onChange={(e) => handleInputChange('houseDetails', e.target.value)}
+                className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Ej: Departamento 4B, Casa 123, etc."
+              />
+            </div>
+
+            {/* Delivery Method */}
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Método de Entrega <span className="text-red-500">*</span>
+              </label>
+              <RadioGroup value={deliveryOption} onChange={setDeliveryOption}>
+                <div className="space-y-2">
+                  <Radio value="pickup" className="group relative flex cursor-pointer rounded-lg px-5 py-4 text-white shadow-md transition focus:outline-none data-[focus]:outline-1 data-[focus]:outline-white data-[checked]:bg-white/10">
+                    <div className="flex w-full items-center justify-between">
+                      <div className="text-sm/6">
+                        <p className="font-semibold text-gray-900">Retiro en tienda</p>
+                        <div className="flex gap-2 text-gray-600">
+                          <div>Retira tu producto en nuestra tienda</div>
+                        </div>
+                      </div>
+                      <div className="size-4 fill-white opacity-0 transition group-data-[checked]:opacity-100">
+                        <svg viewBox="0 0 14 14" fill="none">
+                          <path d="m3 8 2.5 2.5L12 4" strokeWidth={2} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </div>
+                    </div>
+                  </Radio>
+                  <Radio value="delivery" className="group relative flex cursor-pointer rounded-lg px-5 py-4 text-white shadow-md transition focus:outline-none data-[focus]:outline-1 data-[focus]:outline-white data-[checked]:bg-white/10">
+                    <div className="flex w-full items-center justify-between">
+                      <div className="text-sm/6">
+                        <p className="font-semibold text-gray-900">Entrega a domicilio</p>
+                        <div className="flex gap-2 text-gray-600">
+                          <div>Enviamos el producto a tu dirección</div>
+                        </div>
+                      </div>
+                      <div className="size-4 fill-white opacity-0 transition group-data-[checked]:opacity-100">
+                        <svg viewBox="0 0 14 14" fill="none">
+                          <path d="m3 8 2.5 2.5L12 4" strokeWidth={2} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </div>
+                    </div>
+                  </Radio>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Client Comment */}
+            <div className="mt-4">
+              <label htmlFor="client_comment" className="block text-sm font-medium text-gray-700 mb-1">
+                Comentarios Adicionales
+              </label>
+              <textarea
                 id="client_comment"
-                name="client_comment"
+                rows={3}
                 value={formData.client_comment}
-                onChange={handleClientCommentChange}
-                className="block w-full rounded-md border border-gray-400 font-medium py-3 text-sm mt-1"
-                placeholder="Tell us about your experience with this product..."
-                rows={4}
-                ></textarea>
+                onChange={(e) => handleInputChange('client_comment', e.target.value)}
+                className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Agrega cualquier comentario adicional sobre tu solicitud..."
+              />
             </div>
-            {/* Submit Button for the entire page */}
-            <div className="mt-8">
-                <Button type="button" onClick={handleFormSubmit} disabled={loadingForm}>
-                  {loadingForm ? 'Submitting...' : 'Submit Trade-In Form'}
-                </Button>
-            </div>
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex justify-end">
+            <Button
+              onClick={handleSubmitTradeInRequest}
+              disabled={isSubmittingRequest || products.length === 0}
+              className="px-8 py-3"
+            >
+              {isSubmittingRequest ? 'Enviando Solicitud...' : 'Enviar Solicitud Trade-in'}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

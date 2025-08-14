@@ -38,3 +38,6 @@ yarn-error.log*
 next-env.d.ts
 
 snowflake.log
+
+# Trade-in condition images (too large for GitHub)
+/public/images/trade-in/*.png
