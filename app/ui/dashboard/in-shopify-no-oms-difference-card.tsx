@@ -89,7 +89,7 @@ export default function InShopifyNoOmsDifferenceCard({
             >
               <div className="absolute top-2 right-2">
               <a
-                href={`https://admin.shopify.com/store/patagoniachile/orders/${encodeURIComponent(order.SHOPIFY_ID)}`}
+                href={`https://admin.shopify.com/store/patagoniachile/orders/${encodeURIComponent(order.ORDER_ID)}`}
                 className="text-green-500 hover:underline text-sm font-semibold"
                 target="_blank"
                 rel="noopener noreferrer"
