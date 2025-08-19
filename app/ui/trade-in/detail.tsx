@@ -68,63 +68,53 @@ export default function TradeInDetail({ id }: { id: string }) {
                 })()}</p>
             </div>
 
-            {/* Client Information */}
-            <div className="p-6 bg-white rounded-lg shadow-sm border">
-                <h2 className="text-lg font-semibold mb-4 text-gray-800">Información del Cliente</h2>
-                <div className="space-y-4">
-                    <div className="flex items-center space-x-4">
+            {/* Client Information and Location - Two Column Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Client Information */}
+                <div className="p-6 bg-white rounded-lg shadow-sm border">
+                    <div className="flex items-center space-x-3 mb-4">
                         {fieldIcons.name}
-                        <div>
-                            <p className="font-medium">{record.first_name} {record.last_name}</p>
-                            <p className="text-sm text-gray-500">Nombre completo</p>
-                        </div>
+                        <h2 className="text-lg font-semibold text-gray-800">Información del Cliente</h2>
                     </div>
-                    <div className="flex items-center space-x-4">
-                        {fieldIcons.email}
-                        <div>
-                            <p className="font-medium">{record.email}</p>
-                            <p className="text-sm text-gray-500">Email de contacto</p>
+                    <div className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium text-gray-600 w-20 flex-shrink-0">Nombre:</span>
+                            <span className="text-sm text-gray-800">{record.first_name} {record.last_name}</span>
                         </div>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                        {fieldIcons.phone}
-                        <div>
-                            <p className="font-medium">{record.phone}</p>
-                            <p className="text-sm text-gray-500">Teléfono</p>
+                        <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium text-gray-600 w-20 flex-shrink-0">Email:</span>
+                            <span className="text-sm text-gray-800 break-all">{record.email}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium text-gray-600 w-20 flex-shrink-0">Teléfono:</span>
+                            <span className="text-sm text-gray-800">{record.phone}</span>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Location & Delivery */}
-            <div className="p-6 bg-white rounded-lg shadow-sm border">
-                <h2 className="text-lg font-semibold mb-4 text-gray-800">Ubicación y Entrega</h2>
-                <div className="space-y-4">
-                    <div className="flex items-center space-x-4">
+                {/* Location and Delivery */}
+                <div className="p-6 bg-white rounded-lg shadow-sm border">
+                    <div className="flex items-center space-x-3 mb-4">
                         {fieldIcons.location}
-                        <div>
-                            <p className="font-medium">{record.region}, {record.comuna}</p>
-                            <p className="text-sm text-gray-500">Región y comuna</p>
-                        </div>
+                        <h2 className="text-lg font-semibold text-gray-800">Ubicación y Entrega</h2>
                     </div>
-                    {record.address && (
-                        <div className="flex items-center space-x-4">
-                            {fieldIcons.address}
-                            <div>
-                                <p className="font-medium">{record.address}</p>
-                                {record.house_details && (
-                                    <p className="text-sm text-gray-500">{record.house_details}</p>
-                                )}
-                            </div>
+                    <div className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium text-gray-600 w-20 flex-shrink-0">Región:</span>
+                            <span className="text-sm text-gray-800">{record.region}</span>
                         </div>
-                    )}
-                    <div className="flex items-center space-x-4">
-                        {fieldIcons.delivery}
-                        <div>
-                            <p className="font-medium">
-                                {record.delivery_method === 'shipping' ? 'Envío por Chilexpress/Blue Express' : 'Retiro a domicilio'}
-                            </p>
-                            <p className="text-sm text-gray-500">Método de entrega</p>
+                        <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium text-gray-600 w-20 flex-shrink-0">Comuna:</span>
+                            <span className="text-sm text-gray-800">{record.comuna}</span>
+                        </div>
+                        <div className="flex items-start space-x-2">
+                            <span className="text-sm font-medium text-gray-600 w-20 flex-shrink-0">Dirección:</span>
+                            <span className="text-sm text-gray-800 break-words leading-relaxed">{record.address}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            {fieldIcons.delivery}
+                            <span className="text-sm font-medium text-gray-600 flex-shrink-0">Método:</span>
+                            <span className="text-sm text-gray-800 capitalize">{record.delivery_method}</span>
                         </div>
                     </div>
                 </div>
