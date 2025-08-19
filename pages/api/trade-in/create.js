@@ -63,7 +63,6 @@ export default async function handler(req, res) {
       const product = products[i];
       if (
         !product.product_style ||
-        !product.product_color ||
         !product.product_size ||
         !product.usage_signs ||
         !product.pilling_level ||
@@ -73,7 +72,15 @@ export default async function handler(req, res) {
         return res.status(400).json({
           message: `Product ${i + 1} is missing required fields`,
           productIndex: i,
-          product: product
+          product: product,
+          missingFields: {
+            product_style: !product.product_style,
+            product_size: !product.product_size,
+            usage_signs: !product.usage_signs,
+            pilling_level: !product.pilling_level,
+            tears_holes_level: !product.tears_holes_level,
+            repairs_level: !product.repairs_level
+          }
         });
       }
     }

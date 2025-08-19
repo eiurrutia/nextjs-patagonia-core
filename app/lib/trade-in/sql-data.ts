@@ -23,7 +23,6 @@ export interface TradeInProduct {
   id: number;
   request_id: number;
   product_style: string;
-  product_color: string;
   product_size: string;
   credit_range?: string;
   usage_signs: string;
@@ -52,7 +51,6 @@ export interface CreateTradeInRequestData {
 
 export interface CreateTradeInProductData {
   product_style: string;
-  product_color: string;
   product_size: string;
   credit_range?: string;
   usage_signs: string;
@@ -64,31 +62,32 @@ export interface CreateTradeInProductData {
 }
 
 /**
- * Generate a unique request number
+ * Generate request number based on the record ID
  */
-function generateRequestNumber(): string {
-  const timestamp = Date.now().toString();
-  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-  return `TI-${timestamp.slice(-8)}-${random}`;
+function generateRequestNumber(id: number): string {
+  // Format with leading zeros for numbers up to 9999, then continue without padding
+  const formattedNumber = id <= 9999 
+    ? id.toString().padStart(4, '0')
+    : id.toString();
+  
+  return `TI${formattedNumber}`;
 }
 
 /**
  * Create a new trade-in request with multiple products
  */
 export async function createTradeInRequest(data: CreateTradeInRequestData): Promise<TradeInRequest> {
-  const requestNumber = generateRequestNumber();
-  
   try {
     // Start transaction
     await sql`BEGIN`;
     
-    // Insert main request
+    // Insert main request with temporary request_number
     const requestResult = await sql`
       INSERT INTO trade_in_requests (
         request_number, first_name, last_name, email, phone, region, comuna,
         delivery_method, address, house_details, client_comment
       ) VALUES (
-        ${requestNumber}, ${data.first_name}, ${data.last_name}, ${data.email}, 
+        'TEMP', ${data.first_name}, ${data.last_name}, ${data.email}, 
         ${data.phone}, ${data.region || null}, ${data.comuna || null},
         ${data.delivery_method}, ${data.address || null}, ${data.house_details || null}, 
         ${data.client_comment || null}
@@ -97,15 +96,28 @@ export async function createTradeInRequest(data: CreateTradeInRequestData): Prom
     
     const request = requestResult.rows[0] as TradeInRequest;
     
+    // Generate request number based on the auto-generated ID
+    const requestNumber = generateRequestNumber(request.id);
+    
+    // Update the request with the generated request_number
+    await sql`
+      UPDATE trade_in_requests 
+      SET request_number = ${requestNumber}
+      WHERE id = ${request.id}
+    `;
+    
+    // Update the request object with the generated request_number
+    request.request_number = requestNumber;
+    
     // Insert products
     for (const product of data.products) {
       await sql`
         INSERT INTO trade_in_products (
-          request_id, product_style, product_color, product_size, credit_range,
+          request_id, product_style, product_size, credit_range,
           usage_signs, pilling_level, tears_holes_level, repairs_level,
           meets_minimum_requirements, product_images
         ) VALUES (
-          ${request.id}, ${product.product_style}, ${product.product_color}, 
+          ${request.id}, ${product.product_style}, 
           ${product.product_size}, ${product.credit_range || null},
           ${product.usage_signs}, ${product.pilling_level}, ${product.tears_holes_level}, 
           ${product.repairs_level}, ${product.meets_minimum_requirements},
