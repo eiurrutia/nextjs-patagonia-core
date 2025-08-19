@@ -3,16 +3,25 @@ import { PlusIcon } from '@heroicons/react/24/solid';
 import Link from 'next/link';
 import StatusIcons from '@/app/ui/trade-in/status-icons';
 
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
+const formatDate = (dateInput: string | Date | null) => {
+  if (!dateInput) return 'N/A';
+  
+  // Convert to string if it's a Date object
+  const dateString = dateInput instanceof Date ? dateInput.toISOString() : dateInput.toString();
+  
+  // Handle different date formats - now that SQL queries use AT TIME ZONE 'UTC',
+  // dates should come as proper UTC ISO strings
+  const utcDate = new Date(dateString);
+    
   return new Intl.DateTimeFormat('es-CL', {
+    timeZone: 'America/Santiago',
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-  }).format(date);
+  }).format(utcDate);
 };
 
 export default async function TradeInTable({

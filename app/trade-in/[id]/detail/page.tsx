@@ -8,73 +8,118 @@ import StatusSelector from '@/app/ui/trade-in/status-selector';
 import InvoiceAction from '@/app/ui/trade-in/invoice-action';
 import { CardSkeleton } from '@/app/ui/skeletons';
 
-type TradeInStatus = 'Etiqueta Enviada' | 'Producto Entregado' | 'Crédito Entregado';
+type TradeInStatus = 'pending' | 'approved' | 'shipped' | 'delivered' | 'completed' | 'cancelled';
+type LegacyTradeInStatus = 'Etiqueta Enviada' | 'Producto Entregado' | 'Crédito Entregado';
+
+// Mapping functions between new and legacy status types
+const mapToLegacyStatus = (status: TradeInStatus): LegacyTradeInStatus => {
+    switch (status) {
+        case 'pending':
+        case 'approved':
+            return 'Etiqueta Enviada';
+        case 'shipped':
+        case 'delivered':
+            return 'Producto Entregado';
+        case 'completed':
+        case 'cancelled':
+        default:
+            return 'Crédito Entregado';
+    }
+};
+
+const mapFromLegacyStatus = (legacyStatus: LegacyTradeInStatus): TradeInStatus => {
+    switch (legacyStatus) {
+        case 'Etiqueta Enviada':
+            return 'pending';
+        case 'Producto Entregado':
+            return 'delivered';
+        case 'Crédito Entregado':
+            return 'completed';
+        default:
+            return 'pending';
+    }
+};
 
 export default function TradeInDetailPage({ params }: { params: { id: string } }) {
     const { id } = params;
-    const [status, setStatus] = useState<TradeInStatus>('Etiqueta Enviada');
+    const [status, setStatus] = useState<TradeInStatus>('pending');
     const [loading, setLoading] = useState(true);
+    const [requestNumber, setRequestNumber] = useState<string>('');
 
     useEffect(() => {
-        const fetchStatus = async () => {
+        const fetchRequestData = async () => {
             try {
-                const res = await fetch(`/api/trade-in/${id}/status`);
-                const { status } = await res.json();
-                if (statuses.includes(status)) {
-                  setStatus(status as TradeInStatus);
-                }
+                const res = await fetch(`/api/trade-in/requests/${id}`);
+                const data = await res.json();
+                setStatus(data.status);
+                setRequestNumber(data.request_number);
             } catch (error) {
-                console.error('Error fetching status:', error);
+                console.error('Error fetching request data:', error);
             } finally {
               setLoading(false);
           }
         };
 
-        fetchStatus();
+        fetchRequestData();
     }, [id]);
 
-    const statuses: TradeInStatus[] = ['Etiqueta Enviada', 'Producto Entregado', 'Crédito Entregado'];
+    const statuses: TradeInStatus[] = ['pending', 'approved', 'shipped', 'delivered', 'completed', 'cancelled'];
 
     return (
       <div className="w-full p-10">
           <Breadcrumbs
               breadcrumbs={[
                   { label: 'Trade-Ins', href: '/trade-in' },
-                  { label: `Trade-In ${id}`, href: `/trade-in/${id}/detail`, active: true }
+                  { label: requestNumber || `Trade-In ${id}`, href: `/trade-in/${id}/detail`, active: true }
               ]}
           />
 
           <div className="flex gap-10">
-              {/* Basic Info and Actions */}
-              <div className="w-1/2 space-y-6">
-                  <TradeInDetail id={id} />
-
+              {/* Left Column - Trade-In Details */}
+              <div className="w-2/3 space-y-6">
                   {loading ? (
                       <CardSkeleton />
                   ) : (
-                      <div className="p-2 pt-6 bg-gray-50 rounded-lg shadow-lg">
-                          <h2 className="text-xl font-semibold mb-4 pl-4">Acciones</h2>
-                          <div className="space-y-4 bg-white m-1 p-4 rounded-lg">
-                              <div className="flex items-center space-x-4">
-                                  <ArrowRightIcon className="h-6 w-6 text-gray-500" />
-                                  <StatusSelector tradeInId={id} status={status} setStatus={setStatus} />
-                              </div>
-                              <div className="flex items-center space-x-4">
-                                  <ArrowRightIcon className="h-6 w-6 text-gray-500" />
-                                  <InvoiceAction tradeInId={id} />
-                              </div>
-                          </div>
-                      </div>
+                      <TradeInDetail id={id} />
                   )}
               </div>
 
-              {/* Display Status */}
-              <div className="w-1/2">
+              {/* Right Column - Status and Actions */}
+              <div className="w-1/3 space-y-6">
+                  {/* Status Display */}
                   {loading ? (
                       <CardSkeleton />
                   ) : (
-                      <div className="p-6 bg-white border-4 border-gray-50 rounded-lg">
-                          <StatusDisplay currentStatus={status} />
+                      <div className="p-6 bg-white rounded-lg shadow-sm border">
+                          <h2 className="text-lg font-semibold mb-4 text-gray-800">Estado de la Solicitud</h2>
+                          <StatusDisplay currentStatus={mapToLegacyStatus(status)} />
+                      </div>
+                  )}
+
+                  {/* Actions Panel */}
+                  {loading ? (
+                      <CardSkeleton />
+                  ) : (
+                      <div className="p-6 bg-white rounded-lg shadow-sm border">
+                          <h2 className="text-lg font-semibold mb-4 text-gray-800">Acciones</h2>
+                          <div className="space-y-4">
+                              <div className="flex items-center space-x-4">
+                                  <ArrowRightIcon className="h-6 w-6 text-gray-500" />
+                                  <div className="flex-1">
+                                      <StatusSelector 
+                                          tradeInId={id} 
+                                          status={mapToLegacyStatus(status)} 
+                                          setStatus={(newLegacyStatus: LegacyTradeInStatus) => setStatus(mapFromLegacyStatus(newLegacyStatus))} 
+                                      />
+                                  </div>
+                              </div>
+                              <div className="flex items-center space-x-4">
+                                  <ArrowRightIcon className="h-6 w-6 text-gray-500" />
+                                  <div className="flex-1">
+                                      <InvoiceAction tradeInId={id} />
+                                  </div>
+                              </div>
+                          </div>
                       </div>
                   )}
               </div>

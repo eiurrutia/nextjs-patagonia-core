@@ -150,7 +150,11 @@ export async function fetchTradeInRequests(query: string, currentPage: number): 
     
     const result = await sql`
       SELECT 
-        tr.*,
+        tr.id, tr.request_number, tr.first_name, tr.last_name, tr.email, 
+        tr.phone, tr.region, tr.comuna, tr.delivery_method, tr.address, 
+        tr.status, tr.client_comment,
+        tr.created_at AT TIME ZONE 'UTC' as created_at,
+        tr.updated_at AT TIME ZONE 'UTC' as updated_at,
         COUNT(tp.id) as product_count
       FROM trade_in_requests tr
       LEFT JOIN trade_in_products tp ON tr.id = tp.request_id
@@ -162,7 +166,7 @@ export async function fetchTradeInRequests(query: string, currentPage: number): 
         LOWER(tr.request_number) LIKE ${searchQuery}
       GROUP BY tr.id, tr.request_number, tr.first_name, tr.last_name, tr.email, 
                tr.phone, tr.region, tr.comuna, tr.delivery_method, tr.address, 
-               tr.house_details, tr.client_comment, tr.status, tr.created_at, tr.updated_at
+               tr.status, tr.client_comment, tr.created_at, tr.updated_at
       ORDER BY tr.created_at DESC
       LIMIT ${pageSize}
       OFFSET ${offset}
@@ -185,7 +189,12 @@ export async function fetchTradeInRequests(query: string, currentPage: number): 
 export async function getTradeInRequestById(id: number): Promise<(TradeInRequest & { products: TradeInProduct[] }) | null> {
   try {
     const requestResult = await sql`
-      SELECT * FROM trade_in_requests WHERE id = ${id}
+      SELECT 
+        id, request_number, first_name, last_name, email, phone, region, comuna, 
+        delivery_method, address, status, client_comment,
+        created_at AT TIME ZONE 'UTC' as created_at,
+        updated_at AT TIME ZONE 'UTC' as updated_at
+      FROM trade_in_requests WHERE id = ${id}
     `;
     
     if (requestResult.rows.length === 0) {
@@ -198,10 +207,23 @@ export async function getTradeInRequestById(id: number): Promise<(TradeInRequest
       SELECT * FROM trade_in_products WHERE request_id = ${id} ORDER BY created_at
     `;
     
-    const products = productsResult.rows.map(row => ({
-      ...row,
-      product_images: row.product_images ? JSON.parse(row.product_images) : []
-    })) as TradeInProduct[];
+    const products = productsResult.rows.map(row => {
+      let productImages = [];
+      
+      try {
+        if (row.product_images && typeof row.product_images === 'string' && row.product_images.trim() !== '') {
+          productImages = JSON.parse(row.product_images);
+        }
+      } catch (parseError) {
+        console.warn('Error parsing product_images for product:', row.id, parseError);
+        productImages = [];
+      }
+      
+      return {
+        ...row,
+        product_images: Array.isArray(productImages) ? productImages : []
+      };
+    }) as TradeInProduct[];
     
     return { ...request, products };
   } catch (error) {
