@@ -139,6 +139,47 @@ export async function createTradeInRequest(data: CreateTradeInRequestData): Prom
 }
 
 /**
+ * Fetch trade-in requests with pagination and search
+ */
+export async function fetchTradeInRequests(query: string, currentPage: number): Promise<(TradeInRequest & { productCount: number })[]> {
+  const pageSize = 20;
+  const offset = (currentPage - 1) * pageSize;
+  
+  try {
+    const searchQuery = `%${query.toLowerCase()}%`;
+    
+    const result = await sql`
+      SELECT 
+        tr.*,
+        COUNT(tp.id) as product_count
+      FROM trade_in_requests tr
+      LEFT JOIN trade_in_products tp ON tr.id = tp.request_id
+      WHERE 
+        LOWER(tr.first_name) LIKE ${searchQuery} OR 
+        LOWER(tr.last_name) LIKE ${searchQuery} OR 
+        LOWER(tr.email) LIKE ${searchQuery} OR 
+        LOWER(tr.phone) LIKE ${searchQuery} OR
+        LOWER(tr.request_number) LIKE ${searchQuery}
+      GROUP BY tr.id, tr.request_number, tr.first_name, tr.last_name, tr.email, 
+               tr.phone, tr.region, tr.comuna, tr.delivery_method, tr.address, 
+               tr.house_details, tr.client_comment, tr.status, tr.created_at, tr.updated_at
+      ORDER BY tr.created_at DESC
+      LIMIT ${pageSize}
+      OFFSET ${offset}
+    `;
+    
+    return result.rows.map(row => ({
+      ...row,
+      productCount: parseInt(row.product_count) || 0
+    })) as (TradeInRequest & { productCount: number })[];
+    
+  } catch (error) {
+    console.error('Error fetching trade-in requests:', error);
+    throw error;
+  }
+}
+
+/**
  * Get trade-in request by ID with products
  */
 export async function getTradeInRequestById(id: number): Promise<(TradeInRequest & { products: TradeInProduct[] }) | null> {

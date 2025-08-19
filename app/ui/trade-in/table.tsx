@@ -1,4 +1,4 @@
-import { fetchTradeInRecords } from '@/app/lib/trade-in/data';
+import { fetchTradeInRequests } from '@/app/lib/trade-in/sql-data';
 import { PlusIcon } from '@heroicons/react/24/solid';
 import Link from 'next/link';
 import StatusIcons from '@/app/ui/trade-in/status-icons';
@@ -22,7 +22,7 @@ export default async function TradeInTable({
   query: string;
   currentPage: number;
 }) {
-  const records = await fetchTradeInRecords(query, currentPage);
+  const records = await fetchTradeInRequests(query, currentPage);
 
   return (
     <div className="mt-6 flow-root">
@@ -31,35 +31,47 @@ export default async function TradeInTable({
           <table className="min-w-full text-gray-900">
             <thead className="rounded-lg text-left text-sm font-normal">
               <tr>
-                <th scope="col" className="px-3 py-5 font-medium">Orden</th>
+                <th scope="col" className="px-3 py-5 font-medium">N° Solicitud</th>
                 <th scope="col" className="px-3 py-5 font-medium">Nombre</th>
-                <th scope="col" className="px-3 py-5 font-medium">RUT</th>
                 <th scope="col" className="px-3 py-5 font-medium">Email</th>
                 <th scope="col" className="px-3 py-5 font-medium">Teléfono</th>
-                <th scope="col" className="px-3 py-5 font-medium">Producto</th>
+                <th scope="col" className="px-3 py-5 font-medium">Región</th>
+                <th scope="col" className="px-3 py-5 font-medium">Comuna</th>
+                <th scope="col" className="px-3 py-5 font-medium">N° Productos</th>
+                <th scope="col" className="px-3 py-5 font-medium">Método Entrega</th>
                 <th scope="col" className="px-3 py-5 font-medium">Fecha</th>
                 <th scope="col" className="px-3 py-5 font-medium">Estado</th>
                 <th scope="col" className="px-3 py-5 font-medium">Detalle</th>
               </tr>
             </thead>
             <tbody className="bg-white">
-              {records.map((record, index) => (
+              {records.map((record: any, index: number) => (
                 <tr
-                  key={index}
+                  key={record.id}
                   className="border-b last-of-type:border-none"
                 >
-                  <td className="px-3 py-3">{record.ID}</td>
-                  <td className="px-3 py-3">{`${record.FIRST_NAME} ${record.LAST_NAME}`}</td>
-                  <td className="px-3 py-3">{record.RUT}</td>
-                  <td className="px-3 py-3">{record.EMAIL}</td>
-                  <td className="px-3 py-3">{record.PHONE}</td>
-                  <td className="px-3 py-3">{record.SELECTED_ITEM_COLOR}</td>
-                  <td className="px-3 py-3">{formatDate(record.SNOWFLAKE_CREATED_AT)} hrs</td>
+                  <td className="px-3 py-3 font-medium text-blue-600">{record.request_number}</td>
+                  <td className="px-3 py-3">{`${record.first_name} ${record.last_name}`}</td>
+                  <td className="px-3 py-3">{record.email}</td>
+                  <td className="px-3 py-3">{record.phone}</td>
+                  <td className="px-3 py-3">{record.region || 'N/A'}</td>
+                  <td className="px-3 py-3">{record.comuna || 'N/A'}</td>
                   <td className="px-3 py-3">
-                    <StatusIcons status={record.STATUS} />
+                    <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+                      {record.productCount} producto{record.productCount !== 1 ? 's' : ''}
+                    </span>
                   </td>
                   <td className="px-3 py-3">
-                    <Link href={`/trade-in/${encodeURIComponent(record.ID)}/detail`}>
+                    <span className="text-sm text-gray-600">
+                      {record.delivery_method === 'shipping' ? 'Envío' : 'Retiro'}
+                    </span>
+                  </td>
+                  <td className="px-3 py-3">{formatDate(record.created_at)} hrs</td>
+                  <td className="px-3 py-3">
+                    <StatusIcons status={record.status} />
+                  </td>
+                  <td className="px-3 py-3">
+                    <Link href={`/trade-in/${encodeURIComponent(record.id)}/detail`}>
                       <PlusIcon className="h-5 w-5 text-blue-500 hover:text-blue-600" />
                     </Link>
                   </td>
