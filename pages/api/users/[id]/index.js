@@ -16,11 +16,13 @@ export default async function handler(req, res) {
     try {
       const client = await db.connect();
 
-      // Consultar el usuario por ID
+      // Consultar el usuario por ID con información de la tienda
       const { rows } = await client.sql`
-        SELECT id, name, email, role
-        FROM users
-        WHERE id = ${id};
+        SELECT u.id, u.name, u.email, u.role, u.store_id,
+               s.name as store_name, s.code as store_code
+        FROM users u
+        LEFT JOIN stores s ON u.store_id = s.id
+        WHERE u.id = ${id};
       `;
       client.release();
 
@@ -34,28 +36,44 @@ export default async function handler(req, res) {
       return res.status(500).json({ message: 'Internal server error' });
     }
   } else if (req.method === 'PUT') {
-    const { name, email, role, password } = req.body;
+    const { name, email, role, password, storeId } = req.body;
 
     if (!name || !email || !role) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
+    // Validate that store users have a store assigned
+    if (role === 'store' && !storeId) {
+      return res.status(400).json({ message: 'Store employees must have a store assigned' });
+    }
+
     try {
       const client = await db.connect();
       
+      // Verify store exists if storeId is provided
+      if (storeId) {
+        const storeCheck = await client.sql`
+          SELECT id FROM stores WHERE id = ${storeId};
+        `;
+        if (storeCheck.rows.length === 0) {
+          client.release();
+          return res.status(400).json({ message: 'Invalid store ID' });
+        }
+      }
+
       let result;
 
       if (password) {
         const hashedPassword = await bcryptjs.hash(password, 10);
         result = await client.sql`
           UPDATE users
-          SET name = ${name}, email = ${email}, password = ${hashedPassword}, role = ${role}
+          SET name = ${name}, email = ${email}, password = ${hashedPassword}, role = ${role}, store_id = ${storeId || null}
           WHERE id = ${id};
         `;
       } else {
         result = await client.sql`
           UPDATE users
-          SET name = ${name}, email = ${email}, role = ${role}
+          SET name = ${name}, email = ${email}, role = ${role}, store_id = ${storeId || null}
           WHERE id = ${id};
         `;
       }

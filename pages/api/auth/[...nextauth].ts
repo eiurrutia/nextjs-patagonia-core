@@ -7,7 +7,12 @@ import { incrementRateLimit, resetRateLimit, isRateLimited, getClientIp } from '
 
 async function getUser(email: string): Promise<User | null> {
   try {
-    const result = await sql<User>`SELECT * FROM users WHERE email = ${email}`;
+    const result = await sql<User>`
+      SELECT u.*, s.name as store_name, s.code as store_code 
+      FROM users u 
+      LEFT JOIN stores s ON u.store_id = s.id 
+      WHERE u.email = ${email}
+    `;
     return result.rows[0] || null;
   } catch (error) {
     console.error('Error fetching user:', error);
@@ -105,11 +110,19 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub as string;
-        session.user.role = token.role as string;
+        session.user.role = (token.role as string) || 'user';
+        session.user.store_id = token.store_id as string | undefined;
+        session.user.store_name = token.store_name as string | undefined;
+        session.user.store_code = token.store_code as string | undefined;
       } else {
         session.user = {
           id: token.sub as string,
-          role: token.role as string,
+          email: token.email as string,
+          name: token.name as string,
+          role: (token.role as string) || 'user',
+          store_id: token.store_id as string | undefined,
+          store_name: token.store_name as string | undefined,
+          store_code: token.store_code as string | undefined,
         };
       }
       return session;
@@ -117,7 +130,12 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
-        token.role = user.role;
+        token.email = user.email;
+        token.name = user.name;
+        token.role = user.role || 'user';
+        token.store_id = user.store_id || null;
+        token.store_name = user.store_name || null;
+        token.store_code = user.store_code || null;
       }
       return token;
     }

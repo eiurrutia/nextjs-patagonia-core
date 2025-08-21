@@ -1,4 +1,5 @@
 import { fetchTradeInRequests } from '@/app/lib/trade-in/sql-data';
+import { getStores } from '@/app/lib/stores/sql-data';
 import { PlusIcon, BuildingStorefrontIcon } from '@heroicons/react/24/solid';
 import Link from 'next/link';
 import StatusIcons from '@/app/ui/trade-in/status-icons';
@@ -32,6 +33,20 @@ export default async function TradeInTable({
   currentPage: number;
 }) {
   const records = await fetchTradeInRequests(query, currentPage);
+  const stores = await getStores();
+  
+  // Crear un conjunto de códigos de tienda para verificación rápida
+  const storeCodes = new Set(stores.map(store => store.code));
+  
+  // Función para determinar el texto del método de entrega
+  const getDeliveryMethodText = (deliveryMethod: string) => {
+    if (deliveryMethod === 'shipping') return 'Envío';
+    if (deliveryMethod === 'pickup') return 'Retiro';
+    if (storeCodes.has(deliveryMethod) || deliveryMethod === 'store') {
+      return `Tienda: ${deliveryMethod}`;
+    }
+    return deliveryMethod;
+  };
 
   return (
     <div className="mt-6 flow-root">
@@ -72,7 +87,7 @@ export default async function TradeInTable({
                   </td>
                   <td className="px-3 py-3">
                     <span className="text-sm text-gray-600">
-                      {record.delivery_method === 'shipping' ? 'Envío' : 'Retiro'}
+                      {getDeliveryMethodText(record.delivery_method)}
                     </span>
                   </td>
                   <td className="px-3 py-3">{formatDate(record.created_at)} hrs</td>

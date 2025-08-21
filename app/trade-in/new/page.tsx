@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { SimilarImage } from '@/app/lib/definitions';
 import { Button } from '@/app/ui/button';
-import { RadioGroup, Radio } from '@headlessui/react';
 import { lusitana } from '@/app/ui/fonts';
 import ProductForm from '@/app/ui/trade-in/product-form';
 import ProductsTable, { ProductFormData } from '@/app/ui/trade-in/products-table';

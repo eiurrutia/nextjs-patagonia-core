@@ -1,11 +1,12 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { lusitana } from '@/app/ui/fonts';
 import { Button } from '@/app/ui/button';
 import { CheckCircleIcon } from '@heroicons/react/24/outline';
 import TradeInStoreForm from '@/app/ui/trade-in/store-form';
+import StoreSelect from '@/app/ui/stores/store-select';
 import { TradeInFormData } from '@/app/lib/trade-in/form-types';
 import { ProductFormData } from '@/app/ui/trade-in/products-table';
 
@@ -15,6 +16,31 @@ export default function StoreTradeInPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedStore, setSelectedStore] = useState<string>('');
+  const [stores, setStores] = useState<any[]>([]);
+
+  // Fetch user store information if user is a store employee
+  useEffect(() => {
+    async function fetchUserStore() {
+      if (session?.user?.role === 'store' && session?.user?.store_code) {
+        setSelectedStore(session.user.store_code);
+      } else if (session?.user?.role === 'admin') {
+        try {
+          const response = await fetch('/api/stores');
+          if (response.ok) {
+            const data = await response.json();
+            setStores(data);
+          }
+        } catch (error) {
+          console.error('Error fetching stores:', error);
+        }
+      }
+    }
+
+    if (session) {
+      fetchUserStore();
+    }
+  }, [session]);
 
   // Redirect if not authenticated
   if (status === 'loading') {
@@ -29,23 +55,43 @@ export default function StoreTradeInPage() {
   }
 
   const handleSubmit = async (data: TradeInFormData & { products: ProductFormData[] }) => {
+    if (session?.user?.role === 'admin' && !selectedStore) {
+      setError('Debes seleccionar una tienda donde se recibió el producto');
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
     try {
+      // Define Store Code
+      let storeCode = '';
+      let storeName = '';
+      
+      if (session?.user?.role === 'store') {
+        // User type 'store': use store code
+        storeCode = session.user.store_code || 'STORE';
+        storeName = session.user.store_name || 'Tienda Patagonia';
+      } else if (session?.user?.role === 'admin' && selectedStore) {
+        // User admin: use selected store
+        const store = stores.find((s: any) => s.code === selectedStore);
+        storeCode = selectedStore;
+        storeName = store?.name || 'Tienda Patagonia';
+      }
+
       const requestData = {
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
         phone: data.phone,
-        region: 'Región Metropolitana', // Default store region
-        comuna: 'Las Condes', // Default store comuna
-        deliveryMethod: 'store', // Always store for in-store reception
-        address: 'Tienda Patagonia', // Store address
+        region: 'Región Metropolitana',
+        comuna: 'Las Condes',
+        deliveryMethod: storeCode,
+        address: storeName,
         houseDetails: '',
         clientComment: data.client_comment,
         products: data.products,
-        receivedInStore: true // Flag to indicate this was received directly in store
+        receivedInStore: true
       };
 
       const response = await fetch('/api/trade-in/create', {
@@ -111,6 +157,32 @@ export default function StoreTradeInPage() {
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-red-700">{error}</p>
+          </div>
+        )}
+
+        {/* Store Selection for Admin Users */}
+        {session?.user?.role === 'admin' && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Información de la Tienda</h2>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tienda donde se recibe el producto <span className="text-red-500">*</span>
+              </label>
+              <StoreSelect
+                value={selectedStore}
+                onChange={setSelectedStore}
+                placeholder="Selecciona la tienda..."
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Store Info for Store Users */}
+        {session?.user?.role === 'store' && session?.user?.store_name && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <h3 className="text-sm font-medium text-blue-800 mb-1">Recibiendo en:</h3>
+            <p className="text-blue-700 font-semibold">{session.user.store_name}</p>
+            <p className="text-blue-600 text-sm">Código: {session.user.store_code}</p>
           </div>
         )}
 
