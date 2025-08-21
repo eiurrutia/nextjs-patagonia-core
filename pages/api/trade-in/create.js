@@ -107,12 +107,23 @@ export default async function handler(req, res) {
         tears_holes_level: product.tears_holes_level,
         repairs_level: product.repairs_level,
         meets_minimum_requirements: product.meets_minimum_requirements !== false,
-        product_images: product.product_images || []
+        product_images: product.product_images || [],
+        calculated_state: product.calculated_state || null
       }))
     };
 
     // Create the trade-in request in SQL database
     const result = await createTradeInRequest(requestData);
+
+    // Force revalidation by calling the revalidate API
+    try {
+      await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?path=/trade-in`, {
+        method: 'POST',
+      });
+    } catch (revalidateError) {
+      console.warn('Failed to revalidate cache:', revalidateError);
+      // Don't fail the request if revalidation fails
+    }
 
     // Return success response
     return res.status(201).json({

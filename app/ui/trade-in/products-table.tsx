@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { TrashIcon, PencilIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { getConditionOptionLabel } from '@/app/lib/trade-in/condition-images';
+import { getStateDisplayColors } from '@/app/lib/trade-in/product-condition-evaluator';
 
 export interface ProductFormData {
   id: string;
@@ -16,6 +17,7 @@ export interface ProductFormData {
   repairs_level: string;
   meets_minimum_requirements: boolean;
   product_images?: string[];
+  calculated_state?: string;
 }
 
 interface ProductsTableProps {
@@ -91,6 +93,15 @@ export default function ProductsTable({ products, onEdit, onDelete, onView }: Pr
                 </div>
 
                 <div className="flex items-center space-x-2">
+                  {/* Calculated State Indicator */}
+                  {product.calculated_state && (
+                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      getStateDisplayColors(product.calculated_state as any).bg
+                    } ${getStateDisplayColors(product.calculated_state as any).text}`}>
+                      {product.calculated_state}
+                    </div>
+                  )}
+                  
                   {/* Status Indicator */}
                   <div className={`px-2 py-1 rounded-full text-xs font-medium ${
                     product.meets_minimum_requirements 
@@ -153,6 +164,16 @@ export default function ProductsTable({ products, onEdit, onDelete, onView }: Pr
                         <span className="text-gray-600">Reparaciones:</span>
                         <span className="font-medium">{getConditionOptionLabel('repairs_level', product.repairs_level)}</span>
                       </div>
+                      {product.calculated_state && (
+                        <div className="flex justify-between pt-2 border-t border-gray-200 mt-2">
+                          <span className="text-gray-600">Estado evaluado:</span>
+                          <span className={`font-medium px-2 py-0.5 rounded text-xs ${
+                            getStateDisplayColors(product.calculated_state as any).bg
+                          } ${getStateDisplayColors(product.calculated_state as any).text}`}>
+                            {product.calculated_state}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 

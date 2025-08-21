@@ -41,3 +41,8 @@ snowflake.log
 
 # Trade-in condition images (too large for GitHub)
 /public/images/trade-in/*.png
+
+# PWA files
+/public/sw.js
+/public/workbox-*.js
+/public/fallback-*.js

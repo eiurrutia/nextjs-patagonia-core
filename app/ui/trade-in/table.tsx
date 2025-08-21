@@ -1,5 +1,5 @@
 import { fetchTradeInRequests } from '@/app/lib/trade-in/sql-data';
-import { PlusIcon } from '@heroicons/react/24/solid';
+import { PlusIcon, BuildingStorefrontIcon } from '@heroicons/react/24/solid';
 import Link from 'next/link';
 import StatusIcons from '@/app/ui/trade-in/status-icons';
 
@@ -50,7 +50,7 @@ export default async function TradeInTable({
                 <th scope="col" className="px-3 py-5 font-medium">Método Entrega</th>
                 <th scope="col" className="px-3 py-5 font-medium">Fecha</th>
                 <th scope="col" className="px-3 py-5 font-medium">Estado</th>
-                <th scope="col" className="px-3 py-5 font-medium">Detalle</th>
+                <th scope="col" className="px-3 py-5 font-medium">Acciones</th>
               </tr>
             </thead>
             <tbody className="bg-white">
@@ -80,9 +80,16 @@ export default async function TradeInTable({
                     <StatusIcons status={record.status} />
                   </td>
                   <td className="px-3 py-3">
-                    <Link href={`/trade-in/${encodeURIComponent(record.id)}/detail`}>
-                      <PlusIcon className="h-5 w-5 text-blue-500 hover:text-blue-600" />
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/trade-in/${encodeURIComponent(record.id)}/detail`}>
+                        <PlusIcon className="h-5 w-5 text-blue-500 hover:text-blue-600" title="Ver detalle" />
+                      </Link>
+                      {record.status === 'pending' && record.delivery_method !== 'store' && (
+                        <Link href={`/trade-in/store/reception/${encodeURIComponent(record.id)}`}>
+                          <BuildingStorefrontIcon className="h-5 w-5 text-green-500 hover:text-green-600" title="Recibir en tienda" />
+                        </Link>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

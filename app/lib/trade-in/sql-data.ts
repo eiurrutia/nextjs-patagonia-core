@@ -1,4 +1,5 @@
 import { sql } from '@vercel/postgres';
+import { unstable_noStore as noStore } from 'next/cache';
 
 export interface TradeInRequest {
   id: number;
@@ -31,6 +32,7 @@ export interface TradeInProduct {
   repairs_level: string;
   meets_minimum_requirements: boolean;
   product_images?: string[];
+  calculated_state?: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -59,6 +61,7 @@ export interface CreateTradeInProductData {
   repairs_level: string;
   meets_minimum_requirements: boolean;
   product_images?: string[];
+  calculated_state?: string;
 }
 
 /**
@@ -115,13 +118,13 @@ export async function createTradeInRequest(data: CreateTradeInRequestData): Prom
         INSERT INTO trade_in_products (
           request_id, product_style, product_size, credit_range,
           usage_signs, pilling_level, tears_holes_level, repairs_level,
-          meets_minimum_requirements, product_images
+          meets_minimum_requirements, product_images, calculated_state
         ) VALUES (
           ${request.id}, ${product.product_style}, 
           ${product.product_size}, ${product.credit_range || null},
           ${product.usage_signs}, ${product.pilling_level}, ${product.tears_holes_level}, 
           ${product.repairs_level}, ${product.meets_minimum_requirements},
-          ${JSON.stringify(product.product_images || [])}
+          ${JSON.stringify(product.product_images || [])}, ${product.calculated_state || null}
         )
       `;
     }
@@ -142,6 +145,8 @@ export async function createTradeInRequest(data: CreateTradeInRequestData): Prom
  * Fetch trade-in requests with pagination and search
  */
 export async function fetchTradeInRequests(query: string, currentPage: number): Promise<(TradeInRequest & { productCount: number })[]> {
+  noStore(); // Disable caching for this function
+  
   const pageSize = 20;
   const offset = (currentPage - 1) * pageSize;
   

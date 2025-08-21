@@ -4,6 +4,13 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Button } from '@/app/ui/button';
 import ConditionAssessment from './condition-assessment';
+import { 
+  evaluateProductCondition, 
+  areConditionResponsesComplete,
+  getStateDisplayColors,
+  type ConditionResponses,
+  type ProductState
+} from '@/app/lib/trade-in/product-condition-evaluator';
 
 import { ProductFormData } from './products-table';
 
@@ -52,6 +59,7 @@ export default function ProductForm({
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [matchedImageUrl, setMatchedImageUrl] = useState<string | null>(null);
+  const [calculatedState, setCalculatedState] = useState<ProductState | null>(null);
 
   // Refs for form fields to enable scrolling to errors
   const productStyleRef = useRef<HTMLInputElement>(null);
@@ -119,6 +127,23 @@ export default function ProductForm({
     }
   };
 
+  // Calculate product state whenever condition responses change
+  useEffect(() => {
+    const conditionResponses: Partial<ConditionResponses> = {
+      usage_signs: formData.usage_signs as any,
+      pilling_level: formData.pilling_level as any,
+      tears_holes_level: formData.tears_holes_level as any,
+      repairs_level: formData.repairs_level as any
+    };
+
+    if (areConditionResponsesComplete(conditionResponses)) {
+      const state = evaluateProductCondition(conditionResponses);
+      setCalculatedState(state);
+    } else {
+      setCalculatedState(null);
+    }
+  }, [formData.usage_signs, formData.pilling_level, formData.tears_holes_level, formData.repairs_level]);
+
   const scrollToFirstError = (errorFields: string[]) => {
     const fieldRefMap: Record<string, React.RefObject<HTMLElement>> = {
       'product_style': productStyleRef,
@@ -182,7 +207,8 @@ export default function ProductForm({
     try {
       const productData: ProductFormData = {
         id: editingProduct?.id || Date.now().toString(),
-        ...formData
+        ...formData,
+        calculated_state: calculatedState || undefined
       };
 
       if (editingProduct && onUpdateProduct) {
@@ -322,6 +348,27 @@ export default function ProductForm({
             errors={errors}
           />
         </div>
+
+        {/* Calculated Product State */}
+        {calculatedState && (
+          <div className="mt-6 p-4 rounded-lg border bg-gray-50">
+            <h3 className="text-sm font-medium text-gray-900 mb-2">Estado Evaluado del Producto</h3>
+            <div className="flex items-center gap-3">
+              <span 
+                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                  getStateDisplayColors(calculatedState).bg
+                } ${getStateDisplayColors(calculatedState).text} ${
+                  getStateDisplayColors(calculatedState).border
+                } border`}
+              >
+                {calculatedState}
+              </span>
+              <p className="text-xs text-gray-600">
+                Estado calculado automáticamente basado en las respuestas de condición
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Form Actions */}
         <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
