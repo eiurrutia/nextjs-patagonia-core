@@ -8,11 +8,7 @@ import { authOptions } from '@/pages/api/auth/[...nextauth]';
  * @param res - The HTTP response object
  */
 export default async function handler(req, res) {
-  // Check if the request is authenticated
-  const session = await getServerSession(req, res, authOptions);
-  if (!session) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
+  // Allow public access to config API for trade-in form
 
   if (req.method !== 'GET') {
     return res.status(405).json({ message: 'Method not allowed' });

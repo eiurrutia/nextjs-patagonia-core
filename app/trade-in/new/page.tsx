@@ -1,6 +1,7 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { SimilarImage } from '@/app/lib/definitions';
 import { Button } from '@/app/ui/button';
@@ -28,6 +29,7 @@ interface FormData {
 
 const TradeInFormPage = () => {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [similarImages, setSimilarImages] = useState<SimilarImage[]>([]);
@@ -310,10 +312,15 @@ const TradeInFormPage = () => {
       const result = await response.json();
       setSuccessMessage(`¡Solicitud creada exitosamente! Número de solicitud: ${result.requestNumber}`);
       
-      // Reset form after successful submission and force refresh
+      // Different behavior based on authentication status
       setTimeout(() => {
-        // Force complete refresh by going to root and then to trade-in
-        window.location.href = '/trade-in';
+        if (session && session.user) {
+          // User is logged in: redirect to trade-in list
+          window.location.href = '/trade-in';
+        } else {
+          // User is not logged in: reload the same form (clean state)
+          window.location.href = '/trade-in/new';
+        }
       }, 2000);
 
     } catch (error) {
@@ -325,13 +332,22 @@ const TradeInFormPage = () => {
   };
 
   if (successMessage) {
+    const isLoggedIn = session && session.user;
+    
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
           <CheckCircleIcon className="h-16 w-16 text-green-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Solicitud Enviada!</h2>
           <p className="text-gray-600 mb-4">{successMessage}</p>
-          <p className="text-sm text-gray-500">Redirigiendo en 2 segundos...</p>
+          {isLoggedIn ? (
+            <p className="text-sm text-gray-500">Redirigiendo al listado en 2 segundos...</p>
+          ) : (
+            <div className="text-sm text-gray-500">
+              <p className="mb-1">¡Gracias por tu solicitud!</p>
+              <p>Regresando al formulario en 2 segundos...</p>
+            </div>
+          )}
         </div>
       </div>
     );

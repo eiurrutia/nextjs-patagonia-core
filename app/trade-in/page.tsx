@@ -1,5 +1,6 @@
 import Search from '@/app/ui/search';
 import TradeInTable from '@/app/ui/trade-in/table';
+import UserInfoCard from '@/app/ui/user-info-card';
 import { lusitana } from '@/app/ui/fonts';
 import { Suspense } from 'react';
 import { InvoicesTableSkeleton } from '@/app/ui/skeletons';
@@ -28,8 +29,18 @@ export default async function Page({
 
   return (
     <div className="w-full p-20">
-      <div className="flex w-full items-center justify-between">
-        <h1 className={`${lusitana.className} text-2xl`}>Trade-In Records</h1>
+      {/* Header with user info */}
+      <div className="flex w-full items-start justify-between mb-6">
+        <div className="flex-1">
+          <h1 className={`${lusitana.className} text-2xl`}>Trade-In Records</h1>
+        </div>
+        <div className="flex-shrink-0 ml-4">
+          <UserInfoCard />
+        </div>
+      </div>
+      
+      {/* Action buttons */}
+      <div className="flex w-full items-center justify-end mb-6">
         <div className="flex gap-3">
           <Link href="/trade-in/store/new">
             <button className="flex items-center gap-1 rounded-md bg-green-500 px-3 py-2 text-white hover:bg-green-600">
@@ -45,6 +56,7 @@ export default async function Page({
           </Link>
         </div>
       </div>
+      
       <div className="mt-4 flex items-center justify-between gap-2 md:mt-8">
         <Search placeholder="Buscar registros de Trade-In..." />
       </div>

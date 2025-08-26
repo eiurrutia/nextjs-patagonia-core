@@ -11,6 +11,8 @@ export default function RootLayout({
 }) {
   // Re-add the useEffect hook to register the service worker
   useEffect(() => {
+    // Temporarily disable service worker to fix redirect issues
+    /*
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
         .register('/sw.js', { scope: '/' })
@@ -21,15 +23,24 @@ export default function RootLayout({
           console.error('Service Worker registration failed: ', registrationError);
         });
     }
+    */
   }, []);
 
   return (
     <html lang="en">
       <head>
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" href="/patagonia-core-icon.png" />
-        <meta name="theme-color" content="#0070f3" />
         <title>Patagonia Core</title>
+        <meta name="description" content="A custom solution to centralize Patagonia's platform data." />
+        <meta name="theme-color" content="#4682B4" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        
+        {/* Favicon and icons */}
+        <link rel="icon" href="/favicon.ico?v=2" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/icons/patagonia-core-icon.png?v=2" />
+        <link rel="apple-touch-icon" href="/icons/patagonia-core-icon-192x192.png?v=2" />
+        
+        {/* PWA manifest */}
+        <link rel="manifest" href="/manifest.json" />
       </head>
       <body className={`${inter.className} antialiased`}>
         <SessionProvider>{children}</SessionProvider>

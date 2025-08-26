@@ -8,11 +8,8 @@ import { authOptions } from '@/pages/api/auth/[...nextauth]';
  * @param res - The HTTP response object
  */
 export default async function handler(req, res) {
-  // Check if the request is authenticated
+  // Check if the request is authenticated (optional for public trade-in submissions)
   const session = await getServerSession(req, res, authOptions);
-  if (!session) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
 
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
@@ -34,6 +31,11 @@ export default async function handler(req, res) {
       products,
       receivedStoreCode // Nuevo campo para cuando es recepción en tienda
     } = req.body;
+
+    // Special validation: Store receptions require authentication
+    if (deliveryMethod === 'store' && !session) {
+      return res.status(401).json({ message: 'Store receptions require authentication' });
+    }
 
     // Validate that all required fields are present
     if (

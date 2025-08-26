@@ -54,11 +54,7 @@ const cosineSimilarity = (a, b) => {
 };
 
 const handler = async (req, res) => {
-  const session = await getServerSession(req, res, authOptions);
-  if (!session) {
-    console.log('No autorizado. Debes iniciar sesión.');
-    return res.status(401).json({ message: 'No autorizado. Debes iniciar sesión.' });
-  }
+  // Allow public access to upload API for trade-in form
 
   const form = formidable();
   form.parse(req, (err, fields, files) => {

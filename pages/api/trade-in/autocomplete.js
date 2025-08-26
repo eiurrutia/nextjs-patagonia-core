@@ -3,11 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/pages/api/auth/[...nextauth]';
 
 export default async function handler(req, res) {
-  const session = await getServerSession(req, res, authOptions);
-  if (!session) {
-    console.log('No autorizado. Debes iniciar sesión.');
-    return res.status(401).json({ message: 'No autorizado. Debes iniciar sesión.' });
-  }
+  // Allow public access to autocomplete API for trade-in form
 
   const query = `
     SELECT DISTINCT ITEM_COLOR, IMAGE_SRC

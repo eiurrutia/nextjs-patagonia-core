@@ -4,7 +4,7 @@ import { addSecurityHeaders } from '@/app/lib/security/security-headers';
 // Define protected and public routes
 const protectedRoutes = ['/dashboard', '/home', '/orders', '/customers', '/incidences', '/stock-planning', '/users', '/configs', '/ccss']; // Routes that require authentication
 const adminRoutes = ['/dashboard/users', '/users', '/stock-planning']; // Routes that only admins can access
-const publicRoutes = ['/login', '/signup', '/']; // Public routes
+const publicRoutes = ['/login', '/signup', '/', '/trade-in/new']; // Public routes - includes trade-in form for end customers
 
 // Middleware to handle authentication and role-based authorization
 export default async function middleware(req: NextRequest) {

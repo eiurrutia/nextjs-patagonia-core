@@ -1,21 +1,32 @@
 {
-    "name": "Patagonia Core",
-    "short_name": "Patagonia Core",
+    "name": "Patagonia Core - Trade Management",
+    "short_name": "Patagonia Core", 
     "description": "A custom solution to centralize Patagonia's platform data.",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#4682B4",
     "theme_color": "#4682B4",
+    "id": "/patagonia-core-v2",
+    "scope": "/",
+    "orientation": "portrait",
+    "categories": ["business", "productivity"],
     "icons": [
       {
         "src": "/icons/patagonia-core-icon-192x192.png",
         "sizes": "192x192",
-        "type": "image/png"
+        "type": "image/png",
+        "purpose": "any maskable"
       },
       {
-        "src": "/icons/patagonia-core-icon-512x512.png",
+        "src": "/icons/patagonia-core-icon-512x512.png", 
         "sizes": "512x512",
-        "type": "image/png"
+        "type": "image/png",
+        "purpose": "any maskable"
+      },
+      {
+        "src": "/favicon.ico",
+        "sizes": "48x48",
+        "type": "image/x-icon"
       }
     ]
 }
