@@ -86,12 +86,12 @@ export default function StoreTradeInPage() {
         phone: data.phone,
         region: 'Región Metropolitana',
         comuna: 'Las Condes',
-        deliveryMethod: storeCode,
+        deliveryMethod: 'store',
         address: storeName,
         houseDetails: '',
         clientComment: data.client_comment,
         products: data.products,
-        receivedInStore: true
+        receivedStoreCode: storeCode // Agregar el código de tienda donde se recibió
       };
 
       const response = await fetch('/api/trade-in/create', {
@@ -110,10 +110,11 @@ export default function StoreTradeInPage() {
       const result = await response.json();
       setSuccessMessage(`¡Solicitud recibida exitosamente! Número: ${result.requestNumber}`);
       
-      // Reset form after successful submission
+      // Reset form after successful submission and force refresh
       setTimeout(() => {
-        router.push('/trade-in');
-      }, 3000);
+        // Force complete refresh by going to trade-in list
+        window.location.href = '/trade-in';
+      }, 2000);
 
     } catch (error) {
       console.error('Error submitting store trade-in:', error);
@@ -134,7 +135,7 @@ export default function StoreTradeInPage() {
           <CheckCircleIcon className="h-16 w-16 text-green-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Recepción Exitosa!</h2>
           <p className="text-gray-600 mb-4">{successMessage}</p>
-          <p className="text-sm text-gray-500">Serás redirigido automáticamente...</p>
+          <p className="text-sm text-gray-500">Redirigiendo en 2 segundos...</p>
         </div>
       </div>
     );

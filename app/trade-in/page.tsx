@@ -5,6 +5,7 @@ import { Suspense } from 'react';
 import { InvoicesTableSkeleton } from '@/app/ui/skeletons';
 import Link from 'next/link';
 import { PlusIcon, BuildingStorefrontIcon } from '@heroicons/react/24/solid';
+import { headers } from 'next/headers';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -18,6 +19,10 @@ export default async function Page({
     page?: string;
   };
 }) {
+  // Force fresh data by accessing headers
+  const headersList = headers();
+  const timestamp = Date.now();
+  
   const query = searchParams?.query || '';
   const currentPage = Number(searchParams?.page) || 1;
 
@@ -43,7 +48,7 @@ export default async function Page({
       <div className="mt-4 flex items-center justify-between gap-2 md:mt-8">
         <Search placeholder="Buscar registros de Trade-In..." />
       </div>
-      <Suspense key={query + currentPage} fallback={<InvoicesTableSkeleton />}>
+      <Suspense key={query + currentPage + timestamp} fallback={<InvoicesTableSkeleton />}>
         <TradeInTable query={query} currentPage={currentPage} />
       </Suspense>
     </div>

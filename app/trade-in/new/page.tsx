@@ -310,10 +310,11 @@ const TradeInFormPage = () => {
       const result = await response.json();
       setSuccessMessage(`¡Solicitud creada exitosamente! Número de solicitud: ${result.requestNumber}`);
       
-      // Reset form after successful submission
+      // Reset form after successful submission and force refresh
       setTimeout(() => {
-        router.push('/trade-in');
-      }, 3000);
+        // Force complete refresh by going to root and then to trade-in
+        window.location.href = '/trade-in';
+      }, 2000);
 
     } catch (error) {
       console.error('Error submitting trade-in request:', error);
@@ -330,7 +331,7 @@ const TradeInFormPage = () => {
           <CheckCircleIcon className="h-16 w-16 text-green-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Solicitud Enviada!</h2>
           <p className="text-gray-600 mb-4">{successMessage}</p>
-          <p className="text-sm text-gray-500">Serás redirigido automáticamente...</p>
+          <p className="text-sm text-gray-500">Redirigiendo en 2 segundos...</p>
         </div>
       </div>
     );

@@ -31,7 +31,8 @@ export default async function handler(req, res) {
       address,
       houseDetails,
       clientComment,
-      products
+      products,
+      receivedStoreCode // Nuevo campo para cuando es recepción en tienda
     } = req.body;
 
     // Validate that all required fields are present
@@ -97,6 +98,8 @@ export default async function handler(req, res) {
       address: address || null,
       house_details: houseDetails || null,
       client_comment: clientComment || null,
+      received_store_code: receivedStoreCode || null, // Nuevo campo
+      status: deliveryMethod === 'store' ? 'recepcionado_tienda' : 'solicitud_recibida', // Estado inicial según tipo
       products: products.map(product => ({
         product_style: product.product_style,
         product_color: product.product_color,
@@ -114,16 +117,6 @@ export default async function handler(req, res) {
 
     // Create the trade-in request in SQL database
     const result = await createTradeInRequest(requestData);
-
-    // Force revalidation by calling the revalidate API
-    try {
-      await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?path=/trade-in`, {
-        method: 'POST',
-      });
-    } catch (revalidateError) {
-      console.warn('Failed to revalidate cache:', revalidateError);
-      // Don't fail the request if revalidation fails
-    }
 
     // Return success response
     return res.status(201).json({

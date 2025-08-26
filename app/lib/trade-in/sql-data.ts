@@ -16,6 +16,7 @@ export interface TradeInRequest {
   status: string;
   client_comment?: string;
   admin_notes?: string;
+  received_store_code?: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -48,6 +49,8 @@ export interface CreateTradeInRequestData {
   address?: string;
   house_details?: string;
   client_comment?: string;
+  received_store_code?: string;
+  status?: string;
   products: CreateTradeInProductData[];
 }
 
@@ -88,12 +91,12 @@ export async function createTradeInRequest(data: CreateTradeInRequestData): Prom
     const requestResult = await sql`
       INSERT INTO trade_in_requests (
         request_number, first_name, last_name, email, phone, region, comuna,
-        delivery_method, address, house_details, client_comment
+        delivery_method, address, house_details, client_comment, received_store_code, status
       ) VALUES (
         'TEMP', ${data.first_name}, ${data.last_name}, ${data.email}, 
         ${data.phone}, ${data.region || null}, ${data.comuna || null},
         ${data.delivery_method}, ${data.address || null}, ${data.house_details || null}, 
-        ${data.client_comment || null}
+        ${data.client_comment || null}, ${data.received_store_code || null}, ${data.status || 'solicitud_recibida'}
       ) RETURNING *
     `;
     
@@ -153,14 +156,18 @@ export async function fetchTradeInRequests(query: string, currentPage: number): 
   try {
     const searchQuery = `%${query.toLowerCase()}%`;
     
+    // Add a timestamp comment to ensure query is always fresh
+    const timestamp = new Date().getTime();
+    
     const result = await sql`
       SELECT 
         tr.id, tr.request_number, tr.first_name, tr.last_name, tr.email, 
         tr.phone, tr.region, tr.comuna, tr.delivery_method, tr.address, 
-        tr.status, tr.client_comment,
+        tr.status, tr.client_comment, tr.received_store_code,
         tr.created_at AT TIME ZONE 'UTC' as created_at,
         tr.updated_at AT TIME ZONE 'UTC' as updated_at,
-        COUNT(tp.id) as product_count
+        COUNT(tp.id) as product_count,
+        ${timestamp} as query_timestamp
       FROM trade_in_requests tr
       LEFT JOIN trade_in_products tp ON tr.id = tp.request_id
       WHERE 
@@ -171,7 +178,7 @@ export async function fetchTradeInRequests(query: string, currentPage: number): 
         LOWER(tr.request_number) LIKE ${searchQuery}
       GROUP BY tr.id, tr.request_number, tr.first_name, tr.last_name, tr.email, 
                tr.phone, tr.region, tr.comuna, tr.delivery_method, tr.address, 
-               tr.status, tr.client_comment, tr.created_at, tr.updated_at
+               tr.status, tr.client_comment, tr.received_store_code, tr.created_at, tr.updated_at
       ORDER BY tr.created_at DESC
       LIMIT ${pageSize}
       OFFSET ${offset}
