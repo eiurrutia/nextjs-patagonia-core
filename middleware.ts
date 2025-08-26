@@ -27,7 +27,8 @@ export default async function middleware(req: NextRequest) {
   }
 
   // If the user has a session and is on a public route (login or signup), redirect to /home
-  if (session?.user && isPublicRoute) {
+  // Exception: Allow logged users to access /trade-in/new for internal trade-in submissions
+  if (session?.user && isPublicRoute && path !== '/trade-in/new') {
     return NextResponse.redirect(new URL('/home', req.nextUrl));
   }
 
