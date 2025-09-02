@@ -8,6 +8,7 @@ import { Button } from '@/app/ui/button';
 import ProductForm from '@/app/ui/trade-in/product-form';
 import ProductsTable, { ProductFormData } from '@/app/ui/trade-in/products-table';
 import AddressAutocomplete from '@/app/ui/address-autocomplete';
+import StoreSelect from '@/app/ui/stores/store-select';
 import { conditionQuestions } from '@/app/lib/trade-in/condition-images';
 import {
   ChevronRightIcon, ChevronDownIcon,
@@ -40,6 +41,7 @@ const TradeInFormPage = () => {
   const [isImageSectionCollapsed, setImageSectionCollapsed] = useState(true);
   const firstNameInputRef = useRef<HTMLInputElement>(null);
   const [deliveryOption, setDeliveryOption] = useState<string>('');
+  const [selectedStoreCode, setSelectedStoreCode] = useState<string>('');
   
   // New state for enhanced functionality
   const [products, setProducts] = useState<ProductFormData[]>([]);
@@ -276,6 +278,19 @@ const TradeInFormPage = () => {
     };
 
     setErrors(newErrors);
+
+    // Validate delivery method
+    if (!deliveryOption) {
+      setError('Por favor selecciona un método de entrega');
+      return false;
+    }
+
+    // Validate store selection if store delivery is chosen
+    if (deliveryOption === 'store' && !selectedStoreCode) {
+      setError('Por favor selecciona una tienda para la entrega');
+      return false;
+    }
+
     return !Object.values(newErrors).some(Boolean);
   };
 
@@ -303,6 +318,7 @@ const TradeInFormPage = () => {
         region: formData.region,
         comuna: formData.comuna,
         deliveryMethod: deliveryOption,
+        storeCode: deliveryOption === 'store' ? selectedStoreCode : null,
         address: formData.address,
         houseDetails: formData.houseDetails,
         clientComment: formData.client_comment,
@@ -802,7 +818,49 @@ const TradeInFormPage = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Store Delivery Option */}
+                <div 
+                  onClick={() => setDeliveryOption('store')}
+                  className={`cursor-pointer rounded-lg border-2 p-4 transition-all ${
+                    deliveryOption === 'store' 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-start space-x-3">
+                    <div className={`mt-1 h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                      deliveryOption === 'store' 
+                        ? 'border-blue-500 bg-blue-500' 
+                        : 'border-gray-300'
+                    }`}>
+                      {deliveryOption === 'store' && (
+                        <div className="h-2 w-2 rounded-full bg-white"></div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900">Entrega en tienda</h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Lleva tu producto directamente a una de nuestras tiendas durante el horario de atención.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
+
+              {/* Store Selection - Only show when store delivery is selected */}
+              {deliveryOption === 'store' && (
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Selecciona la tienda <span className="text-red-500">*</span>
+                  </label>
+                  <StoreSelect 
+                    value={selectedStoreCode}
+                    onChange={setSelectedStoreCode}
+                    placeholder="Selecciona una tienda..."
+                  />
+                </div>
+              )}
             </div>
 
             {/* Client Comment */}
