@@ -34,6 +34,17 @@ export default function ProductsTable({ products, onEdit, onDelete, onView }: Pr
     setExpandedProduct(expandedProduct === productId ? null : productId);
   };
 
+  // Generate Patagonia image URL from product style
+  const generatePatagoniaImageUrl = (productStyle: string) => {
+    if (!productStyle || productStyle.length < 8) return null;
+    
+    // Replace dash with underscore for Patagonia URL format
+    const formattedStyle = productStyle.replace('-', '_');
+    
+    // Generate Patagonia image URL
+    return `https://production-us2.patagonia.com/dw/image/v2/BDJB_PRD/on/demandware.static/-/Sites-patagonia-master/default/images/hi-res/${formattedStyle}.jpg?sw=2000&sh=2000&sfrm=png&q=95&bgcolor=f5f5f5`;
+  };
+
   if (products.length === 0) {
     return (
       <div className="border border-gray-200 rounded-lg p-8 text-center">
@@ -65,10 +76,32 @@ export default function ProductsTable({ products, onEdit, onDelete, onView }: Pr
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
-                      <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <span className="text-lg font-semibold text-gray-600">
-                          {index + 1}
-                        </span>
+                      <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+                        {(() => {
+                          const imageUrl = generatePatagoniaImageUrl(product.product_style);
+                          return imageUrl ? (
+                            <Image
+                              src={imageUrl}
+                              alt={`${product.product_style}`}
+                              width={48}
+                              height={48}
+                              className="object-cover w-full h-full"
+                              onError={(e) => {
+                                // Fallback to number if image fails
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  parent.innerHTML = `<span class="text-lg font-semibold text-gray-600">${index + 1}</span>`;
+                                }
+                              }}
+                            />
+                          ) : (
+                            <span className="text-lg font-semibold text-gray-600">
+                              {index + 1}
+                            </span>
+                          );
+                        })()}
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
@@ -101,15 +134,6 @@ export default function ProductsTable({ products, onEdit, onDelete, onView }: Pr
                       {product.calculated_state}
                     </div>
                   )}
-                  
-                  {/* Status Indicator */}
-                  <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    product.meets_minimum_requirements 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {product.meets_minimum_requirements ? 'Cumple requisitos' : 'Revisar requisitos'}
-                  </div>
 
                   {/* Action Buttons */}
                   <button
@@ -217,12 +241,9 @@ export default function ProductsTable({ products, onEdit, onDelete, onView }: Pr
 
       {/* Summary */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-center justify-between text-sm">
+        <div className="flex items-center justify-center text-sm">
           <span className="text-blue-800">
             Total de productos: <span className="font-semibold">{products.length}</span>
-          </span>
-          <span className="text-blue-600">
-            {products.filter(p => p.meets_minimum_requirements).length} cumplen requisitos mínimos
           </span>
         </div>
       </div>
