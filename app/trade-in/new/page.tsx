@@ -382,6 +382,50 @@ const TradeInFormPage = () => {
               nuestras tiendas o en nuestra página web.
             </p>
           </div>
+
+          {/* Steps Images Section */}
+          <div className="mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              {/* Paso 1 */}
+              <div className="flex justify-center">
+                <div className="w-64 h-16 flex items-center justify-center">
+                  <Image 
+                    src="https://form-builder-by-hulkapps.s3.amazonaws.com/uploads/patagoniachile.myshopify.com/backend_image/Group_244.png" 
+                    alt="Paso 1: Identifica tu producto"
+                    width={250} 
+                    height={50}
+                    className="object-contain max-w-full max-h-full"
+                  />
+                </div>
+              </div>
+              
+              {/* Paso 2 */}
+              <div className="flex justify-center">
+                <div className="w-64 h-16 flex items-center justify-center">
+                  <Image 
+                    src="https://form-builder-by-hulkapps.s3.amazonaws.com/uploads/patagoniachile.myshopify.com/backend_image/Estado.png" 
+                    alt="Paso 2: Estado del producto"
+                    width={250} 
+                    height={50}
+                    className="object-contain max-w-full max-h-full"
+                  />
+                </div>
+              </div>
+              
+              {/* Paso 3 */}
+              <div className="flex justify-center">
+                <div className="w-64 h-16 flex items-center justify-center">
+                  <Image 
+                    src="https://form-builder-by-hulkapps.s3.amazonaws.com/uploads/patagoniachile.myshopify.com/backend_image/Datos.png" 
+                    alt="Paso 3: Datos"
+                    width={250} 
+                    height={50}
+                    className="object-contain max-w-full max-h-full"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Error Message */}
@@ -509,22 +553,14 @@ const TradeInFormPage = () => {
 
           {/* Products Section */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            {/* Paso 1 Image */}
+            {/* Header with "Productos" label */}
             <div className="flex items-start py-4 border-b border-gray-200 pl-6">
-              <Image 
-                src="https://form-builder-by-hulkapps.s3.amazonaws.com/uploads/patagoniachile.myshopify.com/backend_image/Group_244.png" 
-                alt="Paso 1: Identifica tu producto"
-                width={250} 
-                height={40}
-                className="object-contain"
-              />
+              <h2 className="text-lg font-semibold text-gray-900">Productos</h2>
             </div>
             
             <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-gray-900">Productos</h2>
+              <div className="flex items-center justify-end mb-6">
                 <Button
-                  type="button"
                   onClick={() => setShowProductForm(true)}
                   className="flex items-center space-x-2"
                 >

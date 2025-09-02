@@ -265,17 +265,20 @@ export default function ProductForm({
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">
-          {editingProduct ? 'Editar Producto' : 'Agregar Nuevo Producto'}
-        </h3>
-        <p className="text-sm text-gray-600 mt-1">
-          Completa la información del producto que deseas incluir en tu Trade-in
-        </p>
+    <div className="bg-white border border-gray-200 rounded-lg">
+      {/* Paso 1 Image Header */}
+      <div className="flex items-start py-4 border-b border-gray-200 pl-6">
+        <Image 
+          src="https://form-builder-by-hulkapps.s3.amazonaws.com/uploads/patagoniachile.myshopify.com/backend_image/Group_244.png" 
+          alt="Paso 1: Identifica tu producto"
+          width={250} 
+          height={40}
+          className="object-contain"
+        />
       </div>
 
-      {/* Instructional Section - ¿Dónde encuentro mi número de estilo? */}
+      <div className="p-6">
+        {/* Instructional Section - ¿Dónde encuentro mi número de estilo? */}
       <div className="mb-6 bg-gray-50 p-6 rounded-lg">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           ¿Dónde encuentro mi número de estilo?
@@ -539,6 +542,7 @@ export default function ProductForm({
           </Button>
         </div>
       </form>
+      </div>
     </div>
   );
 }
