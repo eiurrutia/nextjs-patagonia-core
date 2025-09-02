@@ -23,6 +23,40 @@ export default function ConditionAssessment({ values, onChange, errors = {} }: C
 
   return (
     <div className="space-y-6">
+      {/* Paso 2: Requisitos del producto */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        {/* Paso 2 Image */}
+        <div className="flex items-center justify-center py-4 border-b border-gray-200">
+          <Image 
+            src="https://form-builder-by-hulkapps.s3.amazonaws.com/uploads/patagoniachile.myshopify.com/backend_image/Estado.png" 
+            alt="Paso 2: Estado del producto"
+            width={250} 
+            height={55}
+            className="object-contain"
+          />
+        </div>
+        
+        <div className="p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            ¿Tu producto cumple con estos requisitos mínimos para intercambiar?
+          </h2>
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <ul className="text-sm text-gray-700 space-y-2">
+              <li>• Limpio y en buenas condiciones de funcionamiento, sin rasgaduras importantes, roturas, agujeros, cierres rotos o botones faltantes.</li>
+              <li>• Mantiene sus etiquetas blancas internas Patagonia cosidas.</li>
+              <li>• Sin pelo de animales adherido.</li>
+              <li>• Sin etiquetas corporativas ni otras intervenciones externas.</li>
+              <li>• Forma parte de la lista de productos intercambiables. (Revisa el listado en la sección de ayuda)</li>
+            </ul>
+          </div>
+          <div className="mt-4 bg-blue-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-700">
+              <span className="font-semibold">Al continuar, confirmas estar de acuerdo con que tu producto sea reciclado en caso de no cumplir con algunos de estos requisitos, sin recibir crédito por este.</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-2">
           Condición del Producto

@@ -59,6 +59,7 @@ export default function ProductForm({
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [matchedImageUrl, setMatchedImageUrl] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
   const [calculatedState, setCalculatedState] = useState<ProductState | null>(null);
 
   // Refs for form fields to enable scrolling to errors
@@ -83,16 +84,17 @@ export default function ProductForm({
     }
   }, [editingProduct]);
 
-  // Fetch the image if ITEM_COLOR matches
-  const fetchItemColorMatch = (itemColor: string) => {
-    const match = itemColorSuggestions.find(
-      (item) => item.itemColor === itemColor
-    );
-    if (match) {
-      setMatchedImageUrl(match.imageSrc);
-    } else {
-      setMatchedImageUrl(null);
+  // Generate Patagonia image URL from product style
+  const generatePatagoniaImageUrl = (productStyle: string) => {
+    if (!productStyle || !productStyle.includes('-')) {
+      return null;
     }
+    
+    // Convert format from "25551-NVNY" to "25551_NVNY"
+    const formattedStyle = productStyle.replace('-', '_');
+    
+    // Generate Patagonia image URL
+    return `https://production-us2.patagonia.com/dw/image/v2/BDJB_PRD/on/demandware.static/-/Sites-patagonia-master/default/images/hi-res/${formattedStyle}.jpg?sw=2000&sh=2000&sfrm=png&q=95&bgcolor=f5f5f5`;
   };
 
   const handleInputChange = (field: keyof ProductFormState, value: string | boolean) => {
@@ -112,9 +114,12 @@ export default function ProductForm({
     // Handle style-color matching
     if (field === 'product_style' && typeof value === 'string') {
       if (value.length > 0) {
-        fetchItemColorMatch(value);
+        const imageUrl = generatePatagoniaImageUrl(value);
+        setMatchedImageUrl(imageUrl);
+        setImageError(false);
       } else {
         setMatchedImageUrl(null);
+        setImageError(false);
       }
     }
   };
@@ -221,6 +226,7 @@ export default function ProductForm({
       if (!editingProduct) {
         setFormData(initialFormState);
         setMatchedImageUrl(null);
+        setImageError(false);
       }
     } catch (error) {
       console.error('Error saving product:', error);
@@ -233,6 +239,7 @@ export default function ProductForm({
     setFormData(initialFormState);
     setErrors({});
     setMatchedImageUrl(null);
+    setImageError(false);
     if (onCancel) {
       onCancel();
     }
@@ -287,18 +294,19 @@ export default function ProductForm({
             )}
             
             {/* Matched Image Preview */}
-            {matchedImageUrl && (
+            {matchedImageUrl && !imageError && (
               <div className="mt-2">
                 <div className="relative h-32 w-32 border border-gray-200 rounded overflow-hidden">
                   <Image
                     src={matchedImageUrl}
-                    alt="Producto encontrado"
+                    alt="Vista previa del producto"
                     fill
                     sizes="128px"
                     className="object-cover"
+                    onError={() => setImageError(true)}
                   />
                 </div>
-                <p className="text-xs text-green-600 mt-1">✓ Producto encontrado en catálogo</p>
+                <p className="text-xs text-blue-600 mt-1">🔗 Vista previa desde catálogo Patagonia</p>
               </div>
             )}
           </div>

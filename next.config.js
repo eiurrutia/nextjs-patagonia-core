@@ -38,6 +38,18 @@ module.exports = withPWA({
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'form-builder-by-hulkapps.s3.amazonaws.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'production-us2.patagonia.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   async rewrites() {

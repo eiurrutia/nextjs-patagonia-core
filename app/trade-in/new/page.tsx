@@ -50,6 +50,7 @@ const TradeInFormPage = () => {
   const [configLoaded, setConfigLoaded] = useState(false);
   const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState(1); // Estado para controlar el paso actual
 
   // Estado para los datos del formulario y errores
   const [formData, setFormData] = useState<FormData>({
@@ -98,6 +99,19 @@ const TradeInFormPage = () => {
     // Small delay to ensure DOM is ready
     setTimeout(preloadAllImages, 100);
   }, []);
+
+  // Update current step based on form progress
+  useEffect(() => {
+    if (products.length > 0) {
+      if (formData.firstName && formData.lastName && formData.email) {
+        setCurrentStep(3); // All data completed
+      } else {
+        setCurrentStep(2); // Products added, working on personal data
+      }
+    } else {
+      setCurrentStep(1); // Still working on products
+    }
+  }, [products.length, formData.firstName, formData.lastName, formData.email]);
 
   // Fetch trade-in configuration
   const fetchTradeInConfig = async () => {
@@ -357,13 +371,49 @@ const TradeInFormPage = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className={`${lusitana.className} text-3xl font-bold text-gray-900 mb-2`}>
-            Nueva Solicitud Trade-in
+        <div className="text-center mb-8">
+          <h1 className={`${lusitana.className} text-3xl font-bold text-gray-900 mb-4`}>
+            Programa de Intercambio Patagonia
           </h1>
-          <p className="text-gray-600">
-            Completa la información de tu solicitud y agrega los productos que deseas incluir
-          </p>
+          <div className="bg-blue-50 p-6 rounded-lg mb-6 max-w-3xl mx-auto">
+            <p className="text-lg text-gray-700 leading-relaxed">
+              <strong>Tráenos o envíanos esos productos que ya no quieras</strong> y que cumplan con nuestros 
+              criterios de intercambio. A cambio, recibirás un crédito que podrás usar en cualquiera de 
+              nuestras tiendas o en nuestra página web.
+            </p>
+          </div>
+        </div>
+
+        {/* Steps Navigation */}
+        <div className="flex justify-center mb-8">
+          <div className="flex items-center space-x-4">
+            <div className={`flex items-center space-x-2 ${currentStep >= 1 ? 'text-blue-600' : 'text-gray-400'}`}>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
+                currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
+              }`}>
+                1
+              </div>
+              <span className="text-sm font-medium hidden sm:block">Identifica tu producto</span>
+            </div>
+            <ChevronRightIcon className="w-5 h-5 text-gray-400" />
+            <div className={`flex items-center space-x-2 ${currentStep >= 2 ? 'text-blue-600' : 'text-gray-400'}`}>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
+                currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
+              }`}>
+                2
+              </div>
+              <span className="text-sm font-medium hidden sm:block">Estado del producto</span>
+            </div>
+            <ChevronRightIcon className="w-5 h-5 text-gray-400" />
+            <div className={`flex items-center space-x-2 ${currentStep >= 3 ? 'text-blue-600' : 'text-gray-400'}`}>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
+                currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
+              }`}>
+                3
+              </div>
+              <span className="text-sm font-medium hidden sm:block">Datos personales</span>
+            </div>
+          </div>
         </div>
 
         {/* Error Message */}
@@ -490,18 +540,49 @@ const TradeInFormPage = () => {
           )}
 
           {/* Products Section */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">Productos</h2>
-              <Button
-                type="button"
-                onClick={() => setShowProductForm(true)}
-                className="flex items-center space-x-2"
-              >
-                <PlusIcon className="h-4 w-4" />
-                <span>Agregar Producto</span>
-              </Button>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            {/* Paso 1 Image */}
+            <div className="flex items-center justify-center py-4 border-b border-gray-200">
+              <Image 
+                src="https://form-builder-by-hulkapps.s3.amazonaws.com/uploads/patagoniachile.myshopify.com/backend_image/Group_244.png" 
+                alt="Paso 1: Identifica tu producto"
+                width={250} 
+                height={40}
+                className="object-contain"
+              />
             </div>
+            
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold text-gray-900">Productos</h2>
+                <Button
+                  type="button"
+                  onClick={() => setShowProductForm(true)}
+                  className="flex items-center space-x-2"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  <span>Agregar Producto</span>
+                </Button>
+              </div>
+
+              {/* Instructional Section */}
+              <div className="mb-6 bg-gray-50 p-6 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  ¿Dónde encuentro mi número de estilo?
+                </h3>
+                <div className="flex justify-center mb-4">
+                  <Image 
+                    src="https://form-builder-by-hulkapps.s3.amazonaws.com/uploads/patagoniachile.myshopify.com/backend_image/Frame_20__1_.png" 
+                    alt="Ubicación del número de estilo en las etiquetas"
+                    width={400} 
+                    height={200}
+                    className="object-contain rounded-lg"
+                  />
+                </div>
+                <p className="text-sm text-gray-600 text-center">
+                  Busca en las etiquetas internas de tu producto el número de 4 o 5 dígitos.
+                </p>
+              </div>
 
             {/* Product Form */}
             {showProductForm && (
@@ -523,11 +604,45 @@ const TradeInFormPage = () => {
               onEdit={handleEditProduct}
               onDelete={handleDeleteProduct}
             />
+
+            {/* Photo Instructions */}
+            <div className="mt-6 bg-gray-50 p-6 rounded-lg">
+              <h3 className="text-sm font-bold text-gray-900 mb-3">
+                ¿Cómo debo fotografiar mi producto?
+              </h3>
+              <p className="text-sm text-gray-700 mb-4">
+                Asegúrate de incluir vistas frontales y traseras de tu producto estirado sobre un fondo plano y buena iluminación. 
+                En caso de observar detalles de uso como pilling o rasgaduras en este, incluye fotos del (los) detalle(s) de cerca.
+              </p>
+              <div className="flex justify-center">
+                <Image 
+                  src="https://cdn.shopify.com/s/files/1/0012/1661/0359/files/Group_9.png?v=1747139966" 
+                  alt="Ejemplos de cómo fotografiar productos"
+                  width={500} 
+                  height={200}
+                  className="object-contain rounded-lg"
+                />
+              </div>
+            </div>
+
+            </div>
           </div>
 
           {/* Customer Information */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Datos del Cliente</h2>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            {/* Paso 3 Image */}
+            <div className="flex items-center justify-center py-4 border-b border-gray-200">
+              <Image 
+                src="https://form-builder-by-hulkapps.s3.amazonaws.com/uploads/patagoniachile.myshopify.com/backend_image/Datos.png" 
+                alt="Paso 3: Datos personales"
+                width={160} 
+                height={59}
+                className="object-contain"
+              />
+            </div>
+            
+            <div className="p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">Datos del Cliente</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* First Name */}
@@ -742,6 +857,7 @@ const TradeInFormPage = () => {
                 className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
                 placeholder="Comparte la historia de tu producto: aventuras, momentos especiales, lugares que visitaste con él..."
               />
+            </div>
             </div>
           </div>
 
