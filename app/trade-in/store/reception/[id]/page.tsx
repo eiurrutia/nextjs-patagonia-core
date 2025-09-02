@@ -14,6 +14,7 @@ interface TradeInRequest {
   id: string;
   firstName: string;
   lastName: string;
+  rut: string;
   email: string;
   phone: string;
   region: string;

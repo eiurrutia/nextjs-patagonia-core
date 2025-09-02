@@ -18,6 +18,7 @@ import {
 interface FormData {
   firstName: string;
   lastName: string;
+  rut: string;
   email: string;
   phone: string;
   region: string;
@@ -26,6 +27,110 @@ interface FormData {
   houseDetails: string;
   client_comment: string;
 }
+
+// Validation functions
+const validateRut = (rut: string): boolean => {
+  // Remove dots and hyphens
+  const cleanRut = rut.replace(/[.-]/g, '');
+  
+  if (cleanRut.length < 8 || cleanRut.length > 9) return false;
+  
+  const body = cleanRut.slice(0, -1);
+  const dv = cleanRut.slice(-1).toUpperCase(); // Convert to uppercase for comparison
+  
+  // Check if body contains only numbers
+  if (!/^\d+$/.test(body)) return false;
+  
+  // Calculate verification digit using Chilean algorithm
+  let sum = 0;
+  let multiplier = 2;
+  
+  // Process from right to left
+  for (let i = body.length - 1; i >= 0; i--) {
+    sum += parseInt(body[i]) * multiplier;
+    multiplier = multiplier === 7 ? 2 : multiplier + 1;
+  }
+  
+  const remainder = 11 - (sum % 11);
+  let calculatedDv;
+  
+  if (remainder === 11) {
+    calculatedDv = '0';
+  } else if (remainder === 10) {
+    calculatedDv = 'K'; // Use uppercase K
+  } else {
+    calculatedDv = remainder.toString();
+  }
+  
+  return dv === calculatedDv;
+};
+
+const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const validatePhone = (phone: string): boolean => {
+  // Chilean phone format: +56 9 XXXX XXXX or 9 XXXX XXXX
+  const cleanPhone = phone.replace(/[\s\-\+]/g, '');
+  const phoneRegex = /^(56)?9[0-9]{8}$/;
+  return phoneRegex.test(cleanPhone);
+};
+
+const formatRut = (rut: string): string => {
+  const cleanRut = rut.replace(/[^0-9kK]/g, '');
+  if (cleanRut.length <= 1) return cleanRut.toUpperCase();
+  
+  const body = cleanRut.slice(0, -1);
+  const dv = cleanRut.slice(-1).toUpperCase(); // Convert to uppercase
+  
+  // Add dots every 3 digits from right to left
+  const formattedBody = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  
+  return `${formattedBody}-${dv}`;
+};
+
+// Type for error state
+type ErrorState = {
+  firstName: boolean;
+  lastName: boolean;
+  rut: boolean;
+  email: boolean;
+  phone: boolean;
+  region: boolean;
+  comuna: boolean;
+  address: boolean;
+};
+
+// Function to validate individual fields on blur
+const validateField = (fieldName: keyof FormData, value: string, setErrors: React.Dispatch<React.SetStateAction<ErrorState>>) => {
+  setErrors((prevErrors: ErrorState) => {
+    const newErrors = { ...prevErrors };
+    
+    switch (fieldName) {
+      case 'firstName':
+        newErrors.firstName = !value.trim();
+        break;
+      case 'lastName':
+        newErrors.lastName = !value.trim();
+        break;
+      case 'rut':
+        // RUT is required and must be valid
+        newErrors.rut = !value.trim() || !validateRut(value);
+        break;
+      case 'email':
+        newErrors.email = !value.trim() || !validateEmail(value);
+        break;
+      case 'phone':
+        newErrors.phone = !value.trim() || !validatePhone(value);
+        break;
+      default:
+        break;
+    }
+    
+    return newErrors;
+  });
+};
 
 const TradeInFormPage = () => {
   const router = useRouter();
@@ -40,6 +145,7 @@ const TradeInFormPage = () => {
   >([]);
   const [isImageSectionCollapsed, setImageSectionCollapsed] = useState(true);
   const firstNameInputRef = useRef<HTMLInputElement>(null);
+  const rutInputRef = useRef<HTMLInputElement>(null);
   const [deliveryOption, setDeliveryOption] = useState<string>('');
   const [selectedStoreCode, setSelectedStoreCode] = useState<string>('');
   
@@ -57,6 +163,7 @@ const TradeInFormPage = () => {
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
     lastName: '',
+    rut: '',
     email: '',
     phone: '',
     region: '',
@@ -69,6 +176,7 @@ const TradeInFormPage = () => {
   const [errors, setErrors] = useState({
     firstName: false,
     lastName: false,
+    rut: false,
     email: false,
     phone: false,
     region: false,
@@ -104,7 +212,7 @@ const TradeInFormPage = () => {
   // Update current step based on form progress
   useEffect(() => {
     if (products.length > 0) {
-      if (formData.firstName && formData.lastName && formData.email) {
+      if (formData.firstName && formData.lastName && formData.rut && formData.email) {
         setCurrentStep(3); // All data completed
       } else {
         setCurrentStep(2); // Products added, working on personal data
@@ -112,7 +220,7 @@ const TradeInFormPage = () => {
     } else {
       setCurrentStep(1); // Still working on products
     }
-  }, [products.length, formData.firstName, formData.lastName, formData.email]);
+  }, [products.length, formData.firstName, formData.lastName, formData.rut, formData.email]);
 
   // Fetch trade-in configuration
   const fetchTradeInConfig = async () => {
@@ -270,8 +378,9 @@ const TradeInFormPage = () => {
     const newErrors = {
       firstName: !formData.firstName.trim(),
       lastName: !formData.lastName.trim(),
-      email: !formData.email.trim(),
-      phone: !formData.phone.trim(),
+      rut: !formData.rut.trim() || !validateRut(formData.rut),
+      email: !formData.email.trim() || !validateEmail(formData.email),
+      phone: !formData.phone.trim() || !validatePhone(formData.phone),
       region: !formData.region.trim(),
       comuna: !formData.comuna.trim(),
       address: !formData.address.trim(),
@@ -313,6 +422,7 @@ const TradeInFormPage = () => {
       const requestData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
+        rut: formData.rut,
         email: formData.email,
         phone: formData.phone,
         region: formData.region,
@@ -636,11 +746,15 @@ const TradeInFormPage = () => {
                   ref={firstNameInputRef}
                   value={formData.firstName}
                   onChange={(e) => handleInputChange('firstName', e.target.value)}
+                  onBlur={(e) => validateField('firstName', e.target.value, setErrors)}
                   className={`block w-full rounded-md border px-3 py-2 text-sm ${
                     errors.firstName ? 'border-red-500' : 'border-gray-300'
                   } focus:border-blue-500 focus:ring-blue-500`}
                   required
                 />
+                {errors.firstName && (
+                  <p className="mt-1 text-sm text-red-600">El nombre es requerido</p>
+                )}
               </div>
 
               {/* Last Name */}
@@ -653,11 +767,43 @@ const TradeInFormPage = () => {
                   id="lastName"
                   value={formData.lastName}
                   onChange={(e) => handleInputChange('lastName', e.target.value)}
+                  onBlur={(e) => validateField('lastName', e.target.value, setErrors)}
                   className={`block w-full rounded-md border px-3 py-2 text-sm ${
                     errors.lastName ? 'border-red-500' : 'border-gray-300'
                   } focus:border-blue-500 focus:ring-blue-500`}
                   required
                 />
+                {errors.lastName && (
+                  <p className="mt-1 text-sm text-red-600">El apellido es requerido</p>
+                )}
+              </div>
+
+              {/* RUT */}
+              <div>
+                <label htmlFor="rut" className="block text-sm font-medium text-gray-700 mb-1">
+                  RUT <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="rut"
+                  ref={rutInputRef}
+                  value={formData.rut}
+                  onChange={(e) => {
+                    const formatted = formatRut(e.target.value);
+                    handleInputChange('rut', formatted);
+                  }}
+                  onBlur={(e) => validateField('rut', e.target.value, setErrors)}
+                  placeholder="12.345.678-K"
+                  className={`block w-full rounded-md border px-3 py-2 text-sm ${
+                    errors.rut ? 'border-red-500' : 'border-gray-300'
+                  } focus:border-blue-500 focus:ring-blue-500`}
+                  required
+                />
+                {errors.rut && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {!formData.rut.trim() ? 'El RUT es requerido' : 'RUT inválido'}
+                  </p>
+                )}
               </div>
 
               {/* Email */}
@@ -670,11 +816,15 @@ const TradeInFormPage = () => {
                   id="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
+                  onBlur={(e) => validateField('email', e.target.value, setErrors)}
                   className={`block w-full rounded-md border px-3 py-2 text-sm ${
                     errors.email ? 'border-red-500' : 'border-gray-300'
                   } focus:border-blue-500 focus:ring-blue-500`}
                   required
                 />
+                {errors.email && (
+                  <p className="mt-1 text-sm text-red-600">Correo electrónico inválido</p>
+                )}
               </div>
 
               {/* Phone */}
@@ -687,11 +837,16 @@ const TradeInFormPage = () => {
                   id="phone"
                   value={formData.phone}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
+                  onBlur={(e) => validateField('phone', e.target.value, setErrors)}
+                  placeholder="+56 9 1234 5678"
                   className={`block w-full rounded-md border px-3 py-2 text-sm ${
                     errors.phone ? 'border-red-500' : 'border-gray-300'
                   } focus:border-blue-500 focus:ring-blue-500`}
                   required
                 />
+                {errors.phone && (
+                  <p className="mt-1 text-sm text-red-600">Teléfono inválido</p>
+                )}
               </div>
             </div>
 

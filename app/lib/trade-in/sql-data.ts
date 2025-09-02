@@ -6,6 +6,7 @@ export interface TradeInRequest {
   request_number: string;
   first_name: string;
   last_name: string;
+  rut: string;
   email: string;
   phone: string;
   region?: string;
@@ -41,6 +42,7 @@ export interface TradeInProduct {
 export interface CreateTradeInRequestData {
   first_name: string;
   last_name: string;
+  rut: string;
   email: string;
   phone: string;
   region?: string;
@@ -90,10 +92,10 @@ export async function createTradeInRequest(data: CreateTradeInRequestData): Prom
     // Insert main request with temporary request_number
     const requestResult = await sql`
       INSERT INTO trade_in_requests (
-        request_number, first_name, last_name, email, phone, region, comuna,
+        request_number, first_name, last_name, rut, email, phone, region, comuna,
         delivery_method, address, house_details, client_comment, received_store_code, status
       ) VALUES (
-        'TEMP', ${data.first_name}, ${data.last_name}, ${data.email}, 
+        'TEMP', ${data.first_name}, ${data.last_name}, ${data.rut}, ${data.email}, 
         ${data.phone}, ${data.region || null}, ${data.comuna || null},
         ${data.delivery_method}, ${data.address || null}, ${data.house_details || null}, 
         ${data.client_comment || null}, ${data.received_store_code || null}, ${data.status || 'solicitud_recibida'}
@@ -161,7 +163,7 @@ export async function fetchTradeInRequests(query: string, currentPage: number): 
     
     const result = await sql`
       SELECT 
-        tr.id, tr.request_number, tr.first_name, tr.last_name, tr.email, 
+        tr.id, tr.request_number, tr.first_name, tr.last_name, tr.rut, tr.email, 
         tr.phone, tr.region, tr.comuna, tr.delivery_method, tr.address, 
         tr.status, tr.client_comment, tr.received_store_code,
         tr.created_at AT TIME ZONE 'UTC' as created_at,
@@ -173,10 +175,11 @@ export async function fetchTradeInRequests(query: string, currentPage: number): 
       WHERE 
         LOWER(tr.first_name) LIKE ${searchQuery} OR 
         LOWER(tr.last_name) LIKE ${searchQuery} OR 
+        LOWER(tr.rut) LIKE ${searchQuery} OR
         LOWER(tr.email) LIKE ${searchQuery} OR 
         LOWER(tr.phone) LIKE ${searchQuery} OR
         LOWER(tr.request_number) LIKE ${searchQuery}
-      GROUP BY tr.id, tr.request_number, tr.first_name, tr.last_name, tr.email, 
+      GROUP BY tr.id, tr.request_number, tr.first_name, tr.last_name, tr.rut, tr.email, 
                tr.phone, tr.region, tr.comuna, tr.delivery_method, tr.address, 
                tr.status, tr.client_comment, tr.received_store_code, tr.created_at, tr.updated_at
       ORDER BY tr.created_at DESC
@@ -202,7 +205,7 @@ export async function getTradeInRequestById(id: number): Promise<(TradeInRequest
   try {
     const requestResult = await sql`
       SELECT 
-        id, request_number, first_name, last_name, email, phone, region, comuna, 
+        id, request_number, first_name, last_name, rut, email, phone, region, comuna, 
         delivery_method, address, status, client_comment,
         created_at AT TIME ZONE 'UTC' as created_at,
         updated_at AT TIME ZONE 'UTC' as updated_at
