@@ -384,38 +384,6 @@ const TradeInFormPage = () => {
           </div>
         </div>
 
-        {/* Steps Navigation */}
-        <div className="flex justify-center mb-8">
-          <div className="flex items-center space-x-4">
-            <div className={`flex items-center space-x-2 ${currentStep >= 1 ? 'text-blue-600' : 'text-gray-400'}`}>
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
-                currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
-              }`}>
-                1
-              </div>
-              <span className="text-sm font-medium hidden sm:block">Identifica tu producto</span>
-            </div>
-            <ChevronRightIcon className="w-5 h-5 text-gray-400" />
-            <div className={`flex items-center space-x-2 ${currentStep >= 2 ? 'text-blue-600' : 'text-gray-400'}`}>
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
-                currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
-              }`}>
-                2
-              </div>
-              <span className="text-sm font-medium hidden sm:block">Estado del producto</span>
-            </div>
-            <ChevronRightIcon className="w-5 h-5 text-gray-400" />
-            <div className={`flex items-center space-x-2 ${currentStep >= 3 ? 'text-blue-600' : 'text-gray-400'}`}>
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
-                currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
-              }`}>
-                3
-              </div>
-              <span className="text-sm font-medium hidden sm:block">Datos personales</span>
-            </div>
-          </div>
-        </div>
-
         {/* Error Message */}
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
@@ -542,7 +510,7 @@ const TradeInFormPage = () => {
           {/* Products Section */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             {/* Paso 1 Image */}
-            <div className="flex items-center justify-center py-4 border-b border-gray-200">
+            <div className="flex items-start py-4 border-b border-gray-200 pl-6">
               <Image 
                 src="https://form-builder-by-hulkapps.s3.amazonaws.com/uploads/patagoniachile.myshopify.com/backend_image/Group_244.png" 
                 alt="Paso 1: Identifica tu producto"
@@ -563,25 +531,6 @@ const TradeInFormPage = () => {
                   <PlusIcon className="h-4 w-4" />
                   <span>Agregar Producto</span>
                 </Button>
-              </div>
-
-              {/* Instructional Section */}
-              <div className="mb-6 bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  ¿Dónde encuentro mi número de estilo?
-                </h3>
-                <div className="flex justify-center mb-4">
-                  <Image 
-                    src="https://form-builder-by-hulkapps.s3.amazonaws.com/uploads/patagoniachile.myshopify.com/backend_image/Frame_20__1_.png" 
-                    alt="Ubicación del número de estilo en las etiquetas"
-                    width={400} 
-                    height={200}
-                    className="object-contain rounded-lg"
-                  />
-                </div>
-                <p className="text-sm text-gray-600 text-center">
-                  Busca en las etiquetas internas de tu producto el número de 4 o 5 dígitos.
-                </p>
               </div>
 
             {/* Product Form */}
@@ -605,33 +554,13 @@ const TradeInFormPage = () => {
               onDelete={handleDeleteProduct}
             />
 
-            {/* Photo Instructions */}
-            <div className="mt-6 bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-sm font-bold text-gray-900 mb-3">
-                ¿Cómo debo fotografiar mi producto?
-              </h3>
-              <p className="text-sm text-gray-700 mb-4">
-                Asegúrate de incluir vistas frontales y traseras de tu producto estirado sobre un fondo plano y buena iluminación. 
-                En caso de observar detalles de uso como pilling o rasgaduras en este, incluye fotos del (los) detalle(s) de cerca.
-              </p>
-              <div className="flex justify-center">
-                <Image 
-                  src="https://cdn.shopify.com/s/files/1/0012/1661/0359/files/Group_9.png?v=1747139966" 
-                  alt="Ejemplos de cómo fotografiar productos"
-                  width={500} 
-                  height={200}
-                  className="object-contain rounded-lg"
-                />
-              </div>
-            </div>
-
             </div>
           </div>
 
           {/* Customer Information */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             {/* Paso 3 Image */}
-            <div className="flex items-center justify-center py-4 border-b border-gray-200">
+            <div className="flex items-start py-4 border-b border-gray-200 pl-6">
               <Image 
                 src="https://form-builder-by-hulkapps.s3.amazonaws.com/uploads/patagoniachile.myshopify.com/backend_image/Datos.png" 
                 alt="Paso 3: Datos personales"

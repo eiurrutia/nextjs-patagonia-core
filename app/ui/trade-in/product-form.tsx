@@ -43,7 +43,7 @@ const initialFormState: ProductFormState = {
   pilling_level: '',
   tears_holes_level: '',
   repairs_level: '',
-  meets_minimum_requirements: true,
+  meets_minimum_requirements: false,
   product_images: []
 };
 
@@ -60,6 +60,7 @@ export default function ProductForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [matchedImageUrl, setMatchedImageUrl] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(false);
   const [calculatedState, setCalculatedState] = useState<ProductState | null>(null);
 
   // Refs for form fields to enable scrolling to errors
@@ -115,11 +116,19 @@ export default function ProductForm({
     if (field === 'product_style' && typeof value === 'string') {
       if (value.length > 0) {
         const imageUrl = generatePatagoniaImageUrl(value);
-        setMatchedImageUrl(imageUrl);
-        setImageError(false);
+        if (imageUrl) {
+          setImageLoading(true);
+          setMatchedImageUrl(imageUrl);
+          setImageError(false);
+        } else {
+          setMatchedImageUrl(null);
+          setImageError(false);
+          setImageLoading(false);
+        }
       } else {
         setMatchedImageUrl(null);
         setImageError(false);
+        setImageLoading(false);
       }
     }
   };
@@ -227,6 +236,7 @@ export default function ProductForm({
         setFormData(initialFormState);
         setMatchedImageUrl(null);
         setImageError(false);
+        setImageLoading(false);
       }
     } catch (error) {
       console.error('Error saving product:', error);
@@ -240,6 +250,7 @@ export default function ProductForm({
     setErrors({});
     setMatchedImageUrl(null);
     setImageError(false);
+    setImageLoading(false);
     if (onCancel) {
       onCancel();
     }
@@ -261,6 +272,25 @@ export default function ProductForm({
         </h3>
         <p className="text-sm text-gray-600 mt-1">
           Completa la información del producto que deseas incluir en tu Trade-in
+        </p>
+      </div>
+
+      {/* Instructional Section - ¿Dónde encuentro mi número de estilo? */}
+      <div className="mb-6 bg-gray-50 p-6 rounded-lg">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          ¿Dónde encuentro mi número de estilo?
+        </h3>
+        <div className="flex justify-start mb-4">
+          <Image 
+            src="https://form-builder-by-hulkapps.s3.amazonaws.com/uploads/patagoniachile.myshopify.com/backend_image/Frame_20__1_.png" 
+            alt="Ubicación del número de estilo en las etiquetas"
+            width={400} 
+            height={200}
+            className="object-contain rounded-lg"
+          />
+        </div>
+        <p className="text-sm text-gray-600">
+          Busca en las etiquetas internas de tu producto el número de 4 o 5 dígitos.
         </p>
       </div>
 
@@ -297,16 +327,36 @@ export default function ProductForm({
             {matchedImageUrl && !imageError && (
               <div className="mt-2">
                 <div className="relative h-32 w-32 border border-gray-200 rounded overflow-hidden">
+                  {imageLoading && (
+                    <div className="absolute inset-0 bg-gray-50 flex items-center justify-center z-10">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    </div>
+                  )}
                   <Image
                     src={matchedImageUrl}
                     alt="Vista previa del producto"
                     fill
                     sizes="128px"
                     className="object-cover"
-                    onError={() => setImageError(true)}
+                    onLoad={() => setImageLoading(false)}
+                    onError={() => {
+                      setImageError(true);
+                      setImageLoading(false);
+                      setMatchedImageUrl(null);
+                    }}
                   />
                 </div>
                 <p className="text-xs text-blue-600 mt-1">🔗 Vista previa desde catálogo Patagonia</p>
+              </div>
+            )}
+            
+            {/* Loading State when no image yet */}
+            {imageLoading && !matchedImageUrl && (
+              <div className="mt-2">
+                <div className="h-32 w-32 border border-gray-200 rounded overflow-hidden bg-gray-50 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">🔍 Cargando imagen...</p>
               </div>
             )}
           </div>
@@ -346,6 +396,99 @@ export default function ProductForm({
             className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
             placeholder="Ej: $15,000 - $25,000"
           />
+        </div>
+
+        {/* Photo Instructions */}
+        <div className="bg-gray-50 p-6 rounded-lg">
+          <h3 className="text-sm font-bold text-gray-900 mb-3">
+            ¿Cómo debo fotografiar mi producto?
+          </h3>
+          <p className="text-sm text-gray-700 mb-4">
+            Asegúrate de incluir vistas frontales y traseras de tu producto estirado sobre un fondo plano y buena iluminación. 
+            En caso de observar detalles de uso como pilling o rasgaduras en este, incluye fotos del (los) detalle(s) de cerca.
+          </p>
+          <div className="flex justify-center">
+            <Image 
+              src="https://cdn.shopify.com/s/files/1/0012/1661/0359/files/Group_9.png?v=1747139966" 
+              alt="Ejemplos de cómo fotografiar productos"
+              width={500} 
+              height={200}
+              className="object-contain rounded-lg"
+            />
+          </div>
+        </div>
+
+        {/* Product Images Section */}
+        <div className="space-y-4">
+          <div>
+            <h4 className="text-lg font-semibold text-gray-900 mb-4">Imágenes del Producto</h4>
+            
+            {/* Image Upload Area */}
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+              <div className="text-center">
+                <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                  <path
+                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <div className="mt-4">
+                  <label htmlFor="product-images" className="cursor-pointer">
+                    <span className="mt-2 block text-sm font-medium text-gray-900">
+                      Sube imágenes de tu producto
+                    </span>
+                    <span className="mt-2 block text-sm text-gray-500">
+                      PNG, JPG, JPEG hasta 10MB cada una
+                    </span>
+                  </label>
+                  <input
+                    id="product-images"
+                    name="product-images"
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={(e) => {
+                      // TODO: Implementar lógica de carga de imágenes
+                      console.log('Archivos seleccionados:', e.target.files);
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+            
+            {/* Preview area for uploaded images */}
+            {formData.product_images && formData.product_images.length > 0 && (
+              <div className="mt-4">
+                <h5 className="text-sm font-medium text-gray-900 mb-2">Imágenes subidas:</h5>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {formData.product_images.map((imageUrl, index) => (
+                    <div key={index} className="relative">
+                      <Image
+                        src={imageUrl}
+                        alt={`Producto ${index + 1}`}
+                        width={150}
+                        height={150}
+                        className="object-cover rounded-lg border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          // TODO: Implementar eliminación de imagen
+                          console.log('Eliminar imagen:', index);
+                        }}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Condition Assessment */}
