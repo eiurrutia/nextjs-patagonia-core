@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { conditionQuestions } from '@/app/lib/trade-in/condition-images';
 
@@ -13,12 +13,165 @@ interface ConditionAssessmentProps {
 export default function ConditionAssessment({ values, onChange, errors = {} }: ConditionAssessmentProps) {
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
 
+  // Get the usage signs question and other questions
+  const usageSignsQuestion = conditionQuestions.find(q => q.id === 'usage_signs');
+  const otherQuestions = conditionQuestions.filter(q => q.id !== 'usage_signs');
+
+  const showDetailedQuestions = values.usage_signs === 'yes';
+
+  // Auto-assign "regular" values when user selects "No" for usage signs
+  useEffect(() => {
+    if (values.usage_signs === 'no') {
+      // Automatically set all other questions to "regular"
+      otherQuestions.forEach(question => {
+        if (!values[question.id] || values[question.id] !== 'regular') {
+          onChange(question.id, 'regular');
+        }
+      });
+    }
+  }, [values.usage_signs, values, onChange, otherQuestions]);
+
   const toggleQuestion = (questionId: string) => {
     setExpandedQuestion(expandedQuestion === questionId ? null : questionId);
   };
 
   const handleOptionSelect = (questionId: string, value: string) => {
     onChange(questionId, value);
+    // Collapse the question after selection
+    if (expandedQuestion === questionId) {
+      setExpandedQuestion(null);
+    }
+  };
+
+  const renderQuestionOptions = (question: any, forceExpanded = false) => {
+    const isExpanded = forceExpanded || expandedQuestion === question.id;
+    const isUsageSignsQuestion = question.id === 'usage_signs';
+    
+    return (
+      <div key={question.id} className="border border-gray-200 rounded-lg overflow-hidden mb-4">
+        {/* Question Header */}
+        <button
+          type="button"
+          onClick={() => !forceExpanded && toggleQuestion(question.id)}
+          className={`w-full px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 transition-colors ${
+            errors[question.id] ? 'border-l-4 border-red-500' : ''
+          } ${forceExpanded ? 'cursor-default' : 'cursor-pointer'}`}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-medium text-gray-900">{question.question}</h4>
+              <p className="text-sm text-gray-600 mt-1">{question.description}</p>
+              {values[question.id] && (
+                <p className="text-sm text-blue-600 mt-1 font-medium">
+                  Seleccionado: {question.options.find((opt: any) => opt.value === values[question.id])?.label}
+                </p>
+              )}
+            </div>
+            {!forceExpanded && !isUsageSignsQuestion && (
+              <svg
+                className={`w-5 h-5 text-gray-500 transition-transform ${
+                  isExpanded ? 'rotate-180' : ''
+                }`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            )}
+          </div>
+        </button>
+
+        {/* Question Options */}
+        {(isExpanded || isUsageSignsQuestion) && (
+          <div className="p-4 bg-white">
+            {isUsageSignsQuestion ? (
+              // Simple buttons for usage signs question (no images)
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {question.options.map((option: any) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`p-4 rounded-lg border-2 transition-all text-left hover:shadow-md min-h-[100px] flex items-center ${
+                      values[question.id] === option.value
+                        ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => handleOptionSelect(question.id, option.value)}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex-1">
+                        <h5 className="font-medium text-gray-900 mb-2">{option.label}</h5>
+                        <p className="text-sm text-gray-600 leading-relaxed">{option.description}</p>
+                      </div>
+                      {values[question.id] === option.value && (
+                        <div className="ml-3 flex-shrink-0">
+                          <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              // Image-based options for other questions
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {question.options.map((option: any) => (
+                  <div
+                    key={option.value}
+                    className={`border rounded-lg p-3 cursor-pointer transition-all hover:shadow-md ${
+                      values[question.id] === option.value
+                        ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => handleOptionSelect(question.id, option.value)}
+                  >
+                    {/* Option Image */}
+                    <div className="relative h-32 mb-3 bg-gray-50 rounded overflow-hidden">
+                      <Image
+                        src={option.imageUrl}
+                        alt={`${question.question} - ${option.label}`}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover"
+                        priority={true}
+                        unoptimized={false}
+                        onError={(e) => {
+                          // Fallback to placeholder if image doesn't exist
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/images/trade-in/placeholder-condition.svg';
+                        }}
+                      />
+                    </div>
+
+                    {/* Option Details */}
+                    <div className="text-center">
+                      <h5 className="font-medium text-gray-900 mb-1">{option.label}</h5>
+                      <p className="text-xs text-gray-600">{option.description}</p>
+                    </div>
+
+                    {/* Selection Indicator */}
+                    {values[question.id] === option.value && (
+                      <div className="mt-2 flex justify-center">
+                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -87,99 +240,19 @@ export default function ConditionAssessment({ values, onChange, errors = {} }: C
                   Condición del Producto
                 </h3>
                 <p className="text-sm text-gray-600">
-                  Evalúa la condición de tu producto seleccionando la opción que mejor describe su estado. 
-                  Haz clic en cada pregunta para ver ejemplos visuales.
+                  Evalúa la condición de tu producto seleccionando la opción que mejor describe su estado.
                 </p>
               </div>
 
-              {conditionQuestions.map((question) => (
-                <div key={question.id} className="border border-gray-200 rounded-lg overflow-hidden mb-4">
-                  {/* Question Header */}
-                  <button
-                    type="button"
-                    onClick={() => toggleQuestion(question.id)}
-                    className={`w-full px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 transition-colors ${
-                      errors[question.id] ? 'border-l-4 border-red-500' : ''
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium text-gray-900">{question.question}</h4>
-                        <p className="text-sm text-gray-600 mt-1">{question.description}</p>
-                        {values[question.id] && (
-                          <p className="text-sm text-blue-600 mt-1 font-medium">
-                            Seleccionado: {question.options.find(opt => opt.value === values[question.id])?.label}
-                          </p>
-                        )}
-                      </div>
-                      <svg
-                        className={`w-5 h-5 text-gray-500 transition-transform ${
-                          expandedQuestion === question.id ? 'rotate-180' : ''
-                        }`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </button>
+              {/* Usage Signs Question (Always shown first) */}
+              {usageSignsQuestion && renderQuestionOptions(usageSignsQuestion, true)}
 
-                  {/* Question Options */}
-                  {expandedQuestion === question.id && (
-                    <div className="p-4 bg-white">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {question.options.map((option) => (
-                          <div
-                            key={option.value}
-                            className={`border rounded-lg p-3 cursor-pointer transition-all hover:shadow-md ${
-                              values[question.id] === option.value
-                                ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                                : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                            onClick={() => handleOptionSelect(question.id, option.value)}
-                          >
-                            {/* Option Image */}
-                            <div className="relative h-32 mb-3 bg-gray-50 rounded overflow-hidden">
-                              <Image
-                                src={option.imageUrl}
-                                alt={`${question.question} - ${option.label}`}
-                                fill
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                className="object-cover"
-                                priority={true}
-                                unoptimized={false}
-                                onError={(e) => {
-                                  // Fallback to placeholder if image doesn't exist
-                                  const target = e.target as HTMLImageElement;
-                                  target.src = '/images/trade-in/placeholder-condition.svg';
-                                }}
-                              />
-                            </div>
-
-                            {/* Option Details */}
-                            <div className="text-center">
-                              <h5 className="font-medium text-gray-900 mb-1">{option.label}</h5>
-                              <p className="text-xs text-gray-600">{option.description}</p>
-                            </div>
-
-                            {/* Selection Indicator */}
-                            {values[question.id] === option.value && (
-                              <div className="mt-2 flex justify-center">
-                                <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                  </svg>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+              {/* Detailed Questions (Only shown when usage_signs === 'yes') */}
+              {showDetailedQuestions && (
+                <div className="ml-4 border-l-2 border-blue-200 pl-4">
+                  {otherQuestions.map(question => renderQuestionOptions(question, true))}
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>

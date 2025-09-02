@@ -24,26 +24,20 @@ const getImageUrl = (filename: string) => {
 export const conditionQuestions: ConditionQuestion[] = [
   {
     id: 'usage_signs',
-    question: '¿Señales de uso?',
-    description: 'Evalúa las señales generales de uso del producto',
+    question: 'Señales de uso',
+    description: '¿Hay alguna imperfección visual o señal de uso en tu producto, como manchas, descoceduras, reparaciones o apelmazamientos?*',
     options: [
       {
-        value: 'practically_none',
-        label: 'Prácticamente nada',
-        description: 'El producto se ve como nuevo, sin señales visibles de uso',
-        imageUrl: getImageUrl('usage-signs-none.png')
+        value: 'yes',
+        label: 'Sí',
+        description: 'Producto presenta señales de uso',
+        imageUrl: getImageUrl('usage-signs-yes.png')
       },
       {
-        value: 'somewhat_noticeable',
-        label: 'Un poco notorio',
-        description: 'Señales leves de uso, pero el producto está en muy buen estado',
-        imageUrl: getImageUrl('usage-signs-light.png')
-      },
-      {
-        value: 'quite_noticeable',
-        label: 'Bastante notorio',
-        description: 'Señales evidentes de uso, pero el producto aún es funcional',
-        imageUrl: getImageUrl('usage-signs-heavy.png')
+        value: 'no',
+        label: 'No',
+        description: 'Producto no presenta señales de uso significativas',
+        imageUrl: getImageUrl('usage-signs-no.png')
       }
     ]
   },
@@ -53,20 +47,20 @@ export const conditionQuestions: ConditionQuestion[] = [
     description: 'Evalúa la presencia de bolitas o pilling en el tejido',
     options: [
       {
-        value: 'practically_none',
-        label: 'Prácticamente nada',
+        value: 'regular',
+        label: 'Regular',
         description: 'Sin pilling visible, tejido liso y uniforme',
         imageUrl: getImageUrl('pilling-none.png')
       },
       {
-        value: 'somewhat_noticeable',
-        label: 'Un poco notorio',
+        value: 'moderate',
+        label: 'Moderado',
         description: 'Pilling leve en algunas áreas, principalmente en zonas de roce',
         imageUrl: getImageUrl('pilling-light.png')
       },
       {
-        value: 'quite_noticeable',
-        label: 'Bastante notorio',
+        value: 'high',
+        label: 'Alto',
         description: 'Pilling evidente en múltiples áreas del producto',
         imageUrl: getImageUrl('pilling-heavy.png')
       }
@@ -78,20 +72,20 @@ export const conditionQuestions: ConditionQuestion[] = [
     description: 'Evalúa la presencia de rasgaduras, hoyos o daños en el tejido',
     options: [
       {
-        value: 'practically_none',
-        label: 'Prácticamente nada',
+        value: 'regular',
+        label: 'Regular',
         description: 'Sin rasgaduras ni hoyos visibles',
         imageUrl: getImageUrl('tears-none.png')
       },
       {
-        value: 'somewhat_noticeable',
-        label: 'Un poco notorio',
+        value: 'moderate',
+        label: 'Moderado',
         description: 'Pequeñas rasgaduras o hoyos menores que no afectan la funcionalidad',
         imageUrl: getImageUrl('tears-light.png')
       },
       {
-        value: 'quite_noticeable',
-        label: 'Bastante notorio',
+        value: 'high',
+        label: 'Alto',
         description: 'Rasgaduras o hoyos evidentes que pueden afectar el uso',
         imageUrl: getImageUrl('tears-heavy.png')
       }
@@ -103,20 +97,20 @@ export const conditionQuestions: ConditionQuestion[] = [
     description: 'Evalúa si el producto tiene reparaciones visibles',
     options: [
       {
-        value: 'practically_none',
-        label: 'Prácticamente nada',
+        value: 'regular',
+        label: 'Regular',
         description: 'Sin reparaciones visibles, producto original',
         imageUrl: getImageUrl('repairs-none.png')
       },
       {
-        value: 'somewhat_noticeable',
-        label: 'Un poco notorio',
+        value: 'moderate',
+        label: 'Moderado',
         description: 'Reparaciones menores bien ejecutadas',
         imageUrl: getImageUrl('repairs-light.png')
       },
       {
-        value: 'quite_noticeable',
-        label: 'Bastante notorio',
+        value: 'high',
+        label: 'Alto',
         description: 'Reparaciones evidentes o múltiples reparaciones',
         imageUrl: getImageUrl('repairs-heavy.png')
       }

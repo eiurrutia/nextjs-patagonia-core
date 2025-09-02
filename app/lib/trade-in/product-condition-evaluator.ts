@@ -2,26 +2,26 @@
 // Determines final product state based on condition question responses
 
 export interface ConditionResponses {
-  usage_signs: 'practically_none' | 'somewhat_noticeable' | 'quite_noticeable';
-  pilling_level: 'practically_none' | 'somewhat_noticeable' | 'quite_noticeable';
-  tears_holes_level: 'practically_none' | 'somewhat_noticeable' | 'quite_noticeable';
-  repairs_level: 'practically_none' | 'somewhat_noticeable' | 'quite_noticeable';
+  usage_signs: 'yes' | 'no';
+  pilling_level: 'regular' | 'moderate' | 'high';
+  tears_holes_level: 'regular' | 'moderate' | 'high';
+  repairs_level: 'regular' | 'moderate' | 'high';
 }
 
 export type ProductState = 'Como Nuevo' | 'Con detalles de uso' | 'Reparado' | 'Reciclado';
 
 // Mapping from response values to scoring system
 const responseToScore = {
-  'practically_none': 0,    // B
-  'somewhat_noticeable': 1, // M  
-  'quite_noticeable': 3     // A
+  'regular': 0,    // B
+  'moderate': 1,   // M  
+  'high': 3        // A
 };
 
 // Mapping from response values to letter grades for readability
 const responseToGrade = {
-  'practically_none': 'B',
-  'somewhat_noticeable': 'M',
-  'quite_noticeable': 'A'
+  'regular': 'B',
+  'moderate': 'M',
+  'high': 'A'
 };
 
 /**
@@ -32,18 +32,18 @@ const responseToGrade = {
 export function evaluateProductCondition(responses: ConditionResponses): ProductState {
   const { usage_signs, pilling_level, tears_holes_level, repairs_level } = responses;
 
-  // Special case: If usage_signs is "practically_none" (B)
-  // Product can only be "Como Nuevo" if ALL other responses are also "practically_none" (B)
-  if (usage_signs === 'practically_none') {
-    if (pilling_level === 'practically_none' && 
-        tears_holes_level === 'practically_none' && 
-        repairs_level === 'practically_none') {
+  // Special case: If usage_signs is "no" (no signs of use)
+  // Product can only be "Como Nuevo" if ALL other responses are also "regular"
+  if (usage_signs === 'no') {
+    if (pilling_level === 'regular' && 
+        tears_holes_level === 'regular' && 
+        repairs_level === 'regular') {
       return 'Como Nuevo';
     }
-    // If usage_signs is B but others are not all B, continue with scoring logic
+    // If usage_signs is no but others are not all regular, continue with scoring logic
   }
 
-  // For all other cases (usage_signs is M or A, or usage_signs is B but others aren't all B)
+  // For all other cases (usage_signs is yes, or usage_signs is no but others aren't all regular)
   // Use scoring table logic
   
   // Calculate scores for the three evaluation criteria (excluding usage_signs)
@@ -51,9 +51,9 @@ export function evaluateProductCondition(responses: ConditionResponses): Product
   const tearsScore = responseToScore[tears_holes_level];
   const repairsScore = responseToScore[repairs_level];
   
-  // Count number of repairs (non-B responses)
+  // Count number of repairs (non-regular responses)
   const numRepairs = [pilling_level, tears_holes_level, repairs_level]
-    .filter(response => response !== 'practically_none').length;
+    .filter(response => response !== 'regular').length;
   
   // Calculate total score
   const totalScore = pillingScore + tearsScore + repairsScore;
@@ -87,13 +87,13 @@ export function getEvaluationBreakdown(responses: ConditionResponses) {
   const repairsScore = responseToScore[repairs_level];
   
   const numRepairs = [pilling_level, tears_holes_level, repairs_level]
-    .filter(response => response !== 'practically_none').length;
+    .filter(response => response !== 'regular').length;
   
   const totalScore = pillingScore + tearsScore + repairsScore;
   const finalState = evaluateProductCondition(responses);
 
   return {
-    usageSignsGrade: responseToGrade[usage_signs],
+    usageSignsValue: usage_signs,
     pillingGrade,
     tearsGrade,
     repairsGrade,
@@ -103,10 +103,10 @@ export function getEvaluationBreakdown(responses: ConditionResponses) {
     numRepairs,
     totalScore,
     finalState,
-    isSpecialCase: usage_signs === 'practically_none' && 
-                   pilling_level === 'practically_none' && 
-                   tears_holes_level === 'practically_none' && 
-                   repairs_level === 'practically_none'
+    isSpecialCase: usage_signs === 'no' && 
+                   pilling_level === 'regular' && 
+                   tears_holes_level === 'regular' && 
+                   repairs_level === 'regular'
   };
 }
 
