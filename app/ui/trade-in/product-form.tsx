@@ -524,23 +524,25 @@ export default function ProductForm({
           </div>
         )}
 
-        {/* Form Actions */}
-        <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
-          <button
-            type="button"
-            onClick={handleCancel}
-            disabled={isSubmitting}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-          >
-            Cancelar
-          </button>
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Guardando...' : editingProduct ? 'Actualizar Producto' : 'Agregar Producto'}
-          </Button>
-        </div>
+        {/* Form Actions - Only show when meets minimum requirements */}
+        {formData.meets_minimum_requirements && (
+          <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={isSubmitting}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Guardando...' : editingProduct ? 'Actualizar Producto' : 'Agregar Producto'}
+            </Button>
+          </div>
+        )}
       </form>
       </div>
     </div>

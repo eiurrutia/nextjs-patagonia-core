@@ -51,19 +51,19 @@ export default function ConditionAssessment({ values, onChange, errors = {} }: C
           </div>
           
           {/* Minimum Requirements Checkbox - Moved here */}
-          <div className="mt-4 border border-gray-200 rounded-lg p-4">
+          <div className="mt-4 border border-gray-200 rounded-lg p-4 cursor-pointer">
             <label className="flex items-start space-x-3">
               <input
                 type="checkbox"
                 checked={values.meets_minimum_requirements === 'true'}
                 onChange={(e) => onChange('meets_minimum_requirements', e.target.checked ? 'true' : 'false')}
-                className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
               />
               <div>
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-gray-900 cursor-pointer">
                   Cumple con los requisitos mínimos
                 </span>
-                <p className="text-xs text-gray-600 mt-1">
+                <p className="text-xs text-gray-600 mt-1 cursor-pointer">
                   Confirmo que el producto cumple con los requisitos mínimos de calidad para el programa Trade-in
                 </p>
               </div>
