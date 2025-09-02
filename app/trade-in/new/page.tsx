@@ -5,7 +5,6 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { SimilarImage } from '@/app/lib/definitions';
 import { Button } from '@/app/ui/button';
-import { lusitana } from '@/app/ui/fonts';
 import ProductForm from '@/app/ui/trade-in/product-form';
 import ProductsTable, { ProductFormData } from '@/app/ui/trade-in/products-table';
 import AddressAutocomplete from '@/app/ui/address-autocomplete';
@@ -368,11 +367,11 @@ const TradeInFormPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-8 font-ridgeway">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className={`${lusitana.className} text-3xl font-bold text-gray-900 mb-4`}>
+          <h1 className="font-copernicus text-3xl font-bold text-gray-900 mb-4">
             Programa de Intercambio Patagonia
           </h1>
           <div className="bg-blue-50 p-6 rounded-lg mb-6 max-w-3xl mx-auto">

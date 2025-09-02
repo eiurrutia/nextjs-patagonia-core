@@ -19,6 +19,10 @@ const config: Config = {
         },
         steelblue: '#4682B4',
       },
+      fontFamily: {
+        'ridgeway': ['"Ridgeway Sans Static"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'sans-serif'],
+        'copernicus': ['"Copernicus"', 'Georgia', '"Times New Roman"', 'serif'],
+      },
       keyframes: {
         shimmer: {
           '100%': {
