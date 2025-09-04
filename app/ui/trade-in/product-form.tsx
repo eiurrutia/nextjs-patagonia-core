@@ -101,7 +101,7 @@ export default function ProductForm({
     return `https://production-us2.patagonia.com/dw/image/v2/BDJB_PRD/on/demandware.static/-/Sites-patagonia-master/default/images/hi-res/${formattedStyle}.jpg?sw=2000&sh=2000&sfrm=png&q=95&bgcolor=f5f5f5`;
   };
 
-  const handleInputChange = (field: keyof ProductFormState, value: string | boolean) => {
+  const handleInputChange = (field: keyof ProductFormState, value: string | boolean | string[]) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -161,6 +161,19 @@ export default function ProductForm({
       setCalculatedState(null);
     }
   }, [formData.usage_signs, formData.pilling_level, formData.stains_level, formData.tears_holes_level, formData.repairs_level]);
+
+  // Cleanup object URLs when component unmounts to prevent memory leaks
+  useEffect(() => {
+    const currentImages = formData.product_images;
+    return () => {
+      currentImages.forEach(imageUrl => {
+        if (imageUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(imageUrl);
+        }
+      });
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const scrollToFirstError = (errorFields: string[]) => {
     const fieldRefMap: Record<string, React.RefObject<HTMLElement>> = {
@@ -447,10 +460,13 @@ export default function ProductForm({
                 <div className="mt-4">
                   <label htmlFor="product-images" className="cursor-pointer">
                     <span className="mt-2 block text-sm font-medium text-gray-900">
-                      Sube imágenes de tu producto
+                      {formData.product_images.length > 0 
+                        ? `Agregar más imágenes (${formData.product_images.length} ya subidas)`
+                        : 'Sube imágenes de tu producto'
+                      }
                     </span>
                     <span className="mt-2 block text-sm text-gray-500">
-                      PNG, JPG, JPEG hasta 10MB cada una
+                      PNG, JPG, JPEG hasta 10MB cada una. Puedes seleccionar múltiples archivos.
                     </span>
                   </label>
                   <input
@@ -461,8 +477,32 @@ export default function ProductForm({
                     accept="image/*"
                     className="sr-only"
                     onChange={(e) => {
-                      // TODO: Implementar lógica de carga de imágenes
-                      console.log('Archivos seleccionados:', e.target.files);
+                      const files = e.target.files;
+                      if (files && files.length > 0) {
+                        // Convertir archivos a URLs para vista previa
+                        const imageUrls: string[] = [];
+                        const maxSize = 10 * 1024 * 1024; // 10MB en bytes
+                        
+                        Array.from(files).forEach((file) => {
+                          if (file.type.startsWith('image/')) {
+                            if (file.size <= maxSize) {
+                              const url = URL.createObjectURL(file);
+                              imageUrls.push(url);
+                            } else {
+                              alert(`La imagen "${file.name}" es muy grande. El tamaño máximo es 10MB.`);
+                            }
+                          }
+                        });
+                        
+                        // Agregar las nuevas imágenes a las existentes
+                        if (imageUrls.length > 0) {
+                          const updatedImages = [...formData.product_images, ...imageUrls];
+                          handleInputChange('product_images', updatedImages);
+                        }
+                        
+                        // Reset the input so the same file can be selected again
+                        e.target.value = '';
+                      }
                     }}
                   />
                 </div>
@@ -486,8 +526,14 @@ export default function ProductForm({
                       <button
                         type="button"
                         onClick={() => {
-                          // TODO: Implementar eliminación de imagen
-                          console.log('Eliminar imagen:', index);
+                          // Eliminar imagen del array
+                          const updatedImages = formData.product_images.filter((_, i) => i !== index);
+                          handleInputChange('product_images', updatedImages);
+                          
+                          // Liberar memoria del objeto URL si es una vista previa local
+                          if (imageUrl.startsWith('blob:')) {
+                            URL.revokeObjectURL(imageUrl);
+                          }
                         }}
                         className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
                       >
