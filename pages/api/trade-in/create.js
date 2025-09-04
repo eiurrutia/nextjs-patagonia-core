@@ -20,6 +20,7 @@ export default async function handler(req, res) {
     const {
       firstName,
       lastName,
+      rut,
       email,
       phone,
       region,
@@ -41,6 +42,7 @@ export default async function handler(req, res) {
     if (
       !firstName ||
       !lastName ||
+      !rut ||
       !email ||
       !phone ||
       !deliveryMethod ||
@@ -52,6 +54,8 @@ export default async function handler(req, res) {
         message: 'Missing required fields',
         details: {
           firstName: !firstName,
+          lastName: !lastName,
+          rut: !rut,
           lastName: !lastName,
           email: !email,
           phone: !phone,
@@ -92,6 +96,7 @@ export default async function handler(req, res) {
     const requestData = {
       first_name: firstName,
       last_name: lastName,
+      rut: rut,
       email: email,
       phone: phone,
       region: region || null,
@@ -109,6 +114,7 @@ export default async function handler(req, res) {
         credit_range: product.credit_range || null,
         usage_signs: product.usage_signs,
         pilling_level: product.pilling_level,
+        stains_level: product.stains_level,
         tears_holes_level: product.tears_holes_level,
         repairs_level: product.repairs_level,
         meets_minimum_requirements: product.meets_minimum_requirements !== false,

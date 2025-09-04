@@ -30,6 +30,7 @@ export interface TradeInProduct {
   credit_range?: string;
   usage_signs: string;
   pilling_level: string;
+  stains_level: string;
   tears_holes_level: string;
   repairs_level: string;
   meets_minimum_requirements: boolean;
@@ -62,6 +63,7 @@ export interface CreateTradeInProductData {
   credit_range?: string;
   usage_signs: string;
   pilling_level: string;
+  stains_level: string;
   tears_holes_level: string;
   repairs_level: string;
   meets_minimum_requirements: boolean;
@@ -122,13 +124,13 @@ export async function createTradeInRequest(data: CreateTradeInRequestData): Prom
       await sql`
         INSERT INTO trade_in_products (
           request_id, product_style, product_size, credit_range,
-          usage_signs, pilling_level, tears_holes_level, repairs_level,
+          usage_signs, pilling_level, stains_level, tears_holes_level, repairs_level,
           meets_minimum_requirements, product_images, calculated_state
         ) VALUES (
           ${request.id}, ${product.product_style}, 
           ${product.product_size}, ${product.credit_range || null},
-          ${product.usage_signs}, ${product.pilling_level}, ${product.tears_holes_level}, 
-          ${product.repairs_level}, ${product.meets_minimum_requirements},
+          ${product.usage_signs}, ${product.pilling_level}, ${product.stains_level},
+          ${product.tears_holes_level}, ${product.repairs_level}, ${product.meets_minimum_requirements},
           ${JSON.stringify(product.product_images || [])}, ${product.calculated_state || null}
         )
       `;

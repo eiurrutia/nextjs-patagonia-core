@@ -86,7 +86,7 @@ export default function StoreSelect({ value, onChange, disabled = false, placeho
       >
         <option value="">{placeholder}</option>
         {stores.map((store) => (
-          <option key={store.id} value={store.id}>
+          <option key={store.id} value={store.code}>
             {store.name} - {store.city}
           </option>
         ))}

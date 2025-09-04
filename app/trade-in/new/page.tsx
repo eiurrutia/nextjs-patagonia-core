@@ -298,13 +298,13 @@ const TradeInFormPage = () => {
     const newProduct: ProductFormData = {
       id: Date.now().toString(),
       product_style: '',
-
       product_size: '',
       credit_range: '',
       usage_signs: '',
       pilling_level: '',
       tears_holes_level: '',
       repairs_level: '',
+      stains_level: '',
       meets_minimum_requirements: true,
       product_images: []
     };
@@ -428,7 +428,7 @@ const TradeInFormPage = () => {
         region: formData.region,
         comuna: formData.comuna,
         deliveryMethod: deliveryOption,
-        storeCode: deliveryOption === 'store' ? selectedStoreCode : null,
+        receivedStoreCode: deliveryOption === 'store' ? selectedStoreCode : null,
         address: formData.address,
         houseDetails: formData.houseDetails,
         clientComment: formData.client_comment,
