@@ -29,6 +29,7 @@ interface ProductFormState {
   credit_range: string;
   usage_signs: string;
   pilling_level: string;
+  stains_level: string;
   tears_holes_level: string;
   repairs_level: string;
   meets_minimum_requirements: boolean;
@@ -41,6 +42,7 @@ const initialFormState: ProductFormState = {
   credit_range: '',
   usage_signs: '',
   pilling_level: '',
+  stains_level: '',
   tears_holes_level: '',
   repairs_level: '',
   meets_minimum_requirements: false,
@@ -77,6 +79,7 @@ export default function ProductForm({
         credit_range: editingProduct.credit_range || '',
         usage_signs: editingProduct.usage_signs,
         pilling_level: editingProduct.pilling_level,
+        stains_level: editingProduct.stains_level || '',
         tears_holes_level: editingProduct.tears_holes_level,
         repairs_level: editingProduct.repairs_level,
         meets_minimum_requirements: editingProduct.meets_minimum_requirements,
@@ -146,6 +149,7 @@ export default function ProductForm({
     const conditionResponses: Partial<ConditionResponses> = {
       usage_signs: formData.usage_signs as any,
       pilling_level: formData.pilling_level as any,
+      stains_level: formData.stains_level as any,
       tears_holes_level: formData.tears_holes_level as any,
       repairs_level: formData.repairs_level as any
     };
@@ -156,7 +160,7 @@ export default function ProductForm({
     } else {
       setCalculatedState(null);
     }
-  }, [formData.usage_signs, formData.pilling_level, formData.tears_holes_level, formData.repairs_level]);
+  }, [formData.usage_signs, formData.pilling_level, formData.stains_level, formData.tears_holes_level, formData.repairs_level]);
 
   const scrollToFirstError = (errorFields: string[]) => {
     const fieldRefMap: Record<string, React.RefObject<HTMLElement>> = {
@@ -164,6 +168,7 @@ export default function ProductForm({
       'product_size': productSizeRef,
       'usage_signs': conditionAssessmentRef,
       'pilling_level': conditionAssessmentRef,
+      'stains_level': conditionAssessmentRef,
       'tears_holes_level': conditionAssessmentRef,
       'repairs_level': conditionAssessmentRef,
     };
@@ -195,6 +200,7 @@ export default function ProductForm({
     // Condition questions
     if (!formData.usage_signs) newErrors.usage_signs = true;
     if (!formData.pilling_level) newErrors.pilling_level = true;
+    if (!formData.stains_level) newErrors.stains_level = true;
     if (!formData.tears_holes_level) newErrors.tears_holes_level = true;
     if (!formData.repairs_level) newErrors.repairs_level = true;
 
@@ -259,6 +265,7 @@ export default function ProductForm({
   const conditionValues = {
     usage_signs: formData.usage_signs,
     pilling_level: formData.pilling_level,
+    stains_level: formData.stains_level,
     tears_holes_level: formData.tears_holes_level,
     repairs_level: formData.repairs_level,
     meets_minimum_requirements: formData.meets_minimum_requirements.toString()

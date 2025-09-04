@@ -13,6 +13,7 @@ export interface ProductFormData {
   credit_range?: string;
   usage_signs: string;
   pilling_level: string;
+  stains_level: string;
   tears_holes_level: string;
   repairs_level: string;
   meets_minimum_requirements: boolean;

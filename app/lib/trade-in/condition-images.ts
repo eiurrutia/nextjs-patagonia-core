@@ -115,6 +115,31 @@ export const conditionQuestions: ConditionQuestion[] = [
         imageUrl: getImageUrl('repairs-heavy.png')
       }
     ]
+  },
+  {
+    id: 'stains_level',
+    question: 'Nivel de manchas',
+    description: 'Evalúa si el producto tiene manchas visibles',
+    options: [
+      {
+        value: 'regular',
+        label: 'Regular',
+        description: 'Sin manchas visibles, tela limpia',
+        imageUrl: getImageUrl('stains-none.png')
+      },
+      {
+        value: 'moderate',
+        label: 'Moderado',
+        description: 'Manchas leves o poco notorias',
+        imageUrl: getImageUrl('stains-light.png')
+      },
+      {
+        value: 'high',
+        label: 'Alto',
+        description: 'Manchas evidentes o múltiples',
+        imageUrl: getImageUrl('stains-heavy.png')
+      }
+    ]
   }
 ];
 

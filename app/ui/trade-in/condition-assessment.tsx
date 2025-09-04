@@ -37,8 +37,12 @@ export default function ConditionAssessment({ values, onChange, errors = {} }: C
 
   const handleOptionSelect = (questionId: string, value: string) => {
     onChange(questionId, value);
-    // Collapse the question after selection
-    if (expandedQuestion === questionId) {
+    
+    // Only collapse if it's not force-expanded (usage_signs question and detailed questions are force-expanded)
+    const isUsageSignsQuestion = questionId === 'usage_signs';
+    const isDetailedQuestion = otherQuestions.some(q => q.id === questionId);
+    
+    if (!isUsageSignsQuestion && !isDetailedQuestion && expandedQuestion === questionId) {
       setExpandedQuestion(null);
     }
   };
@@ -120,16 +124,21 @@ export default function ConditionAssessment({ values, onChange, errors = {} }: C
             ) : (
               // Image-based options for other questions
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {question.options.map((option: any) => (
-                  <div
-                    key={option.value}
-                    className={`border rounded-lg p-3 cursor-pointer transition-all hover:shadow-md ${
-                      values[question.id] === option.value
-                        ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                    onClick={() => handleOptionSelect(question.id, option.value)}
-                  >
+                {question.options.map((option: any) => {
+                  const isSelected = values[question.id] === option.value;
+                  
+                  return (
+                    <div
+                      key={option.value}
+                      className={`border rounded-lg p-3 cursor-pointer transition-all hover:shadow-md ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => {
+                        handleOptionSelect(question.id, option.value);
+                      }}
+                    >
                     {/* Option Image */}
                     <div className="relative h-32 mb-3 bg-gray-50 rounded overflow-hidden">
                       <Image
@@ -155,7 +164,7 @@ export default function ConditionAssessment({ values, onChange, errors = {} }: C
                     </div>
 
                     {/* Selection Indicator */}
-                    {values[question.id] === option.value && (
+                    {isSelected && (
                       <div className="mt-2 flex justify-center">
                         <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
                           <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -165,7 +174,8 @@ export default function ConditionAssessment({ values, onChange, errors = {} }: C
                       </div>
                     )}
                   </div>
-                ))}
+                );
+              })}
               </div>
             )}
           </div>

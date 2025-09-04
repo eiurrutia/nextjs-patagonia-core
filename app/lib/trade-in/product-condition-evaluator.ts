@@ -4,6 +4,7 @@
 export interface ConditionResponses {
   usage_signs: 'yes' | 'no';
   pilling_level: 'regular' | 'moderate' | 'high';
+  stains_level: 'regular' | 'moderate' | 'high';
   tears_holes_level: 'regular' | 'moderate' | 'high';
   repairs_level: 'regular' | 'moderate' | 'high';
 }
@@ -30,12 +31,13 @@ const responseToGrade = {
  * @returns ProductState - The determined state of the product
  */
 export function evaluateProductCondition(responses: ConditionResponses): ProductState {
-  const { usage_signs, pilling_level, tears_holes_level, repairs_level } = responses;
+  const { usage_signs, pilling_level, stains_level, tears_holes_level, repairs_level } = responses;
 
   // Special case: If usage_signs is "no" (no signs of use)
   // Product can only be "Como Nuevo" if ALL other responses are also "regular"
   if (usage_signs === 'no') {
     if (pilling_level === 'regular' && 
+        stains_level === 'regular' &&
         tears_holes_level === 'regular' && 
         repairs_level === 'regular') {
       return 'Como Nuevo';
@@ -46,17 +48,18 @@ export function evaluateProductCondition(responses: ConditionResponses): Product
   // For all other cases (usage_signs is yes, or usage_signs is no but others aren't all regular)
   // Use scoring table logic
   
-  // Calculate scores for the three evaluation criteria (excluding usage_signs)
+  // Calculate scores for the four evaluation criteria (excluding usage_signs)
   const pillingScore = responseToScore[pilling_level];
+  const stainsScore = responseToScore[stains_level];
   const tearsScore = responseToScore[tears_holes_level];
   const repairsScore = responseToScore[repairs_level];
   
   // Count number of repairs (non-regular responses)
-  const numRepairs = [pilling_level, tears_holes_level, repairs_level]
+  const numRepairs = [pilling_level, stains_level, tears_holes_level, repairs_level]
     .filter(response => response !== 'regular').length;
   
   // Calculate total score
-  const totalScore = pillingScore + tearsScore + repairsScore;
+  const totalScore = pillingScore + stainsScore + tearsScore + repairsScore;
 
   // Determine state based on scoring table
   if (totalScore === 0 && numRepairs === 0) {
@@ -76,28 +79,32 @@ export function evaluateProductCondition(responses: ConditionResponses): Product
  * @returns Object with evaluation details
  */
 export function getEvaluationBreakdown(responses: ConditionResponses) {
-  const { usage_signs, pilling_level, tears_holes_level, repairs_level } = responses;
+  const { usage_signs, pilling_level, stains_level, tears_holes_level, repairs_level } = responses;
   
   const pillingGrade = responseToGrade[pilling_level];
+  const stainsGrade = responseToGrade[stains_level];
   const tearsGrade = responseToGrade[tears_holes_level];
   const repairsGrade = responseToGrade[repairs_level];
   
   const pillingScore = responseToScore[pilling_level];
+  const stainsScore = responseToScore[stains_level];
   const tearsScore = responseToScore[tears_holes_level];
   const repairsScore = responseToScore[repairs_level];
   
-  const numRepairs = [pilling_level, tears_holes_level, repairs_level]
+  const numRepairs = [pilling_level, stains_level, tears_holes_level, repairs_level]
     .filter(response => response !== 'regular').length;
   
-  const totalScore = pillingScore + tearsScore + repairsScore;
+  const totalScore = pillingScore + stainsScore + tearsScore + repairsScore;
   const finalState = evaluateProductCondition(responses);
 
   return {
     usageSignsValue: usage_signs,
     pillingGrade,
+    stainsGrade,
     tearsGrade,
     repairsGrade,
     pillingScore,
+    stainsScore,
     tearsScore,
     repairsScore,
     numRepairs,
@@ -105,6 +112,7 @@ export function getEvaluationBreakdown(responses: ConditionResponses) {
     finalState,
     isSpecialCase: usage_signs === 'no' && 
                    pilling_level === 'regular' && 
+                   stains_level === 'regular' &&
                    tears_holes_level === 'regular' && 
                    repairs_level === 'regular'
   };
@@ -119,6 +127,7 @@ export function areConditionResponsesComplete(responses: Partial<ConditionRespon
   return !!(
     responses.usage_signs &&
     responses.pilling_level &&
+    responses.stains_level &&
     responses.tears_holes_level &&
     responses.repairs_level
   );
