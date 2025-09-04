@@ -92,20 +92,20 @@ export default function ConditionAssessment({ values, onChange, errors = {} }: C
                   <button
                     key={option.value}
                     type="button"
-                    className={`p-4 rounded-lg border-2 transition-all text-left hover:shadow-md min-h-[100px] flex items-center ${
+                    className={`p-4 rounded-lg border-2 transition-all text-left hover:shadow-md min-h-[100px] flex ${
                       values[question.id] === option.value
                         ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                     onClick={() => handleOptionSelect(question.id, option.value)}
                   >
-                    <div className="flex items-center justify-between w-full">
+                    <div className="flex items-start justify-between w-full">
                       <div className="flex-1">
-                        <h5 className="font-medium text-gray-900 mb-2">{option.label}</h5>
+                        <h5 className="font-medium text-gray-900 mb-2 leading-none">{option.label}</h5>
                         <p className="text-sm text-gray-600 leading-relaxed">{option.description}</p>
                       </div>
                       {values[question.id] === option.value && (
-                        <div className="ml-3 flex-shrink-0">
+                        <div className="ml-3 flex-shrink-0 mt-0">
                           <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
                             <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
