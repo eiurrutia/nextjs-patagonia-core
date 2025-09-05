@@ -496,16 +496,18 @@ const TradeInFormPage = () => {
     <div className="min-h-screen bg-gray-50 py-8 font-ridgeway">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="font-copernicus text-3xl font-bold text-gray-900 mb-4">
-            Programa de Intercambio Patagonia
-          </h1>
-          <div className="bg-blue-50 p-6 rounded-lg mb-6 max-w-3xl mx-auto">
-            <p className="text-lg text-gray-700 leading-relaxed">
-              <strong>Tráenos o envíanos esos productos que ya no quieras</strong> y que cumplan con nuestros 
-              criterios de intercambio. A cambio, recibirás un crédito que podrás usar en cualquiera de 
-              nuestras tiendas o en nuestra página web.
-            </p>
+        <div className="mb-8">
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div className="text-left">
+              <h1 className="font-copernicus text-3xl font-bold text-gray-900 mb-4">
+                Formulario de intercambio
+              </h1>
+              <p className="text-lg text-gray-700 leading-relaxed">
+                <strong>Tráenos o envíanos esos productos que ya no quieras</strong> y que cumplan con nuestros 
+                criterios de intercambio. A cambio, recibirás un crédito que podrás usar en cualquiera de 
+                nuestras tiendas o en nuestra página web.
+              </p>
+            </div>
           </div>
 
           {/* Steps Images Section */}
