@@ -1005,7 +1005,7 @@ const TradeInFormPage = () => {
 
               {/* Store Selection - Only show when store delivery is selected */}
               {deliveryOption === 'store' && (
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                <div className="mt-4 p-4 rounded-lg">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Selecciona la tienda <span className="text-red-500">*</span>
                   </label>
