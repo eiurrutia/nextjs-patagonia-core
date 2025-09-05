@@ -208,7 +208,7 @@ export async function getTradeInRequestById(id: number): Promise<(TradeInRequest
     const requestResult = await sql`
       SELECT 
         id, request_number, first_name, last_name, rut, email, phone, region, comuna, 
-        delivery_method, address, status, client_comment,
+        delivery_method, address, received_store_code, status, client_comment,
         created_at AT TIME ZONE 'UTC' as created_at,
         updated_at AT TIME ZONE 'UTC' as updated_at
       FROM trade_in_requests WHERE id = ${id}
