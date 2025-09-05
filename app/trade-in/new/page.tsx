@@ -158,6 +158,9 @@ const TradeInFormPage = () => {
   const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(1); // Estado para controlar el paso actual
+  
+  // Create ref for products section
+  const productsRef = useRef<HTMLDivElement>(null);
 
   // Estado para los datos del formulario y errores
   const [formData, setFormData] = useState<FormData>({
@@ -346,6 +349,16 @@ const TradeInFormPage = () => {
     setProducts(prev => [...prev, product]);
     setShowProductForm(false);
     setEditingProduct(null);
+    
+    // Ensure scroll to products section after adding product
+    setTimeout(() => {
+      if (productsRef.current) {
+        productsRef.current.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }
+    }, 400); // Delay to ensure all state updates and re-renders complete
   };
 
   const handleUpdateProduct = (updatedProduct: ProductFormData) => {
@@ -371,6 +384,20 @@ const TradeInFormPage = () => {
   const handleCancelProductForm = () => {
     setShowProductForm(false);
     setEditingProduct(null);
+  };
+
+  // Handle "Agregar Producto" button click with scroll to products section
+  const handleAgregarProductoClick = () => {
+    setShowProductForm(true);
+    // Scroll to products section with longer delay to ensure all state updates complete
+    setTimeout(() => {
+      if (productsRef.current) {
+        productsRef.current.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }
+    }, 300); // Increased delay to handle step changes
   };
 
   // Validate main form
@@ -679,7 +706,7 @@ const TradeInFormPage = () => {
           )}
 
           {/* Products Section */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div ref={productsRef} className="bg-white rounded-lg shadow-sm border border-gray-200">
             {/* Header with "Productos" label */}
             <div className="flex items-start py-4 border-b border-gray-200 pl-6">
               <h2 className="text-lg font-semibold text-gray-900">Productos</h2>
@@ -688,7 +715,7 @@ const TradeInFormPage = () => {
             <div className="p-6">
               <div className="flex items-center justify-end mb-6">
                 <Button
-                  onClick={() => setShowProductForm(true)}
+                  onClick={handleAgregarProductoClick}
                   className="flex items-center space-x-2"
                 >
                   <PlusIcon className="h-4 w-4" />

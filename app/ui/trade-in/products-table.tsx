@@ -30,9 +30,18 @@ interface ProductsTableProps {
 
 export default function ProductsTable({ products, onEdit, onDelete, onView }: ProductsTableProps) {
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
   const toggleExpanded = (productId: string) => {
     setExpandedProduct(expandedProduct === productId ? null : productId);
+  };
+
+  const handleImageError = (productId: string) => {
+    setFailedImages(prev => {
+      const newSet = new Set(prev);
+      newSet.add(productId);
+      return newSet;
+    });
   };
 
   // Generate Patagonia image URL from product style
@@ -80,27 +89,25 @@ export default function ProductsTable({ products, onEdit, onDelete, onView }: Pr
                       <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
                         {(() => {
                           const imageUrl = generatePatagoniaImageUrl(product.product_style);
-                          return imageUrl ? (
+                          const hasImageFailed = failedImages.has(product.id);
+                          
+                          if (!imageUrl || hasImageFailed) {
+                            return (
+                              <span className="text-lg font-semibold text-gray-600">
+                                {index + 1}
+                              </span>
+                            );
+                          }
+                          
+                          return (
                             <Image
                               src={imageUrl}
                               alt={`${product.product_style}`}
                               width={48}
                               height={48}
                               className="object-cover w-full h-full"
-                              onError={(e) => {
-                                // Fallback to number if image fails
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                                const parent = target.parentElement;
-                                if (parent) {
-                                  parent.innerHTML = `<span class="text-lg font-semibold text-gray-600">${index + 1}</span>`;
-                                }
-                              }}
+                              onError={() => handleImageError(product.id)}
                             />
-                          ) : (
-                            <span className="text-lg font-semibold text-gray-600">
-                              {index + 1}
-                            </span>
                           );
                         })()}
                       </div>
