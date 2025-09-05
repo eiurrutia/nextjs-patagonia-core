@@ -105,8 +105,8 @@ export default async function handler(req, res) {
       address: address || null,
       house_details: houseDetails || null,
       client_comment: clientComment || null,
-      received_store_code: receivedStoreCode || null, // Nuevo campo
-      status: deliveryMethod === 'store' ? 'recepcionado_tienda' : 'solicitud_recibida', // Estado inicial según tipo
+      received_store_code: receivedStoreCode || null,
+      status: 'solicitud_recibida',
       products: products.map(product => ({
         product_style: product.product_style,
         product_color: product.product_color,

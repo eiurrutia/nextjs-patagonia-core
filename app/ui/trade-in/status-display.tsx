@@ -67,8 +67,8 @@ const statusConfigs: Record<TradeInStatus, StatusConfig> = {
     }
 };
 
-// Flujos de estados según el tipo de entrega
-const ecomFlow: TradeInStatus[] = [
+// Status flow unified
+const allFlow: TradeInStatus[] = [
     'solicitud_recibida',
     'etiqueta_enviada', 
     'recepcionado_tienda',
@@ -77,7 +77,9 @@ const ecomFlow: TradeInStatus[] = [
     'enviado_vestua'
 ];
 
+// Status flow for store deliveries
 const storeFlow: TradeInStatus[] = [
+    'solicitud_recibida',
     'recepcionado_tienda',
     'credito_entregado',
     'factura_enviada',
@@ -100,7 +102,7 @@ export default function StatusDisplay({
     const [isUpdating, setIsUpdating] = useState(false);
     
     // Determinar qué flujo usar según el método de entrega
-    const statusFlow = deliveryMethod === 'store' ? storeFlow : ecomFlow;
+    const statusFlow = deliveryMethod === 'store' ? storeFlow : allFlow;
     
     // Encontrar el índice del estado actual
     const currentIndex = statusFlow.indexOf(currentStatus);
@@ -136,7 +138,7 @@ export default function StatusDisplay({
                 const config = statusConfigs[status];
                 const isActive = index <= currentIndex;
                 const isCurrent = status === currentStatus;
-                const isClickable = index <= currentIndex + 1; // Permitir avanzar solo al siguiente estado
+                const isClickable = index <= currentIndex + 1;
                 
                 return (
                     <div key={status} className="flex flex-col items-center space-y-2">
