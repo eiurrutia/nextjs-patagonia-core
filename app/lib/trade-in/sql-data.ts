@@ -307,3 +307,99 @@ export async function getConfigValue(key: string): Promise<string | null> {
     return null;
   }
 }
+
+// Store verification functions
+export async function updateProductVerification(
+  productId: number,
+  verificationData: {
+    confirmed_usage_signs?: string;
+    confirmed_pilling_level?: string;
+    confirmed_tears_holes_level?: string;
+    confirmed_repairs_level?: string;
+    confirmed_stains_level?: string;
+    confirmed_meets_minimum_requirements?: boolean;
+    tears_holes_repairs?: string;
+    repairs_level_repairs?: string;
+    stains_level_repairs?: string;
+    store_verified_by?: string;
+  }
+): Promise<void> {
+  try {
+    await sql`
+      UPDATE trade_in_products 
+      SET 
+        confirmed_usage_signs = ${verificationData.confirmed_usage_signs || null},
+        confirmed_pilling_level = ${verificationData.confirmed_pilling_level || null},
+        confirmed_tears_holes_level = ${verificationData.confirmed_tears_holes_level || null},
+        confirmed_repairs_level = ${verificationData.confirmed_repairs_level || null},
+        confirmed_stains_level = ${verificationData.confirmed_stains_level || null},
+        confirmed_meets_minimum_requirements = ${verificationData.confirmed_meets_minimum_requirements || null},
+        tears_holes_repairs = ${verificationData.tears_holes_repairs || null},
+        repairs_level_repairs = ${verificationData.repairs_level_repairs || null},
+        stains_level_repairs = ${verificationData.stains_level_repairs || null},
+        store_verified_at = CURRENT_TIMESTAMP,
+        store_verified_by = ${verificationData.store_verified_by || null},
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${productId}
+    `;
+  } catch (error) {
+    console.error('Error updating product verification:', error);
+    throw error;
+  }
+}
+
+export async function createTradeInComment(
+  requestId: number,
+  commentType: string,
+  comment: string,
+  contextData: any,
+  createdBy: string
+): Promise<void> {
+  try {
+    await sql`
+      INSERT INTO trade_in_request_comments 
+      (request_id, comment_type, comment, context_data, created_by)
+      VALUES (${requestId}, ${commentType}, ${comment}, ${JSON.stringify(contextData)}, ${createdBy})
+    `;
+  } catch (error) {
+    console.error('Error creating trade-in comment:', error);
+    throw error;
+  }
+}
+
+export async function getTradeInComments(requestId: number): Promise<any[]> {
+  try {
+    const result = await sql`
+      SELECT 
+        id,
+        comment_type,
+        comment,
+        context_data,
+        created_by,
+        created_at
+      FROM trade_in_request_comments 
+      WHERE request_id = ${requestId}
+      ORDER BY created_at DESC
+    `;
+    
+    return result.rows;
+  } catch (error) {
+    console.error('Error fetching trade-in comments:', error);
+    throw error;
+  }
+}
+
+export async function updateTradeInStatus(requestId: number, status: string): Promise<void> {
+  try {
+    await sql`
+      UPDATE trade_in_requests 
+      SET 
+        status = ${status},
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${requestId}
+    `;
+  } catch (error) {
+    console.error('Error updating trade-in status:', error);
+    throw error;
+  }
+}

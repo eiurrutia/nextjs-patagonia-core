@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Breadcrumbs from '@/app/ui/customers/breadcrumbs';
 import TradeInDetail from '@/app/ui/trade-in/detail';
+import TradeInComments from '@/app/ui/trade-in/comments';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import StatusDisplay from '@/app/ui/trade-in/status-display';
 import InvoiceAction from '@/app/ui/trade-in/invoice-action';
@@ -77,6 +78,11 @@ export default function TradeInDetailPage({ params }: { params: { id: string } }
                         <CardSkeleton />
                     ) : (
                         <TradeInDetail id={id} />
+                    )}
+
+                    {/* Comments Section - Moved here from right column */}
+                    {!loading && (
+                        <TradeInComments tradeInId={id} />
                     )}
                 </div>
 

@@ -160,7 +160,7 @@ export default async function TradeInTable({
                       <Link href={`/trade-in/${encodeURIComponent(record.id)}/detail`}>
                         <EyeIcon className="h-5 w-5 text-blue-500 hover:text-blue-600" title="Ver detalle" />
                       </Link>
-                      {(record.status === 'solicitud_recibida' || record.status === 'etiqueta_enviada' || record.status === 'pending') && record.delivery_method !== 'store' && (
+                      {record.status === 'solicitud_recibida' && (
                         <Link href={`/trade-in/store/reception/${encodeURIComponent(record.id)}`}>
                           <BuildingStorefrontIcon className="h-5 w-5 text-green-500 hover:text-green-600" title="Recibir en tienda" />
                         </Link>

@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { lusitana } from '@/app/ui/fonts';
 import { Button } from '@/app/ui/button';
 import { CheckCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
-import TradeInStoreForm from '@/app/ui/trade-in/store-form';
+import StoreReceptionForm from '@/app/ui/trade-in/store-reception-form';
 import { TradeInFormData } from '@/app/lib/trade-in/form-types';
 import { ProductFormData } from '@/app/ui/trade-in/products-table';
 import Link from 'next/link';
@@ -57,6 +57,7 @@ export default function StoreReceptionPage() {
           ...data,
           firstName: data.first_name,
           lastName: data.last_name,
+          rut: data.rut,
           houseDetails: data.house_details,
           deliveryMethod: data.delivery_method,
           clientComment: data.client_comment
@@ -72,7 +73,11 @@ export default function StoreReceptionPage() {
     fetchTradeInRequest();
   }, [tradeInId]);
 
-  const handleSubmit = async (data: TradeInFormData & { products: ProductFormData[] }) => {
+  const handleSubmit = async (data: TradeInFormData & { 
+    products: ProductFormData[];
+    modifiedConditions?: any[];
+    productRepairs?: any[];
+  }) => {
     setIsSubmitting(true);
     setError(null);
 
@@ -81,6 +86,7 @@ export default function StoreReceptionPage() {
         id: tradeInId,
         firstName: data.firstName,
         lastName: data.lastName,
+        rut: data.rut,
         email: data.email,
         phone: data.phone,
         region: data.region || tradeInRequest?.region,
@@ -90,13 +96,15 @@ export default function StoreReceptionPage() {
         client_comment: data.client_comment,
         deliveryMethod: 'store', // Override to store reception
         products: data.products,
-        status: 'received', // Mark as received in store
+        status: 'recepcionado_tienda', // Mark as received in store
         receivedInStore: true,
-        originalDeliveryMethod: tradeInRequest?.deliveryMethod // Keep original for reference
+        originalDeliveryMethod: tradeInRequest?.deliveryMethod, // Keep original for reference
+        modifiedConditions: data.modifiedConditions || [],
+        productRepairs: data.productRepairs || []
       };
 
       const response = await fetch(`/api/trade-in/${tradeInId}/receive`, {
-        method: 'POST',
+        method: 'PATCH', // Changed to PATCH to match the API endpoint
         headers: {
           'Content-Type': 'application/json',
         },
@@ -165,6 +173,7 @@ export default function StoreReceptionPage() {
   const initialData: Partial<TradeInFormData> = tradeInRequest ? {
     firstName: tradeInRequest.firstName,
     lastName: tradeInRequest.lastName,
+    rut: tradeInRequest.rut,
     email: tradeInRequest.email,
     phone: tradeInRequest.phone,
     region: tradeInRequest.region,
@@ -195,26 +204,6 @@ export default function StoreReceptionPage() {
           <p className="text-gray-600 mt-2">
             Revisa y confirma los datos de la solicitud #{tradeInId}
           </p>
-          
-          {tradeInRequest && (
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h3 className="font-medium text-blue-900 mb-2">Información Original:</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-medium">Cliente:</span> {tradeInRequest.firstName} {tradeInRequest.lastName}
-                </div>
-                <div>
-                  <span className="font-medium">Email:</span> {tradeInRequest.email}
-                </div>
-                <div>
-                  <span className="font-medium">Método de entrega original:</span> {tradeInRequest.deliveryMethod}
-                </div>
-                <div>
-                  <span className="font-medium">Estado:</span> {tradeInRequest.status}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Error Display */}
@@ -225,12 +214,12 @@ export default function StoreReceptionPage() {
         )}
 
         {/* Form */}
-        <TradeInStoreForm
-          mode="store-reception"
+        <StoreReceptionForm
           onSubmit={handleSubmit}
           isSubmitting={isSubmitting}
           initialData={initialData}
           initialProducts={tradeInRequest?.products || []}
+          tradeInId={tradeInId}
         />
       </div>
     </div>

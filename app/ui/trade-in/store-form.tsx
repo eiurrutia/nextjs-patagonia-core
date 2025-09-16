@@ -26,6 +26,7 @@ export default function TradeInStoreForm({
   const [formData, setFormData] = useState<TradeInFormData>({
     firstName: initialData?.firstName || '',
     lastName: initialData?.lastName || '',
+    rut: initialData?.rut || '',
     email: initialData?.email || '',
     phone: initialData?.phone || '',
     region: initialData?.region || '',
@@ -39,6 +40,7 @@ export default function TradeInStoreForm({
   const [errors, setErrors] = useState({
     firstName: false,
     lastName: false,
+    rut: false,
     email: false,
     phone: false,
   });
@@ -84,6 +86,7 @@ export default function TradeInStoreForm({
     const newErrors = {
       firstName: !formData.firstName.trim(),
       lastName: !formData.lastName.trim(),
+      rut: !formData.rut.trim(),
       email: !formData.email.trim(),
       phone: !formData.phone.trim(),
     };
@@ -210,6 +213,24 @@ export default function TradeInStoreForm({
               className={`block w-full rounded-md border px-3 py-2 text-sm ${
                 errors.lastName ? 'border-red-500' : 'border-gray-300'
               } focus:border-blue-500 focus:ring-blue-500`}
+              required
+            />
+          </div>
+
+          {/* RUT */}
+          <div>
+            <label htmlFor="rut" className="block text-sm font-medium text-gray-700 mb-1">
+              RUT <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="rut"
+              value={formData.rut}
+              onChange={(e) => handleInputChange('rut', e.target.value)}
+              className={`block w-full rounded-md border px-3 py-2 text-sm ${
+                errors.rut ? 'border-red-500' : 'border-gray-300'
+              } focus:border-blue-500 focus:ring-blue-500`}
+              placeholder="12345678-9"
               required
             />
           </div>

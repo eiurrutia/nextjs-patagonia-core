@@ -1,6 +1,35 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]';
 import { sql } from '@vercel/postgres';
+import { updateProductVerification, createTradeInComment } from '@/app/lib/trade-in/sql-data';
+
+// Función auxiliar para obtener el valor confirmado (modificado o original)
+function getConfirmedValue(product, modifications, field) {
+  const modification = modifications.find(mod => mod.questionId === field);
+  return modification ? modification.newValue : product[field];
+}
+
+// Función auxiliar para generar comentario de cambios
+function generateChangeComment(modifiedConditions, products) {
+  const changes = modifiedConditions.map(mod => {
+    const product = products.find(p => p.id == mod.productId);
+    const productName = product ? `${product.product_style} (Talla: ${product.product_size})` : `Producto ${mod.productId}`;
+    
+    const conditionLabels = {
+      'usage_signs': 'Señales de uso',
+      'pilling_level': 'Nivel de pilling',
+      'tears_holes_level': 'Roturas/agujeros',
+      'repairs_level': 'Reparaciones',
+      'stains_level': 'Manchas',
+      'meets_minimum_requirements': 'Cumple requisitos mínimos'
+    };
+    
+    const conditionLabel = conditionLabels[mod.questionId] || mod.questionId;
+    return `* ${productName}: ${conditionLabel} cambiado de "${mod.originalValue}" a "${mod.newValue}"`;
+  });
+  
+  return `Verificación en tienda realizada. Cambios:\n${changes.join('\n')}`;
+}
 
 /**
  * API route handler for receiving/confirming a Trade-In request in store
@@ -14,7 +43,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
-  if (req.method !== 'POST') {
+  if (req.method !== 'POST' && req.method !== 'PATCH') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
@@ -23,6 +52,7 @@ export default async function handler(req, res) {
     const {
       firstName,
       lastName,
+      rut,
       email,
       phone,
       region,
@@ -34,7 +64,9 @@ export default async function handler(req, res) {
       products,
       status,
       receivedInStore,
-      originalDeliveryMethod
+      originalDeliveryMethod,
+      modifiedConditions = [],
+      productRepairs = []
     } = req.body;
 
     if (!id) {
@@ -46,21 +78,80 @@ export default async function handler(req, res) {
       return res.status(400).json({ message: 'Invalid ID format' });
     }
 
+    // Get products from database to have complete information
+    const existingProducts = await sql`
+      SELECT * FROM trade_in_products WHERE request_id = ${requestId}
+    `;
+
     // Validate required fields
-    if (!firstName || !lastName || !email || !phone || !products || products.length === 0) {
-      return res.status(400).json({ message: 'Missing required fields' });
+    if (!firstName || !lastName || !email || !phone || !existingProducts.rows || existingProducts.rows.length === 0) {
+      return res.status(400).json({ message: 'Missing required fields or no products found' });
     }
 
     // Start transaction
     await sql`BEGIN`;
 
     try {
-      // Update the main trade-in request
+      // 1. Si hay modificaciones o reparaciones, procesarlas primero
+      if (modifiedConditions.length > 0 || productRepairs.length > 0) {
+        // Procesar verificación de productos usando datos de la BD
+        for (const product of existingProducts.rows) {
+          const productModifications = modifiedConditions.filter(mod => mod.productId == product.id);
+          const productRepairData = productRepairs.find(pr => pr.productId == product.id);
+
+          if (productModifications.length > 0 || productRepairData) {
+            // Preparar los valores confirmados (usar modificados o originales)
+            const confirmedValues = {
+              confirmed_usage_signs: getConfirmedValue(product, productModifications, 'usage_signs'),
+              confirmed_pilling_level: getConfirmedValue(product, productModifications, 'pilling_level'),
+              confirmed_tears_holes_level: getConfirmedValue(product, productModifications, 'tears_holes_level'),
+              confirmed_repairs_level: getConfirmedValue(product, productModifications, 'repairs_level'),
+              confirmed_stains_level: getConfirmedValue(product, productModifications, 'stains_level'),
+              confirmed_meets_minimum_requirements: getConfirmedValue(product, productModifications, 'meets_minimum_requirements')
+            };
+
+            // Preparar las reparaciones (separadas por ";")
+            const repairFields = {
+              tears_holes_repairs: productRepairData?.tears_holes_repairs?.join(';') || null,
+              repairs_level_repairs: productRepairData?.repairs_level_repairs?.join(';') || null,
+              stains_level_repairs: productRepairData?.stains_level_repairs?.join(';') || null
+            };
+
+            // Actualizar verificación del producto
+            await updateProductVerification(product.id, {
+              ...confirmedValues,
+              ...repairFields,
+              store_verified_by: 'sistema_tienda'
+            });
+          }
+        }
+
+        // Crear comentario en bitácora si hay modificaciones
+        if (modifiedConditions.length > 0) {
+          const commentText = generateChangeComment(modifiedConditions, existingProducts.rows);
+          const contextData = {
+            modified_conditions: modifiedConditions,
+            products_affected: existingProducts.rows.map(p => p.id),
+            repair_selections: productRepairs
+          };
+
+          await createTradeInComment(
+            requestId,
+            'product_verification',
+            commentText,
+            contextData,
+            'sistema_tienda'
+          );
+        }
+      }
+
+      // 2. Update the main trade-in request
       await sql`
         UPDATE trade_in_requests 
         SET 
           first_name = ${firstName},
           last_name = ${lastName},
+          rut = ${rut || null},
           email = ${email},
           phone = ${phone},
           region = ${region || null},
@@ -69,7 +160,7 @@ export default async function handler(req, res) {
           house_details = ${houseDetails || null},
           client_comment = ${client_comment || null},
           delivery_method = ${deliveryMethod},
-          status = ${status || 'received'},
+          status = ${status || 'recepcionado_tienda'},
           updated_at = CURRENT_TIMESTAMP
         WHERE id = ${requestId}
       `;

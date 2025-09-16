@@ -15,6 +15,7 @@ export interface StoreInfo {
 export interface TradeInFormData {
   firstName: string;
   lastName: string;
+  rut: string;
   email: string;
   phone: string;
   region: string;
@@ -44,18 +45,18 @@ export interface TradeInFormProps {
 // Default configurations for each mode
 export const FORM_CONFIGS: Record<TradeInFormMode, Partial<TradeInFormContext>> = {
   'ecom': {
-    requiredFields: ['firstName', 'lastName', 'email', 'phone', 'region', 'comuna', 'address'],
+    requiredFields: ['firstName', 'lastName', 'rut', 'email', 'phone', 'region', 'comuna', 'address'],
     hideFields: [],
-    allowEditing: ['firstName', 'lastName', 'email', 'phone', 'region', 'comuna', 'address', 'houseDetails', 'client_comment', 'deliveryMethod']
+    allowEditing: ['firstName', 'lastName', 'rut', 'email', 'phone', 'region', 'comuna', 'address', 'houseDetails', 'client_comment', 'deliveryMethod']
   },
   'store-new': {
-    requiredFields: ['firstName', 'lastName', 'email', 'phone'],
+    requiredFields: ['firstName', 'lastName', 'rut', 'email', 'phone'],
     hideFields: ['address', 'region', 'comuna', 'houseDetails', 'deliveryMethod'],
-    allowEditing: ['firstName', 'lastName', 'email', 'phone', 'client_comment']
+    allowEditing: ['firstName', 'lastName', 'rut', 'email', 'phone', 'client_comment']
   },
   'store-reception': {
-    requiredFields: ['firstName', 'lastName', 'email', 'phone'],
+    requiredFields: ['firstName', 'lastName', 'rut', 'email', 'phone'],
     hideFields: ['deliveryMethod'],
-    allowEditing: ['client_comment'] // Only allow editing comments during reception
+    allowEditing: ['firstName', 'lastName', 'rut', 'email', 'phone', 'client_comment'] // Allow editing during reception
   }
 };
