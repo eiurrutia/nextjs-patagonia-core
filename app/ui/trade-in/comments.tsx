@@ -42,6 +42,7 @@ export default function TradeInComments({ tradeInId }: TradeInCommentsProps) {
     const types = {
       'product_verification': 'Verificación de Productos',
       'status_change': 'Cambio de Estado',
+      'state_change': 'Cambio de Estado Calculado',
       'general_comment': 'Comentario General',
       'repair_added': 'Reparación Agregada'
     };
@@ -52,6 +53,7 @@ export default function TradeInComments({ tradeInId }: TradeInCommentsProps) {
     const colors = {
       'product_verification': 'bg-blue-100 text-blue-800',
       'status_change': 'bg-green-100 text-green-800',
+      'state_change': 'bg-orange-100 text-orange-800',
       'general_comment': 'bg-gray-100 text-gray-800',
       'repair_added': 'bg-orange-100 text-orange-800'
     };

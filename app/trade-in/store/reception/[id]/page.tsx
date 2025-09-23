@@ -119,9 +119,10 @@ export default function StoreReceptionPage() {
       const result = await response.json();
       setSuccessMessage(`Solicitud recibida exitosamente. ID: ${result.id}`);
       
-      // Redirect after 2 seconds
+      // Redirect after 2 seconds with router refresh to ensure data is updated
       setTimeout(() => {
-        router.push('/trade-in');
+        // Use window.location for a full page reload to ensure fresh data
+        window.location.href = '/trade-in';
       }, 2000);
 
     } catch (err) {

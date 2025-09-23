@@ -39,6 +39,17 @@ function generateChangeComment(modifiedConditions, products) {
   return `Verificación en tienda realizada. Cambios:\n${changes.join('\n')}`;
 }
 
+// Aux function to generate state change comment
+function generateStateChangeComment(stateChanges, products) {
+  const changes = stateChanges.map(change => {
+    const product = products.find(p => p.id == change.productId);
+    const productName = product ? `${product.product_style} (Talla: ${product.product_size})` : `Producto ${change.productId}`;
+    return `* ${productName}: Estado cambiado de "${change.originalState}" a "${change.confirmedState}"`;
+  });
+  
+  return `Estados de productos actualizados tras verificación en tienda:\n${changes.join('\n')}`;
+}
+
 /**
  * API route handler for receiving/confirming a Trade-In request in store
  * @param req - The HTTP request object
@@ -100,6 +111,9 @@ export default async function handler(req, res) {
     await sql`BEGIN`;
 
     try {
+      // Arrays to track changes
+      const stateChanges = [];
+      
       // 1. Process verification of ALL products (not just modified ones)
       for (const product of existingProducts.rows) {
         const productModifications = modifiedConditions.filter(mod => mod.productId == product.id);
@@ -120,7 +134,6 @@ export default async function handler(req, res) {
           confirmed_meets_minimum_requirements: getConfirmedValue(product, productModifications, 'meets_minimum_requirements')
         };
 
-
         // Calculate confirmed state using evaluation logic
         const conditionResponses = {
           usage_signs: confirmedValues.confirmed_usage_signs,
@@ -132,13 +145,21 @@ export default async function handler(req, res) {
 
         const confirmedCalculatedState = evaluateProductCondition(conditionResponses);
 
+        // Check if calculated state changed
+        if (product.calculated_state && confirmedCalculatedState && product.calculated_state !== confirmedCalculatedState) {
+          stateChanges.push({
+            productId: product.id,
+            originalState: product.calculated_state,
+            confirmedState: confirmedCalculatedState
+          });
+        }
+
         // Prepare repairs (separated by ";")
         const repairFields = {
           tears_holes_repairs: productRepairData?.tears_holes_repairs?.join(';') || null,
           repairs_level_repairs: productRepairData?.repairs_level_repairs?.join(';') || null,
           stains_level_repairs: productRepairData?.stains_level_repairs?.join(';') || null
         };
-
 
         const verificationData = {
           ...confirmedValues,
@@ -157,7 +178,7 @@ export default async function handler(req, res) {
         }
       }
 
-      // 2. Create log comment if there are modifications
+      // 2. Create log comment for condition modifications
       if (modifiedConditions.length > 0) {
         const commentText = generateChangeComment(modifiedConditions, existingProducts.rows);
         const contextData = {
@@ -175,7 +196,24 @@ export default async function handler(req, res) {
         );
       }
 
-      // 3. Update the main trade-in request
+      // 3. Create log comment for state changes
+      if (stateChanges.length > 0) {
+        const stateCommentText = generateStateChangeComment(stateChanges, existingProducts.rows);
+        const stateContextData = {
+          state_changes: stateChanges,
+          products_affected: stateChanges.map(sc => sc.productId)
+        };
+
+        await createTradeInComment(
+          requestId,
+          'state_change',
+          stateCommentText,
+          stateContextData,
+          'sistema_tienda'
+        );
+      }
+
+      // 4. Update the main trade-in request
       await sql`
         UPDATE trade_in_requests 
         SET 
