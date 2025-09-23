@@ -218,53 +218,40 @@ export default function TradeInDetail({ id }: { id: string }) {
                                                 <h3 className="font-medium text-gray-900">{product.product_style}</h3>
                                                 <p className="text-sm text-gray-600 mt-1">Talla: {product.product_size}</p>
                                             </div>
-                                            {/* Product State Badge */}
+                                            {/* Product State Badge - Use confirmed state if available */}
                                             <div className="flex flex-col items-end space-y-1">
-                                                {product.calculated_state && (
-                                                    <div className="flex items-center space-x-1">
-                                                        <span className="text-xs text-gray-500">Original:</span>
-                                                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                                            getStateDisplayColors(product.calculated_state as any).bg
-                                                        } ${getStateDisplayColors(product.calculated_state as any).text}`}>
-                                                            {product.calculated_state}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                                {product.confirmed_calculated_state && (
-                                                    <div className="flex items-center space-x-1">
-                                                        <span className="text-xs text-green-600 font-medium">Confirmado:</span>
-                                                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border-2 border-green-500 ${
-                                                            getStateDisplayColors(product.confirmed_calculated_state as any).bg
-                                                        } ${getStateDisplayColors(product.confirmed_calculated_state as any).text}`}>
-                                                            ✓ {product.confirmed_calculated_state}
-                                                        </span>
-                                                    </div>
+                                                {(product.confirmed_calculated_state || product.calculated_state) && (
+                                                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                                        getStateDisplayColors((product.confirmed_calculated_state || product.calculated_state) as any).bg
+                                                    } ${getStateDisplayColors((product.confirmed_calculated_state || product.calculated_state) as any).text}`}>
+                                                        {product.confirmed_calculated_state || product.calculated_state}
+                                                    </span>
                                                 )}
                                             </div>
                                         </div>
                                         
                                         {/* Product Condition with Visual Indicators */}
                                         <div className="mt-3 space-y-2">
-                                            {/* Usage Signs - Main indicator */}
-                                            {product.usage_signs && (
-                                                <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getConditionColor(product.usage_signs)}`}>
+                                            {/* Usage Signs - Main indicator - Use confirmed value if available, otherwise original */}
+                                            {(product.confirmed_usage_signs || product.usage_signs) && (
+                                                <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getConditionColor(product.confirmed_usage_signs || product.usage_signs)}`}>
                                                     <span className="mr-2">👁️</span>
-                                                    Señales de uso: {getConditionDetails('usage_signs', product.usage_signs).label}
+                                                    Señales de uso: {getConditionDetails('usage_signs', product.confirmed_usage_signs || product.usage_signs).label}
                                                 </div>
                                             )}
                                             
                                             {/* Detailed conditions grid (only if usage_signs is 'yes') */}
-                                            {product.usage_signs === 'yes' && (
+                                            {(product.confirmed_usage_signs || product.usage_signs) === 'yes' && (
                                                 <div className="grid grid-cols-2 gap-2 mt-2">
-                                                    {/* Pilling Level */}
-                                                    {product.pilling_level && (
-                                                        <div className={`flex items-center p-2 rounded-lg text-xs ${getConditionColor(product.pilling_level)}`}>
+                                                    {/* Pilling Level - Use confirmed value if available */}
+                                                    {(product.confirmed_pilling_level || product.pilling_level) && (
+                                                        <div className={`flex items-center p-2 rounded-lg text-xs ${getConditionColor(product.confirmed_pilling_level || product.pilling_level)}`}>
                                                             <div className="flex items-center space-x-2">
-                                                                {getConditionDetails('pilling_level', product.pilling_level).imageUrl && (
+                                                                {getConditionDetails('pilling_level', product.confirmed_pilling_level || product.pilling_level).imageUrl && (
                                                                     <div className="w-6 h-6 relative flex-shrink-0">
                                                                         <Image
-                                                                            src={getConditionDetails('pilling_level', product.pilling_level).imageUrl}
-                                                                            alt={`Pilling ${product.pilling_level}`}
+                                                                            src={getConditionDetails('pilling_level', product.confirmed_pilling_level || product.pilling_level).imageUrl}
+                                                                            alt={`Pilling ${product.confirmed_pilling_level || product.pilling_level}`}
                                                                             fill
                                                                             className="object-cover rounded"
                                                                         />
@@ -272,21 +259,21 @@ export default function TradeInDetail({ id }: { id: string }) {
                                                                 )}
                                                                 <div>
                                                                     <div className="font-medium">Pilling</div>
-                                                                    <div>{getConditionDetails('pilling_level', product.pilling_level).label}</div>
+                                                                    <div>{getConditionDetails('pilling_level', product.confirmed_pilling_level || product.pilling_level).label}</div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     )}
 
-                                                    {/* Tears and Holes */}
-                                                    {product.tears_holes_level && (
-                                                        <div className={`flex items-center p-2 rounded-lg text-xs ${getConditionColor(product.tears_holes_level)}`}>
+                                                    {/* Tears and Holes - Use confirmed value if available */}
+                                                    {(product.confirmed_tears_holes_level || product.tears_holes_level) && (
+                                                        <div className={`flex items-center p-2 rounded-lg text-xs ${getConditionColor(product.confirmed_tears_holes_level || product.tears_holes_level)}`}>
                                                             <div className="flex items-center space-x-2">
-                                                                {getConditionDetails('tears_holes_level', product.tears_holes_level).imageUrl && (
+                                                                {getConditionDetails('tears_holes_level', product.confirmed_tears_holes_level || product.tears_holes_level).imageUrl && (
                                                                     <div className="w-6 h-6 relative flex-shrink-0">
                                                                         <Image
-                                                                            src={getConditionDetails('tears_holes_level', product.tears_holes_level).imageUrl}
-                                                                            alt={`Rasgaduras ${product.tears_holes_level}`}
+                                                                            src={getConditionDetails('tears_holes_level', product.confirmed_tears_holes_level || product.tears_holes_level).imageUrl}
+                                                                            alt={`Rasgaduras ${product.confirmed_tears_holes_level || product.tears_holes_level}`}
                                                                             fill
                                                                             className="object-cover rounded"
                                                                         />
@@ -294,21 +281,21 @@ export default function TradeInDetail({ id }: { id: string }) {
                                                                 )}
                                                                 <div>
                                                                     <div className="font-medium">Rasgaduras</div>
-                                                                    <div>{getConditionDetails('tears_holes_level', product.tears_holes_level).label}</div>
+                                                                    <div>{getConditionDetails('tears_holes_level', product.confirmed_tears_holes_level || product.tears_holes_level).label}</div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     )}
 
-                                                    {/* Repairs */}
-                                                    {product.repairs_level && (
-                                                        <div className={`flex items-center p-2 rounded-lg text-xs ${getConditionColor(product.repairs_level)}`}>
+                                                    {/* Repairs - Use confirmed value if available */}
+                                                    {(product.confirmed_repairs_level || product.repairs_level) && (
+                                                        <div className={`flex items-center p-2 rounded-lg text-xs ${getConditionColor(product.confirmed_repairs_level || product.repairs_level)}`}>
                                                             <div className="flex items-center space-x-2">
-                                                                {getConditionDetails('repairs_level', product.repairs_level).imageUrl && (
+                                                                {getConditionDetails('repairs_level', product.confirmed_repairs_level || product.repairs_level).imageUrl && (
                                                                     <div className="w-6 h-6 relative flex-shrink-0">
                                                                         <Image
-                                                                            src={getConditionDetails('repairs_level', product.repairs_level).imageUrl}
-                                                                            alt={`Reparaciones ${product.repairs_level}`}
+                                                                            src={getConditionDetails('repairs_level', product.confirmed_repairs_level || product.repairs_level).imageUrl}
+                                                                            alt={`Reparaciones ${product.confirmed_repairs_level || product.repairs_level}`}
                                                                             fill
                                                                             className="object-cover rounded"
                                                                         />
@@ -316,21 +303,21 @@ export default function TradeInDetail({ id }: { id: string }) {
                                                                 )}
                                                                 <div>
                                                                     <div className="font-medium">Reparaciones</div>
-                                                                    <div>{getConditionDetails('repairs_level', product.repairs_level).label}</div>
+                                                                    <div>{getConditionDetails('repairs_level', product.confirmed_repairs_level || product.repairs_level).label}</div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     )}
 
-                                                    {/* Stains */}
-                                                    {product.stains_level && (
-                                                        <div className={`flex items-center p-2 rounded-lg text-xs ${getConditionColor(product.stains_level)}`}>
+                                                    {/* Stains - Use confirmed value if available */}
+                                                    {(product.confirmed_stains_level || product.stains_level) && (
+                                                        <div className={`flex items-center p-2 rounded-lg text-xs ${getConditionColor(product.confirmed_stains_level || product.stains_level)}`}>
                                                             <div className="flex items-center space-x-2">
-                                                                {getConditionDetails('stains_level', product.stains_level).imageUrl && (
+                                                                {getConditionDetails('stains_level', product.confirmed_stains_level || product.stains_level).imageUrl && (
                                                                     <div className="w-6 h-6 relative flex-shrink-0">
                                                                         <Image
-                                                                            src={getConditionDetails('stains_level', product.stains_level).imageUrl}
-                                                                            alt={`Manchas ${product.stains_level}`}
+                                                                            src={getConditionDetails('stains_level', product.confirmed_stains_level || product.stains_level).imageUrl}
+                                                                            alt={`Manchas ${product.confirmed_stains_level || product.stains_level}`}
                                                                             fill
                                                                             className="object-cover rounded"
                                                                         />
@@ -338,11 +325,43 @@ export default function TradeInDetail({ id }: { id: string }) {
                                                                 )}
                                                                 <div>
                                                                     <div className="font-medium">Manchas</div>
-                                                                    <div>{getConditionDetails('stains_level', product.stains_level).label}</div>
+                                                                    <div>{getConditionDetails('stains_level', product.confirmed_stains_level || product.stains_level).label}</div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     )}
+                                                </div>
+                                            )}
+
+                                            {/* Repairs Required - Simplified format */}
+                                            {(product.tears_holes_repairs || product.repairs_level_repairs || product.stains_level_repairs) && (
+                                                <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
+                                                    <h4 className="text-xs font-semibold text-gray-700 mb-2 flex items-center">
+                                                        <span className="mr-2">🔧</span>
+                                                        Reparaciones Requeridas
+                                                    </h4>
+                                                    <div className="space-y-1 text-xs text-gray-600">
+                                                        {/* Tears/Holes Repairs */}
+                                                        {product.tears_holes_repairs && (
+                                                            <div>
+                                                                <span className="font-medium">Rasgaduras/Agujeros:</span> {product.tears_holes_repairs.split(';').map((repair: string) => repair.trim().replace(/_/g, ' ')).join(', ')}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Previous Repairs */}
+                                                        {product.repairs_level_repairs && (
+                                                            <div>
+                                                                <span className="font-medium">Reparaciones Previas:</span> {product.repairs_level_repairs.split(';').map((repair: string) => repair.trim().replace(/_/g, ' ')).join(', ')}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Stains Repairs */}
+                                                        {product.stains_level_repairs && (
+                                                            <div>
+                                                                <span className="font-medium">Manchas:</span> {product.stains_level_repairs.split(';').map((repair: string) => repair.trim().replace(/_/g, ' ')).join(', ')}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
