@@ -219,13 +219,28 @@ export default function TradeInDetail({ id }: { id: string }) {
                                                 <p className="text-sm text-gray-600 mt-1">Talla: {product.product_size}</p>
                                             </div>
                                             {/* Product State Badge */}
-                                            {product.calculated_state && (
-                                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                                                    getStateDisplayColors(product.calculated_state as any).bg
-                                                } ${getStateDisplayColors(product.calculated_state as any).text}`}>
-                                                    {product.calculated_state}
-                                                </span>
-                                            )}
+                                            <div className="flex flex-col items-end space-y-1">
+                                                {product.calculated_state && (
+                                                    <div className="flex items-center space-x-1">
+                                                        <span className="text-xs text-gray-500">Original:</span>
+                                                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                                            getStateDisplayColors(product.calculated_state as any).bg
+                                                        } ${getStateDisplayColors(product.calculated_state as any).text}`}>
+                                                            {product.calculated_state}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                {product.confirmed_calculated_state && (
+                                                    <div className="flex items-center space-x-1">
+                                                        <span className="text-xs text-green-600 font-medium">Confirmado:</span>
+                                                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border-2 border-green-500 ${
+                                                            getStateDisplayColors(product.confirmed_calculated_state as any).bg
+                                                        } ${getStateDisplayColors(product.confirmed_calculated_state as any).text}`}>
+                                                            ✓ {product.confirmed_calculated_state}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                         
                                         {/* Product Condition with Visual Indicators */}

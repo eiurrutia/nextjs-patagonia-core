@@ -2,14 +2,22 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]';
 import { sql } from '@vercel/postgres';
 import { updateProductVerification, createTradeInComment } from '@/app/lib/trade-in/sql-data';
+import { evaluateProductCondition } from '@/app/lib/trade-in/product-condition-evaluator';
 
-// Función auxiliar para obtener el valor confirmado (modificado o original)
+// Aux function to get the confirmed value (modified or original)
 function getConfirmedValue(product, modifications, field) {
   const modification = modifications.find(mod => mod.questionId === field);
-  return modification ? modification.newValue : product[field];
+  if (modification) {
+    // For boolean fields, convert string to boolean
+    if (field === 'meets_minimum_requirements') {
+      return modification.newValue === 'true' || modification.newValue === true;
+    }
+    return modification.newValue;
+  }
+  return product[field];
 }
 
-// Función auxiliar para generar comentario de cambios
+// Aux function to generate change comment
 function generateChangeComment(modifiedConditions, products) {
   const changes = modifiedConditions.map(mod => {
     const product = products.find(p => p.id == mod.productId);
@@ -92,60 +100,93 @@ export default async function handler(req, res) {
     await sql`BEGIN`;
 
     try {
-      // 1. Si hay modificaciones o reparaciones, procesarlas primero
-      if (modifiedConditions.length > 0 || productRepairs.length > 0) {
-        // Procesar verificación de productos usando datos de la BD
-        for (const product of existingProducts.rows) {
-          const productModifications = modifiedConditions.filter(mod => mod.productId == product.id);
-          const productRepairData = productRepairs.find(pr => pr.productId == product.id);
+      // 1. Process verification of ALL products (not just modified ones)
+      console.log('=== DEBUGGING PRODUCT VERIFICATION ===');
+      console.log('Existing products:', existingProducts.rows.map(p => ({ id: p.id, style: p.product_style, size: p.product_size })));
+      console.log('Modified conditions:', modifiedConditions);
+      console.log('Product repairs:', productRepairs);
+      
+      for (const product of existingProducts.rows) {
+        const productModifications = modifiedConditions.filter(mod => mod.productId == product.id);
+        const productRepairData = productRepairs.find(pr => pr.productId == product.id);
 
-          if (productModifications.length > 0 || productRepairData) {
-            // Preparar los valores confirmados (usar modificados o originales)
-            const confirmedValues = {
-              confirmed_usage_signs: getConfirmedValue(product, productModifications, 'usage_signs'),
-              confirmed_pilling_level: getConfirmedValue(product, productModifications, 'pilling_level'),
-              confirmed_tears_holes_level: getConfirmedValue(product, productModifications, 'tears_holes_level'),
-              confirmed_repairs_level: getConfirmedValue(product, productModifications, 'repairs_level'),
-              confirmed_stains_level: getConfirmedValue(product, productModifications, 'stains_level'),
-              confirmed_meets_minimum_requirements: getConfirmedValue(product, productModifications, 'meets_minimum_requirements')
-            };
+        console.log(`Processing product ${product.id}:`, {
+          modifications: productModifications,
+          repairs: productRepairData
+        });
 
-            // Preparar las reparaciones (separadas por ";")
-            const repairFields = {
-              tears_holes_repairs: productRepairData?.tears_holes_repairs?.join(';') || null,
-              repairs_level_repairs: productRepairData?.repairs_level_repairs?.join(';') || null,
-              stains_level_repairs: productRepairData?.stains_level_repairs?.join(';') || null
-            };
+        // Get confirmed values (modified or original)
+        const confirmedValues = {
+          confirmed_usage_signs: getConfirmedValue(product, productModifications, 'usage_signs'),
+          confirmed_pilling_level: getConfirmedValue(product, productModifications, 'pilling_level'),
+          confirmed_tears_holes_level: getConfirmedValue(product, productModifications, 'tears_holes_level'),
+          confirmed_repairs_level: getConfirmedValue(product, productModifications, 'repairs_level'),
+          confirmed_stains_level: getConfirmedValue(product, productModifications, 'stains_level'),
+          confirmed_meets_minimum_requirements: getConfirmedValue(product, productModifications, 'meets_minimum_requirements')
+        };
 
-            // Actualizar verificación del producto
-            await updateProductVerification(product.id, {
-              ...confirmedValues,
-              ...repairFields,
-              store_verified_by: 'sistema_tienda'
-            });
-          }
-        }
+        console.log(`Confirmed values for product ${product.id}:`, confirmedValues);
 
-        // Crear comentario en bitácora si hay modificaciones
-        if (modifiedConditions.length > 0) {
-          const commentText = generateChangeComment(modifiedConditions, existingProducts.rows);
-          const contextData = {
-            modified_conditions: modifiedConditions,
-            products_affected: existingProducts.rows.map(p => p.id),
-            repair_selections: productRepairs
-          };
+        // Calculate confirmed state using evaluation logic
+        const conditionResponses = {
+          usage_signs: confirmedValues.confirmed_usage_signs,
+          pilling_level: confirmedValues.confirmed_pilling_level,
+          tears_holes_level: confirmedValues.confirmed_tears_holes_level,
+          repairs_level: confirmedValues.confirmed_repairs_level,
+          stains_level: confirmedValues.confirmed_stains_level
+        };
 
-          await createTradeInComment(
-            requestId,
-            'product_verification',
-            commentText,
-            contextData,
-            'sistema_tienda'
-          );
+        const confirmedCalculatedState = evaluateProductCondition(conditionResponses);
+        console.log(`Confirmed calculated state for product ${product.id}:`, confirmedCalculatedState);
+
+        // Prepare repairs (separated by ";")
+        const repairFields = {
+          tears_holes_repairs: productRepairData?.tears_holes_repairs?.join(';') || null,
+          repairs_level_repairs: productRepairData?.repairs_level_repairs?.join(';') || null,
+          stains_level_repairs: productRepairData?.stains_level_repairs?.join(';') || null
+        };
+
+        console.log(`Repair fields for product ${product.id}:`, repairFields);
+
+        const verificationData = {
+          ...confirmedValues,
+          confirmed_calculated_state: confirmedCalculatedState,
+          ...repairFields,
+          store_verified_by: 'sistema_tienda'
+        };
+
+        console.log(`Full verification data for product ${product.id}:`, verificationData);
+
+        // Update product verification (ALWAYS, not just if there are modifications)
+        try {
+          await updateProductVerification(product.id, verificationData);
+          console.log(`✅ Successfully updated product ${product.id}`);
+        } catch (error) {
+          console.error(`❌ Error updating product ${product.id}:`, error);
+          throw error;
         }
       }
+      console.log('=== END DEBUGGING ===');
 
-      // 2. Update the main trade-in request
+      // 2. Create log comment if there are modifications
+      if (modifiedConditions.length > 0) {
+        const commentText = generateChangeComment(modifiedConditions, existingProducts.rows);
+        const contextData = {
+          modified_conditions: modifiedConditions,
+          products_affected: existingProducts.rows.map(p => p.id),
+          repair_selections: productRepairs
+        };
+
+        await createTradeInComment(
+          requestId,
+          'product_verification',
+          commentText,
+          contextData,
+          'sistema_tienda'
+        );
+      }
+
+      // 3. Update the main trade-in request
       await sql`
         UPDATE trade_in_requests 
         SET 
@@ -165,45 +206,29 @@ export default async function handler(req, res) {
         WHERE id = ${requestId}
       `;
 
-      // Delete existing products for this request
-      await sql`
-        DELETE FROM trade_in_products 
-        WHERE request_id = ${requestId}
-      `;
-
-      // Insert updated products
-      for (const product of products) {
-        await sql`
-          INSERT INTO trade_in_products (
-            request_id,
-            product_style,
-            product_size,
-            credit_range,
-            usage_signs,
-            pilling_level,
-            tears_holes_level,
-            repairs_level,
-            meets_minimum_requirements,
-            product_images,
-            calculated_state,
-            created_at,
-            updated_at
-          ) VALUES (
-            ${requestId},
-            ${product.product_style},
-            ${product.product_size},
-            ${product.credit_range || null},
-            ${product.usage_signs},
-            ${product.pilling_level},
-            ${product.tears_holes_level},
-            ${product.repairs_level},
-            ${product.meets_minimum_requirements},
-            ${JSON.stringify(product.product_images || [])},
-            ${product.calculated_state || null},
-            CURRENT_TIMESTAMP,
-            CURRENT_TIMESTAMP
-          )
-        `;
+      // Update existing products with any new information if provided
+      if (products && products.length > 0) {
+        for (const product of products) {
+          // Only update if the product exists and has changes
+          const existingProduct = existingProducts.rows.find(ep => ep.product_style === product.product_style && ep.product_size === product.product_size);
+          if (existingProduct) {
+            await sql`
+              UPDATE trade_in_products 
+              SET 
+                credit_range = ${product.credit_range || existingProduct.credit_range},
+                usage_signs = ${product.usage_signs || existingProduct.usage_signs},
+                pilling_level = ${product.pilling_level || existingProduct.pilling_level},
+                tears_holes_level = ${product.tears_holes_level || existingProduct.tears_holes_level},
+                repairs_level = ${product.repairs_level || existingProduct.repairs_level},
+                stains_level = ${product.stains_level || existingProduct.stains_level},
+                meets_minimum_requirements = ${product.meets_minimum_requirements !== undefined ? product.meets_minimum_requirements : existingProduct.meets_minimum_requirements},
+                product_images = ${JSON.stringify(product.product_images || existingProduct.product_images || [])},
+                calculated_state = ${product.calculated_state || existingProduct.calculated_state},
+                updated_at = CURRENT_TIMESTAMP
+              WHERE id = ${existingProduct.id}
+            `;
+          }
+        }
       }
 
       // Commit transaction

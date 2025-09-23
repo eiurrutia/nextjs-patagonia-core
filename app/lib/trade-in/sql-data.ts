@@ -318,6 +318,7 @@ export async function updateProductVerification(
     confirmed_repairs_level?: string;
     confirmed_stains_level?: string;
     confirmed_meets_minimum_requirements?: boolean;
+    confirmed_calculated_state?: string;
     tears_holes_repairs?: string;
     repairs_level_repairs?: string;
     stains_level_repairs?: string;
@@ -334,6 +335,7 @@ export async function updateProductVerification(
         confirmed_repairs_level = ${verificationData.confirmed_repairs_level || null},
         confirmed_stains_level = ${verificationData.confirmed_stains_level || null},
         confirmed_meets_minimum_requirements = ${verificationData.confirmed_meets_minimum_requirements || null},
+        confirmed_calculated_state = ${verificationData.confirmed_calculated_state || null},
         tears_holes_repairs = ${verificationData.tears_holes_repairs || null},
         repairs_level_repairs = ${verificationData.repairs_level_repairs || null},
         stains_level_repairs = ${verificationData.stains_level_repairs || null},

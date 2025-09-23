@@ -4,6 +4,7 @@ import {
   createTradeInComment, 
   updateTradeInStatus 
 } from '@/app/lib/trade-in/sql-data';
+import { evaluateProductCondition } from '@/app/lib/trade-in/product-condition-evaluator';
 
 export default async function handler(req, res) {
   const { id } = req.query;
@@ -34,6 +35,17 @@ export default async function handler(req, res) {
         confirmed_meets_minimum_requirements: getConfirmedValue(product, productModifications, 'meets_minimum_requirements')
       };
 
+      // Calcular el estado confirmado usando la lógica de evaluación
+      const conditionResponses = {
+        usage_signs: confirmedValues.confirmed_usage_signs,
+        pilling_level: confirmedValues.confirmed_pilling_level,
+        tears_holes_level: confirmedValues.confirmed_tears_holes_level,
+        repairs_level: confirmedValues.confirmed_repairs_level,
+        stains_level: confirmedValues.confirmed_stains_level
+      };
+
+      const confirmedCalculatedState = evaluateProductCondition(conditionResponses);
+
       const repairFields = {
         tears_holes_repairs: productRepairData?.tears_holes_repairs?.join(';') || null,
         repairs_level_repairs: productRepairData?.repairs_level_repairs?.join(';') || null,
@@ -43,6 +55,7 @@ export default async function handler(req, res) {
       // Update the product
       await updateProductVerification(product.id, {
         ...confirmedValues,
+        confirmed_calculated_state: confirmedCalculatedState,
         ...repairFields,
         store_verified_by: verifiedBy
       });
@@ -91,6 +104,10 @@ export default async function handler(req, res) {
 function getConfirmedValue(product, modifications, fieldName) {
   const modification = modifications.find(mod => mod.questionId === fieldName);
   if (modification) {
+    // Para campos booleanos, convertir string a boolean
+    if (fieldName === 'meets_minimum_requirements') {
+      return modification.newValue === 'true' || modification.newValue === true;
+    }
     return modification.newValue;
   }
   return product[fieldName];
