@@ -101,11 +101,6 @@ export default async function handler(req, res) {
 
     try {
       // 1. Process verification of ALL products (not just modified ones)
-      console.log('=== DEBUGGING PRODUCT VERIFICATION ===');
-      console.log('Existing products:', existingProducts.rows.map(p => ({ id: p.id, style: p.product_style, size: p.product_size })));
-      console.log('Modified conditions:', modifiedConditions);
-      console.log('Product repairs:', productRepairs);
-      
       for (const product of existingProducts.rows) {
         const productModifications = modifiedConditions.filter(mod => mod.productId == product.id);
         const productRepairData = productRepairs.find(pr => pr.productId == product.id);
@@ -125,7 +120,6 @@ export default async function handler(req, res) {
           confirmed_meets_minimum_requirements: getConfirmedValue(product, productModifications, 'meets_minimum_requirements')
         };
 
-        console.log(`Confirmed values for product ${product.id}:`, confirmedValues);
 
         // Calculate confirmed state using evaluation logic
         const conditionResponses = {
@@ -137,7 +131,6 @@ export default async function handler(req, res) {
         };
 
         const confirmedCalculatedState = evaluateProductCondition(conditionResponses);
-        console.log(`Confirmed calculated state for product ${product.id}:`, confirmedCalculatedState);
 
         // Prepare repairs (separated by ";")
         const repairFields = {
@@ -146,7 +139,6 @@ export default async function handler(req, res) {
           stains_level_repairs: productRepairData?.stains_level_repairs?.join(';') || null
         };
 
-        console.log(`Repair fields for product ${product.id}:`, repairFields);
 
         const verificationData = {
           ...confirmedValues,
@@ -154,8 +146,6 @@ export default async function handler(req, res) {
           ...repairFields,
           store_verified_by: 'sistema_tienda'
         };
-
-        console.log(`Full verification data for product ${product.id}:`, verificationData);
 
         // Update product verification (ALWAYS, not just if there are modifications)
         try {
@@ -166,7 +156,6 @@ export default async function handler(req, res) {
           throw error;
         }
       }
-      console.log('=== END DEBUGGING ===');
 
       // 2. Create log comment if there are modifications
       if (modifiedConditions.length > 0) {
