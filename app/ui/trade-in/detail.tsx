@@ -106,10 +106,10 @@ export default function TradeInDetail({ id }: { id: string }) {
                 })()}</p>
             </div>
 
-            {/* Client Information and Location - Two Column Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Client Information and Location */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                 {/* Client Information */}
-                <div className="p-6 bg-white rounded-lg shadow-sm border">
+                <div className="lg:col-span-3 p-6 bg-white rounded-lg shadow-sm border">
                     <div className="flex items-center space-x-3 mb-4">
                         {fieldIcons.name}
                         <h2 className="text-lg font-semibold text-gray-800">Información del Cliente</h2>
@@ -139,10 +139,10 @@ export default function TradeInDetail({ id }: { id: string }) {
                 </div>
 
                 {/* Location and Delivery */}
-                <div className="p-6 bg-white rounded-lg shadow-sm border">
+                <div className="lg:col-span-2 p-6 bg-white rounded-lg shadow-sm border">
                     <div className="flex items-center space-x-3 mb-4">
                         {fieldIcons.location}
-                        <h2 className="text-lg font-semibold text-gray-800">Ubicación y Entrega</h2>
+                        <h2 className="text-lg font-semibold text-gray-800">Entrega</h2>
                     </div>
                     <div className="space-y-4">
                         {/* Delivery Method */}
