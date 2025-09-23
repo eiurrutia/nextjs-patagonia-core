@@ -61,13 +61,21 @@ export default function TradeInComments({ tradeInId }: TradeInCommentsProps) {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('es-CL', {
+    // Create date object and ensure it's handled correctly
+    const date = new Date(dateString);
+    
+    // Use Intl.DateTimeFormat for more reliable timezone handling
+    const formatter = new Intl.DateTimeFormat('es-CL', {
+      timeZone: 'America/Santiago',
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      hour12: true
     });
+    
+    return formatter.format(date);
   };
 
   if (loading) {

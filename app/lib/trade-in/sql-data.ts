@@ -378,7 +378,7 @@ export async function getTradeInComments(requestId: number): Promise<any[]> {
         comment,
         context_data,
         created_by,
-        created_at
+        created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago' as created_at
       FROM trade_in_request_comments 
       WHERE request_id = ${requestId}
       ORDER BY created_at DESC
