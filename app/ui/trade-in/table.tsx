@@ -111,14 +111,11 @@ export default async function TradeInTable({
             <thead className="rounded-lg text-left text-sm font-normal">
               <tr>
                 <th scope="col" className="px-3 py-5 font-medium">N° Solicitud</th>
-                <th scope="col" className="px-3 py-5 font-medium">Nombre</th>
-                <th scope="col" className="px-3 py-5 font-medium">Email</th>
+                <th scope="col" className="px-3 py-5 font-medium">Cliente</th>
                 <th scope="col" className="px-3 py-5 font-medium">Teléfono</th>
-                <th scope="col" className="px-3 py-5 font-medium">Región</th>
-                <th scope="col" className="px-3 py-5 font-medium">Comuna</th>
                 <th scope="col" className="px-3 py-5 font-medium">N° Productos</th>
                 <th scope="col" className="px-3 py-5 font-medium">Método Entrega</th>
-                <th scope="col" className="px-3 py-5 font-medium">Fecha</th>
+                <th scope="col" className="px-3 py-5 font-medium w-48">Fecha Solicitud</th>
                 <th scope="col" className="px-3 py-5 font-medium text-center">Estado</th>
                 <th scope="col" className="px-3 py-5 font-medium">Acciones</th>
               </tr>
@@ -137,11 +134,13 @@ export default async function TradeInTable({
                       {record.request_number}
                     </Link>
                   </td>
-                  <td className="px-3 py-3">{`${record.first_name} ${record.last_name}`}</td>
-                  <td className="px-3 py-3">{record.email}</td>
+                  <td className="px-3 py-3">
+                    <div className="text-sm">
+                      <div className="font-medium text-gray-900">{`${record.first_name} ${record.last_name}`}</div>
+                      <div className="text-gray-500">{record.email}</div>
+                    </div>
+                  </td>
                   <td className="px-3 py-3">{record.phone}</td>
-                  <td className="px-3 py-3">{record.region || 'N/A'}</td>
-                  <td className="px-3 py-3">{record.comuna || 'N/A'}</td>
                   <td className="px-3 py-3">
                     <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
                       {record.productCount}
@@ -151,7 +150,11 @@ export default async function TradeInTable({
                   <td className="px-3 py-3">
                     {getDeliveryMethodText(record)}
                   </td>
-                  <td className="px-3 py-3">{formatDate(record.created_at)} hrs</td>
+                  <td className="px-3 py-3 w-48">
+                    <div className="text-sm">
+                      {formatDate(record.created_at)} hrs
+                    </div>
+                  </td>
                   <td className="px-3 py-3 text-center">
                     {getStatusText(record.status)}
                   </td>
