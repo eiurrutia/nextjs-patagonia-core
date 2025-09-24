@@ -21,6 +21,18 @@ const fieldIcons = {
 export default function TradeInDetail({ id }: { id: string }) {
     const [record, setRecord] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const openImageModal = (imageUrl: string) => {
+        setSelectedImage(imageUrl);
+        setIsModalOpen(true);
+    };
+
+    const closeImageModal = () => {
+        setSelectedImage(null);
+        setIsModalOpen(false);
+    };
 
     // Helper function to get condition details
     const getConditionDetails = (questionId: string, value: string) => {
@@ -187,8 +199,9 @@ export default function TradeInDetail({ id }: { id: string }) {
                 <h2 className="text-lg font-semibold mb-4 text-gray-800">Productos ({record.products?.length || 0})</h2>
                 {record.products && record.products.length > 0 ? (
                     <div className="space-y-4">
-                        {record.products.map((product: any, index: number) => (
-                            <div key={product.id} className="p-4 bg-gray-50 rounded-lg border">
+                        {record.products.map((product: any, index: number) => {
+                            return (
+                            <div key={product.id} className="p-4 bg-gray-50 rounded-lg border relative">
                                 <div className="flex items-start space-x-4">
                                     {/* Product Image */}
                                     <div className="flex-shrink-0">
@@ -198,6 +211,7 @@ export default function TradeInDetail({ id }: { id: string }) {
                                                     src={generatePatagoniaImageUrl(product.product_style)!}
                                                     alt={product.product_style}
                                                     fill
+                                                    sizes="80px"
                                                     className="object-cover"
                                                     onError={(e) => {
                                                         // Fallback to numbered badge if image fails
@@ -376,8 +390,47 @@ export default function TradeInDetail({ id }: { id: string }) {
                                         )}
                                     </div>
                                 </div>
+
+                                {/* Product Images - Bottom Right Corner */}
+                                {product.product_images && product.product_images.length > 0 && (
+                                    <div className="absolute bottom-3 right-3">
+                                        <div className="flex -space-x-1">
+                                            {product.product_images.slice(0, 3).map((imageUrl: string, imageIndex: number) => (
+                                                <div 
+                                                    key={imageIndex} 
+                                                    className="relative w-12 h-12 rounded-lg overflow-hidden border-2 border-white shadow-lg cursor-pointer hover:scale-105 transition-transform duration-200"
+                                                    onClick={() => openImageModal(imageUrl)}
+                                                    title="Click para ver imagen completa"
+                                                >
+                                                    {imageUrl.startsWith('data:image/') ? (
+                                                        // eslint-disable-next-line @next/next/no-img-element
+                                                        <img
+                                                            src={imageUrl}
+                                                            alt={`Producto ${index + 1} - Imagen ${imageIndex + 1}`}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <Image
+                                                            src={imageUrl}
+                                                            alt={`Producto ${index + 1} - Imagen ${imageIndex + 1}`}
+                                                            fill
+                                                            sizes="48px"
+                                                            className="object-cover"
+                                                        />
+                                                    )}
+                                                </div>
+                                            ))}
+                                            {product.product_images.length > 3 && (
+                                                <div className="w-12 h-12 rounded-lg bg-gray-800 bg-opacity-75 border-2 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-200">
+                                                    <span className="text-white text-xs font-bold">+{product.product_images.length - 3}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 ) : (
                     <p className="text-gray-500">No hay productos asociados a esta solicitud.</p>
@@ -392,6 +445,47 @@ export default function TradeInDetail({ id }: { id: string }) {
                         {fieldIcons.comment}
                         <div className="flex-1">
                             <p className="text-gray-700 leading-relaxed">{record.client_comment}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Image Modal */}
+            {isModalOpen && selectedImage && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4"
+                     onClick={closeImageModal}>
+                    <div className="relative max-w-4xl max-h-[90vh] bg-white rounded-lg overflow-hidden"
+                         onClick={(e) => e.stopPropagation()}>
+                        {/* Close button */}
+                        <button
+                            onClick={closeImageModal}
+                            className="absolute top-4 right-4 z-10 bg-white rounded-full p-2 hover:bg-gray-100 transition-colors shadow-lg"
+                        >
+                            <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        
+                        {/* Image */}
+                        <div className="relative w-full h-full">
+                            {selectedImage.startsWith('data:image/') ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                    src={selectedImage}
+                                    alt="Imagen del producto"
+                                    className="max-w-full max-h-[80vh] object-contain"
+                                />
+                            ) : (
+                                <div className="relative" style={{ width: '800px', height: '600px' }}>
+                                    <Image
+                                        src={selectedImage}
+                                        alt="Imagen del producto"
+                                        fill
+                                        sizes="800px"
+                                        className="object-contain"
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -476,31 +476,45 @@ export default function ProductForm({
                     multiple
                     accept="image/*"
                     className="sr-only"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const files = e.target.files;
                       if (files && files.length > 0) {
-                        // Convertir archivos a URLs para vista previa
-                        const imageUrls: string[] = [];
-                        const maxSize = 10 * 1024 * 1024; // 10MB en bytes
+                        // Convert files to base64 for storage
+                        const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+                        const imagePromises: Promise<string>[] = [];
                         
                         Array.from(files).forEach((file) => {
                           if (file.type.startsWith('image/')) {
                             if (file.size <= maxSize) {
-                              const url = URL.createObjectURL(file);
-                              imageUrls.push(url);
+                              const promise = new Promise<string>((resolve, reject) => {
+                                const reader = new FileReader();
+                                reader.onload = () => {
+                                  resolve(reader.result as string);
+                                };
+                                reader.onerror = reject;
+                                reader.readAsDataURL(file);
+                              });
+                              imagePromises.push(promise);
                             } else {
                               alert(`La imagen "${file.name}" es muy grande. El tamaño máximo es 10MB.`);
                             }
                           }
                         });
                         
-                        // Agregar las nuevas imágenes a las existentes
-                        if (imageUrls.length > 0) {
-                          const updatedImages = [...formData.product_images, ...imageUrls];
-                          handleInputChange('product_images', updatedImages);
+                        // Wait for all images to be converted
+                        if (imagePromises.length > 0) {
+                          try {
+                            const base64Images = await Promise.all(imagePromises);
+                            // Add new images to existing ones
+                            const updatedImages = [...formData.product_images, ...base64Images];
+                            handleInputChange('product_images', updatedImages);
+                          } catch (error) {
+                            console.error('Error converting images:', error);
+                            alert('Error al procesar las imágenes. Por favor intenta de nuevo.');
+                          }
                         }
                         
-                        // Reset the input so the same file can be selected again
+                        // Reset input
                         e.target.value = '';
                       }
                     }}
@@ -526,11 +540,11 @@ export default function ProductForm({
                       <button
                         type="button"
                         onClick={() => {
-                          // Eliminar imagen del array
+                          // Remove image from array
                           const updatedImages = formData.product_images.filter((_, i) => i !== index);
                           handleInputChange('product_images', updatedImages);
                           
-                          // Liberar memoria del objeto URL si es una vista previa local
+                          // Only revoke blob URLs, not base64 data URLs
                           if (imageUrl.startsWith('blob:')) {
                             URL.revokeObjectURL(imageUrl);
                           }

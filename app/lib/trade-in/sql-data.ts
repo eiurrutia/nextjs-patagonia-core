@@ -228,8 +228,14 @@ export async function getTradeInRequestById(id: number): Promise<(TradeInRequest
       let productImages = [];
       
       try {
-        if (row.product_images && typeof row.product_images === 'string' && row.product_images.trim() !== '') {
-          productImages = JSON.parse(row.product_images);
+        // Since product_images is JSON type in PostgreSQL, it comes already parsed
+        if (row.product_images) {
+          if (Array.isArray(row.product_images)) {
+            productImages = row.product_images;
+          } else if (typeof row.product_images === 'string') {
+            // Fallback for string format
+            productImages = JSON.parse(row.product_images);
+          }
         }
       } catch (parseError) {
         console.warn('Error parsing product_images for product:', row.id, parseError);

@@ -1,4 +1,5 @@
 import { createTradeInRequest } from '@/app/lib/trade-in/sql-data';
+import { sql } from '@vercel/postgres';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/pages/api/auth/[...nextauth]';
 
@@ -125,6 +126,82 @@ export default async function handler(req, res) {
 
     // Create the trade-in request in SQL database
     const result = await createTradeInRequest(requestData);
+
+    // After successful creation, upload images for each product if present
+    if (result && result.id) {
+      try {
+        // Process each product for image uploads
+        for (let i = 0; i < products.length; i++) {
+          const product = products[i];
+          
+          if (product.product_images && product.product_images.length > 0) {
+            // Filter for base64 images only
+            const base64Images = product.product_images.filter(img => 
+              typeof img === 'string' && img.startsWith('data:image/')
+            );
+
+            if (base64Images.length > 0) {
+              try {
+                // Get the correct URL for the upload endpoint
+                const protocol = req.headers['x-forwarded-proto'] || 'http';
+                const host = req.headers.host || 'localhost:3001';
+                const baseUrl = `${protocol}://${host}`;
+                
+                console.log(`Uploading images to: ${baseUrl}/api/trade-in/upload-images`);
+                
+                const uploadResponse = await fetch(`${baseUrl}/api/trade-in/upload-images`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Cookie': req.headers.cookie || '' // Pass authentication
+                  },
+                  body: JSON.stringify({
+                    images: base64Images,
+                    tradeInId: result.id,
+                    productId: `${i + 1}`
+                  })
+                });
+
+                if (uploadResponse.ok) {
+                  const uploadResult = await uploadResponse.json();
+                  console.log(`Uploaded ${uploadResult.urls.length} images for product ${i + 1}`);
+                  console.log('Upload result:', uploadResult);
+                  
+                  // Update the product with uploaded image URLs
+                  if (uploadResult.urls.length > 0) {
+                    try {
+                      console.log(`Updating database for product: style=${product.product_style}, size=${product.product_size}, request_id=${result.id}`);
+                      
+                      // Update the database with the uploaded URLs
+                      const updateResult = await sql`
+                        UPDATE trade_in_products 
+                        SET product_images = ${JSON.stringify(uploadResult.urls)}
+                        WHERE request_id = ${result.id} 
+                        AND product_style = ${product.product_style}
+                        AND product_size = ${product.product_size}
+                      `;
+                      
+                      console.log(`Database update result:`, updateResult);
+                      console.log(`Updated ${updateResult.rowCount} rows for product ${i + 1}`);
+                    } catch (dbError) {
+                      console.error(`Database error updating product ${i + 1}:`, dbError);
+                    }
+                  }
+                } else {
+                  console.error(`Failed to upload images for product ${i + 1}:`, await uploadResponse.text());
+                }
+              } catch (uploadError) {
+                console.error(`Error uploading images for product ${i + 1}:`, uploadError);
+                // Don't fail the entire request if image upload fails
+              }
+            }
+          }
+        }
+      } catch (imageUploadError) {
+        console.error('Error during image upload process:', imageUploadError);
+        // Don't fail the request if image uploads fail
+      }
+    }
 
     // Return success response
     return res.status(201).json({
