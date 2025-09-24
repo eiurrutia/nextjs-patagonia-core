@@ -397,6 +397,33 @@ export async function getTradeInComments(requestId: number): Promise<any[]> {
   }
 }
 
+export async function addTradeInComment(
+  requestId: number, 
+  comment: string, 
+  createdBy: string, 
+  commentType: string = 'manual_comment'
+): Promise<any> {
+  try {
+    const result = await sql`
+      INSERT INTO trade_in_request_comments 
+        (request_id, comment_type, comment, created_by, created_at)
+      VALUES 
+        (${requestId}, ${commentType}, ${comment}, ${createdBy}, NOW())
+      RETURNING 
+        id,
+        comment_type,
+        comment,
+        created_by,
+        created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago' as created_at
+    `;
+    
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error adding trade-in comment:', error);
+    throw error;
+  }
+}
+
 export async function updateTradeInStatus(requestId: number, status: string): Promise<void> {
   try {
     await sql`
