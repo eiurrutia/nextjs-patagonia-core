@@ -1,5 +1,7 @@
 import Search from '@/app/ui/search';
 import TradeInTable from '@/app/ui/trade-in/table';
+import TradeInProductsListTable from '@/app/ui/trade-in/products-list-table';
+import Tabs from '@/app/ui/trade-in/tabs';
 import UserInfoCard from '@/app/ui/user-info-card';
 import { lusitana } from '@/app/ui/fonts';
 import { Suspense } from 'react';
@@ -60,9 +62,25 @@ export default async function Page({
       <div className="mt-4 flex items-center justify-between gap-2 md:mt-8">
         <Search placeholder="Buscar registros de Trade-In..." />
       </div>
-      <Suspense key={query + currentPage + timestamp} fallback={<InvoicesTableSkeleton />}>
-        <TradeInTable query={query} currentPage={currentPage} />
-      </Suspense>
+      
+      <Tabs 
+        tabLabels={['Solicitudes', 'Productos']}
+        tabIcons={['clipboard', 'tag']}
+      >
+        {/* Tab 1: Solicitudes */}
+        <div>
+          <Suspense key={query + currentPage + timestamp + 'requests'} fallback={<InvoicesTableSkeleton />}>
+            <TradeInTable query={query} currentPage={currentPage} />
+          </Suspense>
+        </div>
+        
+        {/* Tab 2: Productos */}
+        <div>
+          <Suspense key={query + currentPage + timestamp + 'products'} fallback={<InvoicesTableSkeleton />}>
+            <TradeInProductsListTable query={query} currentPage={currentPage} />
+          </Suspense>
+        </div>
+      </Tabs>
     </div>
   );
 }

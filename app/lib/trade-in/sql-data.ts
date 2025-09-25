@@ -438,3 +438,74 @@ export async function updateTradeInStatus(requestId: number, status: string): Pr
     throw error;
   }
 }
+
+/**
+ * Fetch all trade-in products with request information
+ */
+export async function fetchTradeInProducts(query: string, currentPage: number): Promise<any[]> {
+  noStore(); // Disable caching for this function
+  
+  const pageSize = 20;
+  const offset = (currentPage - 1) * pageSize;
+  
+  try {
+    const searchQuery = `%${query.toLowerCase()}%`;
+    
+    // Add a timestamp comment to ensure query is always fresh
+    const timestamp = new Date().getTime();
+    
+    const result = await sql`
+      SELECT 
+        tp.id,
+        tp.request_id,
+        tp.product_style,
+        tp.product_size,
+        tp.credit_range,
+        tp.usage_signs,
+        tp.pilling_level,
+        tp.stains_level,
+        tp.tears_holes_level,
+        tp.repairs_level,
+        tp.meets_minimum_requirements,
+        tp.calculated_state,
+        tp.confirmed_usage_signs,
+        tp.confirmed_pilling_level,
+        tp.confirmed_tears_holes_level,
+        tp.confirmed_repairs_level,
+        tp.confirmed_stains_level,
+        tp.confirmed_meets_minimum_requirements,
+        tp.confirmed_calculated_state,
+        tp.store_verified_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago' as store_verified_at,
+        tp.store_verified_by,
+        tp.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago' as created_at,
+        tp.updated_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago' as updated_at,
+        tr.request_number,
+        tr.first_name,
+        tr.last_name,
+        tr.email,
+        tr.phone,
+        tr.status as request_status,
+        ${timestamp} as query_timestamp
+      FROM trade_in_products tp
+      INNER JOIN trade_in_requests tr ON tp.request_id = tr.id
+      WHERE 
+        LOWER(tp.product_style) LIKE ${searchQuery} OR 
+        LOWER(tp.product_size) LIKE ${searchQuery} OR 
+        LOWER(tp.calculated_state) LIKE ${searchQuery} OR
+        LOWER(tp.confirmed_calculated_state) LIKE ${searchQuery} OR
+        LOWER(tr.request_number) LIKE ${searchQuery} OR
+        LOWER(tr.first_name) LIKE ${searchQuery} OR 
+        LOWER(tr.last_name) LIKE ${searchQuery} OR
+        LOWER(tr.email) LIKE ${searchQuery}
+      ORDER BY tp.created_at DESC
+      LIMIT ${pageSize}
+      OFFSET ${offset}
+    `;
+    
+    return result.rows;
+    
+  } catch (error) {
+    console.error('Error fetching trade-in products:', error);
+    throw error;
+  }
+}
