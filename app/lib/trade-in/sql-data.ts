@@ -84,6 +84,35 @@ function generateRequestNumber(id: number): string {
 }
 
 /**
+ * Generate confirmed SKU based on product information and confirmed state
+ * Format: W{codigo-item}{iniciales-estado}-{color}-{talla}
+ * Example: W26270CN-NTPL-M for "Como Nuevo" state
+ */
+function generateConfirmedSku(productStyle: string, productSize: string, confirmedState: string): string {
+  // Extract item code and color from product style
+  // Product style format is usually: {codigo-item}-{color}
+  const parts = productStyle.split('-');
+  const itemCode = parts[0] || '';
+  const color = parts[1] || '';
+  
+  // Map confirmed states to initials
+  const stateInitials: Record<string, string> = {
+    'como nuevo': 'CN',
+    'con detalles de uso': 'DU',
+    'detalle de uso': 'DU',
+    'detalles de uso': 'DU',
+    'reparado': 'RP',
+    'reciclado': 'IN'
+  };
+  
+  const normalizedState = confirmedState?.toLowerCase().trim();
+  const stateCode = stateInitials[normalizedState] || 'XX';
+  
+  // Format: W{codigo-item}{iniciales-estado}-{color}-{talla}
+  return `W${itemCode}${stateCode}-${color}-${productSize}`;
+}
+
+/**
  * Create a new trade-in request with multiple products
  */
 export async function createTradeInRequest(data: CreateTradeInRequestData): Promise<TradeInRequest> {
@@ -332,6 +361,26 @@ export async function updateProductVerification(
   }
 ): Promise<void> {
   try {
+    // First, get the current product data to generate the confirmed_sku
+    const productResult = await sql`
+      SELECT product_style, product_size 
+      FROM trade_in_products 
+      WHERE id = ${productId}
+    `;
+
+    let confirmedSku = null;
+    
+    // Generate confirmed_sku if we have a confirmed_calculated_state and product data
+    if (verificationData.confirmed_calculated_state && productResult.rows.length > 0) {
+      const product = productResult.rows[0];
+      confirmedSku = generateConfirmedSku(
+        product.product_style,
+        product.product_size,
+        verificationData.confirmed_calculated_state
+      );
+    }
+
+    // Update the product with all verification data including the generated SKU
     await sql`
       UPDATE trade_in_products 
       SET 
@@ -342,6 +391,7 @@ export async function updateProductVerification(
         confirmed_stains_level = ${verificationData.confirmed_stains_level || null},
         confirmed_meets_minimum_requirements = ${verificationData.confirmed_meets_minimum_requirements || null},
         confirmed_calculated_state = ${verificationData.confirmed_calculated_state || null},
+        confirmed_sku = ${confirmedSku},
         tears_holes_repairs = ${verificationData.tears_holes_repairs || null},
         repairs_level_repairs = ${verificationData.repairs_level_repairs || null},
         stains_level_repairs = ${verificationData.stains_level_repairs || null},
@@ -475,6 +525,7 @@ export async function fetchTradeInProducts(query: string, currentPage: number): 
         tp.confirmed_stains_level,
         tp.confirmed_meets_minimum_requirements,
         tp.confirmed_calculated_state,
+        tp.confirmed_sku,
         tp.store_verified_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago' as store_verified_at,
         tp.store_verified_by,
         tp.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago' as created_at,
@@ -493,6 +544,7 @@ export async function fetchTradeInProducts(query: string, currentPage: number): 
         LOWER(tp.product_size) LIKE ${searchQuery} OR 
         LOWER(tp.calculated_state) LIKE ${searchQuery} OR
         LOWER(tp.confirmed_calculated_state) LIKE ${searchQuery} OR
+        LOWER(tp.confirmed_sku) LIKE ${searchQuery} OR
         LOWER(tr.request_number) LIKE ${searchQuery} OR
         LOWER(tr.first_name) LIKE ${searchQuery} OR 
         LOWER(tr.last_name) LIKE ${searchQuery} OR

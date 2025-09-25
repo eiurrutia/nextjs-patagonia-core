@@ -89,6 +89,7 @@ export default async function TradeInProductsListTable({
           <table className="min-w-full text-gray-900">
             <thead className="rounded-lg text-left text-sm font-normal">
               <tr>
+                <th scope="col" className="px-3 py-5 font-medium">SKU</th>
                 <th scope="col" className="px-3 py-5 font-medium">Producto</th>
                 <th scope="col" className="px-3 py-5 font-medium">N° Solicitud</th>
                 <th scope="col" className="px-3 py-5 font-medium">Estado Producto</th>
@@ -103,6 +104,19 @@ export default async function TradeInProductsListTable({
                   key={product.id}
                   className="border-b last-of-type:border-none"
                 >
+                  <td className="px-3 py-3">
+                    {product.confirmed_sku ? (
+                      <div className="text-sm font-mono">
+                        <div className="font-medium text-gray-600">{product.confirmed_sku}</div>
+                      </div>
+                    ) : (
+                      <div className="text-sm">
+                        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-500">
+                          Pendiente
+                        </span>
+                      </div>
+                    )}
+                  </td>
                   <td className="px-3 py-3">
                     <div className="text-sm">
                       <div className="font-medium text-gray-900">{product.product_style}</div>
