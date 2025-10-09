@@ -54,23 +54,25 @@ export default async function TradeInProductsListTable({
         <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${color}`}>
           {state}
         </span>
-        {confirmedState && (
-          <div className="text-xs text-green-600 mt-1">✓ Verificado</div>
-        )}
       </div>
     );
   };
 
-  // Función para mostrar el estado de la solicitud
-  const getRequestStatusText = (status: string) => {
+  // Función para mostrar el estado operativo del producto
+  const getOperationalStatusText = (status: string | null) => {
+    if (!status) {
+      return (
+        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-500">
+          Pendiente
+        </span>
+      );
+    }
+
     const statusLabels: Record<string, { label: string; color: string }> = {
-      'solicitud_recibida': { label: 'Solicitud recibida', color: 'bg-blue-100 text-blue-800' },
-      'etiqueta_enviada': { label: 'Etiqueta enviada', color: 'bg-indigo-100 text-indigo-800' },
-      'recepcionado_tienda': { label: 'En tienda', color: 'bg-green-100 text-green-800' },
-      'credito_entregado': { label: 'Crédito entregado', color: 'bg-yellow-100 text-yellow-800' },
-      'factura_enviada': { label: 'Factura enviada', color: 'bg-purple-100 text-purple-800' },
-      'enviado_vestua': { label: 'Enviado a Vestua', color: 'bg-gray-100 text-gray-800' },
-      'pending': { label: 'Pendiente', color: 'bg-gray-100 text-gray-800' }
+      'en_tienda': { label: 'En Tienda', color: 'bg-blue-100 text-blue-800' },
+      'etiqueta_generada': { label: 'Etiqueta Generada', color: 'bg-indigo-100 text-indigo-800' },
+      'empacado': { label: 'Empacado', color: 'bg-yellow-100 text-yellow-800' },
+      'enviado': { label: 'Enviado', color: 'bg-green-100 text-green-800' }
     };
     
     const statusInfo = statusLabels[status] || { label: status, color: 'bg-gray-100 text-gray-800' };
@@ -89,11 +91,12 @@ export default async function TradeInProductsListTable({
           <table className="min-w-full text-gray-900">
             <thead className="rounded-lg text-left text-sm font-normal">
               <tr>
+                <th scope="col" className="px-3 py-5 font-medium">ID</th>
                 <th scope="col" className="px-3 py-5 font-medium">SKU</th>
-                <th scope="col" className="px-3 py-5 font-medium">Producto</th>
+                <th scope="col" className="px-3 py-5 font-medium">Estilo</th>
                 <th scope="col" className="px-3 py-5 font-medium">N° Solicitud</th>
                 <th scope="col" className="px-3 py-5 font-medium">Estado Producto</th>
-                <th scope="col" className="px-3 py-5 font-medium">Estado Solicitud</th>
+                <th scope="col" className="px-3 py-5 font-medium">Estado Operativo</th>
                 <th scope="col" className="px-3 py-5 font-medium w-48">Fecha Ingreso</th>
                 <th scope="col" className="px-3 py-5 font-medium">Acciones</th>
               </tr>
@@ -104,6 +107,16 @@ export default async function TradeInProductsListTable({
                   key={product.id}
                   className="border-b last-of-type:border-none"
                 >
+                  <td className="px-3 py-3">
+                    <div className="text-sm">
+                      <Link 
+                        href={`/trade-in/products/${product.id}`}
+                        className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                      >
+                        #{product.id}
+                      </Link>
+                    </div>
+                  </td>
                   <td className="px-3 py-3">
                     {product.confirmed_sku ? (
                       <div className="text-sm font-mono">
@@ -119,7 +132,9 @@ export default async function TradeInProductsListTable({
                   </td>
                   <td className="px-3 py-3">
                     <div className="text-sm">
-                      <div className="font-medium text-gray-900">{product.product_style}</div>
+                      <div className="font-medium text-gray-900">
+                        {product.product_style}
+                      </div>
                       <div className="text-gray-500">Talla: {product.product_size}</div>
                     </div>
                   </td>
@@ -135,22 +150,17 @@ export default async function TradeInProductsListTable({
                     {getProductState(product)}
                   </td>
                   <td className="px-3 py-3">
-                    {getRequestStatusText(product.request_status)}
+                    {getOperationalStatusText(product.product_status)}
                   </td>
                   <td className="px-3 py-3 w-48">
                     <div className="text-sm">
                       {formatDate(product.created_at)} hrs
                     </div>
-                    {product.store_verified_at && (
-                      <div className="text-xs text-green-600 mt-1">
-                        Verificado: {formatDate(product.store_verified_at)}
-                      </div>
-                    )}
                   </td>
                   <td className="px-3 py-3">
                     <div className="flex items-center gap-2">
-                      <Link href={`/trade-in/${encodeURIComponent(product.request_id)}/detail`}>
-                        <EyeIcon className="h-5 w-5 text-blue-500 hover:text-blue-600" title="Ver detalle de solicitud" />
+                      <Link href={`/trade-in/products/${product.id}`}>
+                        <EyeIcon className="h-5 w-5 text-blue-500 hover:text-blue-600" title="Ver detalle del producto" />
                       </Link>
                     </div>
                   </td>

@@ -50,7 +50,39 @@ module.exports = withPWA({
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.patagonia.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
+  },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: `
+              default-src 'self';
+              script-src 'self' 'unsafe-eval' 'unsafe-inline';
+              style-src 'self' 'unsafe-inline';
+              img-src 'self' data: blob: https://cdn.shopify.com https://9m64zfqkzfk3ohy7.public.blob.vercel-storage.com https://form-builder-by-hulkapps.s3.amazonaws.com https://production-us2.patagonia.com https://images.patagonia.com;
+              font-src 'self' data: https://images.patagonia.com;
+              connect-src 'self' https://api.openai.com;
+              frame-src 'self';
+              object-src 'none';
+              base-uri 'self';
+              form-action 'self';
+              frame-ancestors 'none';
+              upgrade-insecure-requests;
+            `.replace(/\s+/g, ' ').trim()
+          },
+        ],
+      },
+    ];
   },
   async rewrites() {
     return [

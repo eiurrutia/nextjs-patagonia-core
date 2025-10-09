@@ -483,8 +483,111 @@ export async function updateTradeInStatus(requestId: number, status: string): Pr
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ${requestId}
     `;
+
+    // Si el trade-in pasa a "recepcionado_tienda", actualizar todos sus productos a "en_tienda"
+    if (status === 'recepcionado_tienda') {
+      await updateProductsStatusToEnTienda(requestId);
+    }
   } catch (error) {
     console.error('Error updating trade-in status:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update products status to "en_tienda" when trade-in is received in store
+ */
+export async function updateProductsStatusToEnTienda(requestId: number): Promise<void> {
+  try {
+    await sql`
+      UPDATE trade_in_products 
+      SET 
+        product_status = 'en_tienda',
+        updated_at = CURRENT_TIMESTAMP
+      WHERE request_id = ${requestId} AND product_status IS NULL
+    `;
+  } catch (error) {
+    console.error('Error updating products status to en_tienda:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update individual product status
+ */
+export async function updateProductStatus(
+  productId: number, 
+  status: 'en_tienda' | 'etiqueta_generada' | 'empacado' | 'enviado',
+  updatedBy?: string
+): Promise<void> {
+  try {
+    await sql`
+      UPDATE trade_in_products 
+      SET 
+        product_status = ${status},
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${productId}
+    `;
+  } catch (error) {
+    console.error('Error updating product status:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get trade-in product by ID with complete information
+ */
+export async function getTradeInProductById(productId: number): Promise<any | null> {
+  try {
+    const result = await sql`
+      SELECT 
+        tp.*,
+        tp.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago' as created_at,
+        tp.updated_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago' as updated_at,
+        tp.store_verified_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago' as store_verified_at,
+        tr.request_number,
+        tr.first_name,
+        tr.last_name,
+        tr.email,
+        tr.phone,
+        tr.status as request_status,
+        tr.delivery_method,
+        tr.address,
+        tr.region,
+        tr.comuna,
+        tr.received_store_code
+      FROM trade_in_products tp
+      INNER JOIN trade_in_requests tr ON tp.request_id = tr.id
+      WHERE tp.id = ${productId}
+    `;
+    
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    const product = result.rows[0];
+    
+    // Parse product_images if it exists
+    let productImages = [];
+    try {
+      if (product.product_images) {
+        if (Array.isArray(product.product_images)) {
+          productImages = product.product_images;
+        } else if (typeof product.product_images === 'string') {
+          productImages = JSON.parse(product.product_images);
+        }
+      }
+    } catch (parseError) {
+      console.warn('Error parsing product_images for product:', productId, parseError);
+      productImages = [];
+    }
+
+    return {
+      ...product,
+      product_images: Array.isArray(productImages) ? productImages : []
+    };
+  } catch (error) {
+    console.error('Error fetching trade-in product:', error);
     throw error;
   }
 }
@@ -526,6 +629,7 @@ export async function fetchTradeInProducts(query: string, currentPage: number): 
         tp.confirmed_meets_minimum_requirements,
         tp.confirmed_calculated_state,
         tp.confirmed_sku,
+        tp.product_status,
         tp.store_verified_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago' as store_verified_at,
         tp.store_verified_by,
         tp.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago' as created_at,
@@ -545,6 +649,7 @@ export async function fetchTradeInProducts(query: string, currentPage: number): 
         LOWER(tp.calculated_state) LIKE ${searchQuery} OR
         LOWER(tp.confirmed_calculated_state) LIKE ${searchQuery} OR
         LOWER(tp.confirmed_sku) LIKE ${searchQuery} OR
+        LOWER(tp.product_status) LIKE ${searchQuery} OR
         LOWER(tr.request_number) LIKE ${searchQuery} OR
         LOWER(tr.first_name) LIKE ${searchQuery} OR 
         LOWER(tr.last_name) LIKE ${searchQuery} OR
