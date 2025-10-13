@@ -6,6 +6,7 @@ import { lusitana } from '@/app/ui/fonts';
 import { Button } from '@/app/ui/button';
 import { CheckCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import StoreReceptionForm from '@/app/ui/trade-in/store-reception-form';
+import StoreSelect from '@/app/ui/stores/store-select';
 import { TradeInFormData } from '@/app/lib/trade-in/form-types';
 import { ProductFormData } from '@/app/ui/trade-in/products-table';
 import Link from 'next/link';
@@ -37,15 +38,18 @@ export default function StoreReceptionPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [tradeInRequest, setTradeInRequest] = useState<TradeInRequest | null>(null);
+  const [stores, setStores] = useState<any[]>([]);
+  const [selectedStore, setSelectedStore] = useState<string>('');
 
   const tradeInId = params?.id as string;
 
-  // Fetch trade-in request data
+  // Fetch trade-in request data and stores
   useEffect(() => {
-    const fetchTradeInRequest = async () => {
+    const fetchData = async () => {
       if (!tradeInId) return;
 
       try {
+        // Fetch trade-in request
         const response = await fetch(`/api/trade-in/requests/${tradeInId}`);
         if (!response.ok) {
           throw new Error('Error al cargar la solicitud');
@@ -63,6 +67,18 @@ export default function StoreReceptionPage() {
           clientComment: data.client_comment
         };
         setTradeInRequest(mappedData);
+
+        // Fetch stores for admin users
+        if (session?.user?.role === 'admin') {
+          const storesResponse = await fetch('/api/stores');
+          if (storesResponse.ok) {
+            const storesResult = await storesResponse.json();
+            setStores(storesResult.stores || []);
+          }
+        } else if (session?.user?.role === 'store') {
+          // For store users, set the selected store automatically
+          setSelectedStore(session.user.store_code || '');
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error desconocido');
       } finally {
@@ -70,18 +86,46 @@ export default function StoreReceptionPage() {
       }
     };
 
-    fetchTradeInRequest();
-  }, [tradeInId]);
+    if (session !== undefined) {
+      fetchData();
+    }
+  }, [tradeInId, session]);
+
+  // Auto-scroll to top when error state changes
+  useEffect(() => {
+    if (error) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [error]);
 
   const handleSubmit = async (data: TradeInFormData & { 
     products: ProductFormData[];
     modifiedConditions?: any[];
     productRepairs?: any[];
   }) => {
+    // Validate store selection for admin users
+    if (session?.user?.role === 'admin' && !selectedStore) {
+      setError('Debes seleccionar la tienda donde se está recibiendo la solicitud');
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
     try {
+      // Determine store code and name
+      let storeCode = '';
+      let storeName = '';
+      
+      if (session?.user?.role === 'store') {
+        storeCode = session.user.store_code || '';
+        storeName = session.user.store_name || '';
+      } else if (session?.user?.role === 'admin' && selectedStore) {
+        const store = stores.find((s: any) => s.code === selectedStore);
+        storeCode = selectedStore;
+        storeName = store?.name || '';
+      }
+
       const requestData = {
         id: tradeInId,
         firstName: data.firstName,
@@ -94,10 +138,11 @@ export default function StoreReceptionPage() {
         address: data.address || tradeInRequest?.address,
         houseDetails: data.houseDetails || tradeInRequest?.houseDetails,
         client_comment: data.client_comment,
-        deliveryMethod: 'store', // Override to store reception
+        deliveryMethod: tradeInRequest?.deliveryMethod || 'shipping', // Keep original delivery method
         products: data.products,
         status: 'recepcionado_tienda', // Mark as received in store
         receivedInStore: true,
+        receivedStoreCode: storeCode, // Add store code where it was received
         originalDeliveryMethod: tradeInRequest?.deliveryMethod, // Keep original for reference
         modifiedConditions: data.modifiedConditions || [],
         productRepairs: data.productRepairs || []
@@ -182,7 +227,7 @@ export default function StoreReceptionPage() {
     address: tradeInRequest.address,
     houseDetails: tradeInRequest.houseDetails,
     client_comment: tradeInRequest.clientComment,
-    deliveryMethod: 'store' // Override for store reception
+    deliveryMethod: tradeInRequest?.deliveryMethod || 'shipping' // Keep original delivery method
   } : {};
 
   return (
@@ -211,6 +256,32 @@ export default function StoreReceptionPage() {
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-red-800">{error}</p>
+          </div>
+        )}
+
+        {/* Store Selection for Admin Users */}
+        {session?.user?.role === 'admin' && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Información de Recepción</h2>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tienda donde se está recibiendo <span className="text-red-500">*</span>
+              </label>
+              <StoreSelect
+                value={selectedStore}
+                onChange={setSelectedStore}
+                placeholder="Selecciona la tienda..."
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Store Info for Store Users */}
+        {session?.user?.role === 'store' && session?.user?.store_name && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <h3 className="text-sm font-medium text-blue-800 mb-1">Recibiendo en:</h3>
+            <p className="text-blue-700 font-semibold">{session.user.store_name}</p>
+            <p className="text-blue-600 text-sm">Código: {session.user.store_code}</p>
           </div>
         )}
 

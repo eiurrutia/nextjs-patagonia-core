@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]';
 import { sql } from '@vercel/postgres';
-import { updateProductVerification, createTradeInComment } from '@/app/lib/trade-in/sql-data';
+import { updateProductVerification, createTradeInComment, updateProductsStatusToEnTienda } from '@/app/lib/trade-in/sql-data';
 import { evaluateProductCondition } from '@/app/lib/trade-in/product-condition-evaluator';
 
 // Aux function to get the confirmed value (modified or original)
@@ -83,6 +83,7 @@ export default async function handler(req, res) {
       products,
       status,
       receivedInStore,
+      receivedStoreCode,
       originalDeliveryMethod,
       modifiedConditions = [],
       productRepairs = []
@@ -228,12 +229,27 @@ export default async function handler(req, res) {
           house_details = ${houseDetails || null},
           client_comment = ${client_comment || null},
           delivery_method = ${deliveryMethod},
+          received_store_code = ${receivedStoreCode || null},
           status = ${status || 'recepcionado_tienda'},
           updated_at = CURRENT_TIMESTAMP
         WHERE id = ${requestId}
       `;
 
-      // Update existing products with any new information if provided
+      // 5. Update products status to "en_tienda" when received in store
+      await updateProductsStatusToEnTienda(requestId);
+
+      // 6. Update products with received store code
+      if (receivedStoreCode) {
+        await sql`
+          UPDATE trade_in_products 
+          SET 
+            received_store_code = ${receivedStoreCode},
+            updated_at = CURRENT_TIMESTAMP
+          WHERE request_id = ${requestId}
+        `;
+      }
+
+      // 7. Update existing products with any new information if provided
       if (products && products.length > 0) {
         for (const product of products) {
           // Only update if the product exists and has changes

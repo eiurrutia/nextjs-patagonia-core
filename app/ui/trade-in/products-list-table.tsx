@@ -1,4 +1,5 @@
 import { fetchTradeInProducts } from '@/app/lib/trade-in/sql-data';
+import { getStores } from '@/app/lib/stores/sql-data';
 import { TagIcon, EyeIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 
@@ -31,6 +32,29 @@ export default async function TradeInProductsListTable({
   currentPage: number;
 }) {
   const products = await fetchTradeInProducts(query, currentPage);
+  const stores = await getStores();
+  
+  // Crear un mapa de códigos de tienda para obtener nombres
+  const storeMap = new Map(stores.map(store => [store.code, store.name]));
+
+  // Función para mostrar información de la bodega de recepción
+  const getReceptionWarehouseText = (storeCode: string | null) => {
+    if (!storeCode) {
+      return (
+        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-500">
+          Pendiente
+        </span>
+      );
+    }
+
+    const storeName = storeMap.get(storeCode) || storeCode;
+    
+    return (
+      <div className="text-sm">
+        <div className="text-gray-800 text-xs">{storeCode}</div>
+      </div>
+    );
+  };
 
   // Función para obtener el estado del producto (prioriza el confirmado sobre el calculado)
   const getProductState = (product: any) => {
@@ -94,6 +118,7 @@ export default async function TradeInProductsListTable({
                 <th scope="col" className="px-3 py-5 font-medium">ID</th>
                 <th scope="col" className="px-3 py-5 font-medium">SKU</th>
                 <th scope="col" className="px-3 py-5 font-medium">Estilo</th>
+                <th scope="col" className="px-3 py-5 font-medium">Bodega Recepción</th>
                 <th scope="col" className="px-3 py-5 font-medium">N° Solicitud</th>
                 <th scope="col" className="px-3 py-5 font-medium">Estado Producto</th>
                 <th scope="col" className="px-3 py-5 font-medium">Estado Operativo</th>
@@ -137,6 +162,9 @@ export default async function TradeInProductsListTable({
                       </div>
                       <div className="text-gray-500">Talla: {product.product_size}</div>
                     </div>
+                  </td>
+                  <td className="px-3 py-3">
+                    {getReceptionWarehouseText(product.product_received_store_code)}
                   </td>
                   <td className="px-3 py-3 font-medium">
                     <Link 

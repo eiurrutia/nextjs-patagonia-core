@@ -36,6 +36,7 @@ export interface TradeInProduct {
   meets_minimum_requirements: boolean;
   product_images?: string[];
   calculated_state?: string;
+  received_store_code?: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -630,6 +631,7 @@ export async function fetchTradeInProducts(query: string, currentPage: number): 
         tp.confirmed_calculated_state,
         tp.confirmed_sku,
         tp.product_status,
+        tp.received_store_code as product_received_store_code,
         tp.store_verified_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago' as store_verified_at,
         tp.store_verified_by,
         tp.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago' as created_at,
@@ -663,6 +665,84 @@ export async function fetchTradeInProducts(query: string, currentPage: number): 
     
   } catch (error) {
     console.error('Error fetching trade-in products:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch trade-in products filtered by store code
+ */
+export async function fetchTradeInProductsByStore(
+  storeCode: string, 
+  query: string, 
+  currentPage: number
+): Promise<any[]> {
+  noStore(); // Disable caching for this function
+  
+  const pageSize = 20;
+  const offset = (currentPage - 1) * pageSize;
+  
+  try {
+    const searchQuery = `%${query.toLowerCase()}%`;
+    
+    const result = await sql`
+      SELECT 
+        tp.id,
+        tp.request_id,
+        tp.product_style,
+        tp.product_size,
+        tp.credit_range,
+        tp.usage_signs,
+        tp.pilling_level,
+        tp.stains_level,
+        tp.tears_holes_level,
+        tp.repairs_level,
+        tp.meets_minimum_requirements,
+        tp.calculated_state,
+        tp.confirmed_usage_signs,
+        tp.confirmed_pilling_level,
+        tp.confirmed_tears_holes_level,
+        tp.confirmed_repairs_level,
+        tp.confirmed_stains_level,
+        tp.confirmed_meets_minimum_requirements,
+        tp.confirmed_calculated_state,
+        tp.confirmed_sku,
+        tp.product_status,
+        tp.received_store_code as product_received_store_code,
+        tp.store_verified_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago' as store_verified_at,
+        tp.store_verified_by,
+        tp.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago' as created_at,
+        tp.updated_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago' as updated_at,
+        tr.request_number,
+        tr.first_name,
+        tr.last_name,
+        tr.email,
+        tr.status as request_status,
+        tr.delivery_method
+      FROM trade_in_products tp
+      INNER JOIN trade_in_requests tr ON tp.request_id = tr.id
+      WHERE tp.received_store_code = ${storeCode}
+      AND (
+        LOWER(tp.product_style) LIKE ${searchQuery} OR 
+        LOWER(tp.product_size) LIKE ${searchQuery} OR 
+        LOWER(tp.calculated_state) LIKE ${searchQuery} OR
+        LOWER(tp.confirmed_calculated_state) LIKE ${searchQuery} OR
+        LOWER(tp.confirmed_sku) LIKE ${searchQuery} OR
+        LOWER(tp.product_status) LIKE ${searchQuery} OR
+        LOWER(tr.request_number) LIKE ${searchQuery} OR
+        LOWER(tr.first_name) LIKE ${searchQuery} OR 
+        LOWER(tr.last_name) LIKE ${searchQuery} OR
+        LOWER(tr.email) LIKE ${searchQuery}
+      )
+      ORDER BY tp.created_at DESC
+      LIMIT ${pageSize}
+      OFFSET ${offset}
+    `;
+    
+    return result.rows;
+    
+  } catch (error) {
+    console.error('Error fetching trade-in products by store:', error);
     throw error;
   }
 }
