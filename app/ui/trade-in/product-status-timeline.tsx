@@ -30,19 +30,35 @@ interface StatusStep {
 export default function ProductStatusTimeline({ product, onStatusChange }: ProductStatusTimelineProps) {
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return null;
+  const formatDate = (dateInput: string | Date | null) => {
+    if (!dateInput) return null;
     
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('es-CL', {
-      timeZone: 'America/Santiago',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    }).format(date);
+    try {
+      // Convert to string if it's a Date object
+      const dateString = dateInput instanceof Date ? dateInput.toISOString() : dateInput.toString();
+      
+      // Create date object
+      const date = new Date(dateString);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid date received:', dateInput);
+        return null;
+      }
+      
+      return new Intl.DateTimeFormat('es-CL', {
+        timeZone: 'America/Santiago',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }).format(date);
+    } catch (error) {
+      console.error('Error formatting date:', dateInput, error);
+      return null;
+    }
   };
 
   const getStatusSteps = (): StatusStep[] => {
@@ -58,7 +74,7 @@ export default function ProductStatusTimeline({ product, onStatusChange }: Produ
         name: 'En Tienda',
         description: 'Producto recibido en tienda',
         icon: BuildingStorefrontIcon,
-        completedAt: currentIndex >= 0 ? formatDate(product.updated_at) : null,
+        completedAt: currentIndex >= 0 ? product.updated_at : null,
         isCompleted: currentIndex >= 0,
         isCurrent: currentStatus === 'en_tienda',
         canUpdate: currentIndex < 0 // Can update if not started
@@ -68,7 +84,7 @@ export default function ProductStatusTimeline({ product, onStatusChange }: Produ
         name: 'Etiqueta Generada',
         description: 'Etiqueta del producto generada',
         icon: TagIcon,
-        completedAt: currentIndex >= 1 ? formatDate(product.updated_at) : null,
+        completedAt: currentIndex >= 1 ? product.updated_at : null,
         isCompleted: currentIndex >= 1,
         isCurrent: currentStatus === 'etiqueta_generada',
         canUpdate: currentIndex === 0 // Can update if current is en_tienda
@@ -78,7 +94,7 @@ export default function ProductStatusTimeline({ product, onStatusChange }: Produ
         name: 'Empacado',
         description: 'Producto empacado y listo',
         icon: ArchiveBoxIcon,
-        completedAt: currentIndex >= 2 ? formatDate(product.updated_at) : null,
+        completedAt: currentIndex >= 2 ? product.updated_at : null,
         isCompleted: currentIndex >= 2,
         isCurrent: currentStatus === 'empacado',
         canUpdate: currentIndex === 1 // Can update if current is etiqueta_generada
@@ -88,7 +104,7 @@ export default function ProductStatusTimeline({ product, onStatusChange }: Produ
         name: 'Enviado',
         description: 'Producto enviado a destino',
         icon: TruckIcon,
-        completedAt: currentIndex >= 3 ? formatDate(product.updated_at) : null,
+        completedAt: currentIndex >= 3 ? product.updated_at : null,
         isCompleted: currentIndex >= 3,
         isCurrent: currentStatus === 'enviado',
         canUpdate: currentIndex === 2 // Can update if current is empacado

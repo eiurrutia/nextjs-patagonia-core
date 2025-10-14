@@ -543,9 +543,9 @@ export async function getTradeInProductById(productId: number): Promise<any | nu
     const result = await sql`
       SELECT 
         tp.*,
-        tp.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago' as created_at,
-        tp.updated_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago' as updated_at,
-        tp.store_verified_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago' as store_verified_at,
+        tp.created_at,
+        tp.updated_at,
+        tp.store_verified_at,
         tr.request_number,
         tr.first_name,
         tr.last_name,
