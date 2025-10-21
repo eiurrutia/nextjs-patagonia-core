@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { notFound } from 'next/navigation';
 import ProductDetailInfo from '@/app/ui/trade-in/product-detail-info';
 import ProductStatusTimeline from '@/app/ui/trade-in/product-status-timeline';
+import GeneratedLabelCard from '@/app/ui/trade-in/generated-label-card';
 import Link from 'next/link';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { CardSkeleton } from '@/app/ui/skeletons';
@@ -27,6 +28,8 @@ export default function ProductDetailPage({
   const [product, setProduct] = useState<ProductData | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFoundError, setNotFoundError] = useState(false);
+  const [labelGenerated, setLabelGenerated] = useState(false);
+  const [labelPdfUrl, setLabelPdfUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -43,6 +46,13 @@ export default function ProductDetailPage({
         
         const data = await response.json();
         setProduct(data);
+        
+        // Verificar si ya existe una etiqueta generada
+        if (data.label_pdf_url) {
+          setLabelGenerated(true);
+          setLabelPdfUrl(data.label_pdf_url);
+          console.log('Etiqueta existente encontrada:', data.label_pdf_url);
+        }
       } catch (error) {
         console.error('Error fetching product:', error);
         setNotFoundError(true);
@@ -53,6 +63,11 @@ export default function ProductDetailPage({
 
     fetchProduct();
   }, [params.id]);
+
+  // Debug effect for labelGenerated state
+  useEffect(() => {
+    console.log('labelGenerated state changed to:', labelGenerated);
+  }, [labelGenerated]);
 
   const handleStatusChange = (newStatus: ProductStatus) => {
     if (product) {
@@ -114,18 +129,32 @@ export default function ProductDetailPage({
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid gap-8 grid-cols-1 lg:grid-cols-2">
         {/* Left Column - Product Information */}
         <div className="space-y-6">
           <ProductDetailInfo product={product} />
         </div>
 
-        {/* Right Column - Status Timeline */}
+        {/* Right Column - Status Timeline + Generated Label */}
         <div className="space-y-6">
           <ProductStatusTimeline 
             product={product} 
             onStatusChange={handleStatusChange}
+            onLabelGenerated={(pdfBlobUrl: string) => {
+              console.log('Label generated callback received in main page with URL:', pdfBlobUrl);
+              setLabelGenerated(true);
+              setLabelPdfUrl(pdfBlobUrl);
+            }}
           />
+          
+          {/* Generated Label Card (below timeline when generated) */}
+          {labelGenerated && product.confirmed_sku && (
+            <GeneratedLabelCard
+              sku={product.confirmed_sku}
+              description={`Patagonia ${product.brand || ''} ${product.model || ''} ${product.size || ''}`.trim()}
+              pdfBlobUrl={labelPdfUrl || undefined}
+            />
+          )}
         </div>
       </div>
     </div>

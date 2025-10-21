@@ -37,6 +37,7 @@ export interface TradeInProduct {
   product_images?: string[];
   calculated_state?: string;
   received_store_code?: string;
+  label_pdf_url?: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -743,6 +744,24 @@ export async function fetchTradeInProductsByStore(
     
   } catch (error) {
     console.error('Error fetching trade-in products by store:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update label PDF URL for a trade-in product
+ */
+export async function updateProductLabelPdfUrl(productId: number, pdfUrl: string): Promise<void> {
+  try {
+    await sql`
+      UPDATE trade_in_products 
+      SET 
+        label_pdf_url = ${pdfUrl},
+        updated_at = NOW()
+      WHERE id = ${productId}
+    `;
+  } catch (error) {
+    console.error('Error updating label PDF URL:', error);
     throw error;
   }
 }

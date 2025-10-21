@@ -7,13 +7,16 @@ import {
   BuildingStorefrontIcon,
   TagIcon,
   ArchiveBoxIcon,
-  TruckIcon
+  TruckIcon,
+  PrinterIcon
 } from '@heroicons/react/24/outline';
 import { updateProductStatus } from '@/app/lib/trade-in/sql-data';
+import LabelPreviewModal from './label-preview-modal';
 
 interface ProductStatusTimelineProps {
   product: any;
   onStatusChange?: (newStatus: 'en_tienda' | 'etiqueta_generada' | 'empacado' | 'enviado') => void;
+  onLabelGenerated?: (pdfBlobUrl: string) => void;
 }
 
 interface StatusStep {
@@ -27,8 +30,10 @@ interface StatusStep {
   canUpdate: boolean;
 }
 
-export default function ProductStatusTimeline({ product, onStatusChange }: ProductStatusTimelineProps) {
+export default function ProductStatusTimeline({ product, onStatusChange, onLabelGenerated }: ProductStatusTimelineProps) {
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
+  const [showLabelPreview, setShowLabelPreview] = useState(false);
+  const [labelGenerated, setLabelGenerated] = useState(false);
 
   const formatDate = (dateInput: string | Date | null) => {
     if (!dateInput) return null;
@@ -214,6 +219,24 @@ export default function ProductStatusTimeline({ product, onStatusChange }: Produ
                         </button>
                       )}
                       
+                      {/* Botón Generar Etiqueta - solo cuando está en en_tienda */}
+                      {step.id === 'en_tienda' && step.isCompleted && product.confirmed_sku && !labelGenerated && (
+                        <button
+                          onClick={() => setShowLabelPreview(true)}
+                          className="inline-flex items-center px-3 py-1.5 ml-2 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        >
+                          <PrinterIcon className="h-4 w-4 mr-1" />
+                          Generar Etiqueta
+                        </button>
+                      )}
+
+                      {/* Indicador de etiqueta generada */}
+                      {step.id === 'en_tienda' && step.isCompleted && product.confirmed_sku && labelGenerated && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 ml-2 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          ✓ Etiqueta generada
+                        </span>
+                      )}
+                      
                       {step.isCurrent && !step.isCompleted && (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           En proceso
@@ -237,6 +260,19 @@ export default function ProductStatusTimeline({ product, onStatusChange }: Produ
           )}
         </div>
       </div>
+
+      {/* Modal de vista previa de etiqueta */}
+      <LabelPreviewModal
+        isOpen={showLabelPreview}
+        onClose={() => setShowLabelPreview(false)}
+        sku={product.confirmed_sku || product.id}
+        productId={product.id}
+        description={`Patagonia ${product.brand || ''} ${product.model || ''} ${product.size || ''}`.trim()}
+        onLabelGenerated={(pdfBlobUrl: string) => {
+          setLabelGenerated(true);
+          onLabelGenerated?.(pdfBlobUrl);
+        }}
+      />
     </div>
   );
 }

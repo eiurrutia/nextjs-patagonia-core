@@ -72,8 +72,8 @@ module.exports = withPWA({
               img-src 'self' data: blob: https://cdn.shopify.com https://9m64zfqkzfk3ohy7.public.blob.vercel-storage.com https://form-builder-by-hulkapps.s3.amazonaws.com https://production-us2.patagonia.com https://images.patagonia.com;
               font-src 'self' data: https://images.patagonia.com;
               connect-src 'self' https://api.openai.com;
-              frame-src 'self';
-              object-src 'none';
+              frame-src 'self' https://9m64zfqkzfk3ohy7.public.blob.vercel-storage.com;
+              object-src 'self' https://9m64zfqkzfk3ohy7.public.blob.vercel-storage.com;
               base-uri 'self';
               form-action 'self';
               frame-ancestors 'none';
