@@ -32,33 +32,30 @@ export default function LabelPreviewModal({
   const [barcodeGenerated, setBarcodeGenerated] = useState(false);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
 
-  // Generar PDF blob URL cuando el modal se abre
+  // Generar PDF blob URL cuando el modal se abre (solo para vista previa temporal)
   useEffect(() => {
     if (isOpen && sku && !pdfBlobUrl) {
-      console.log('Generando PDF blob URL para:', sku);
+      console.log('Generando vista previa temporal para:', sku);
       try {
-        // Generar PDF como blob
+        // Generar PDF temporal solo para vista previa (NO se guarda en BD)
         const pdfBlob = LabelGenerator.generatePDFBlob({ sku, description });
         const blobUrl = URL.createObjectURL(pdfBlob);
         setPdfBlobUrl(blobUrl);
-        console.log('PDF blob URL generado:', blobUrl);
+        console.log('Vista previa temporal generada');
         
-        // Notificar al componente padre con la URL generada
-        if (onLabelGenerated) {
-          onLabelGenerated(blobUrl);
-        }
+        // NO notificamos al padre aún, solo cuando se descargue o imprima
       } catch (error) {
-        console.error('Error generando PDF blob:', error);
+        console.error('Error generando vista previa:', error);
       }
     } else if (!isOpen) {
-      // Limpiar cuando se cierra el modal
-      if (pdfBlobUrl) {
+      // Limpiar cuando se cierra el modal solo si es blob URL temporal
+      if (pdfBlobUrl && pdfBlobUrl.startsWith('blob:')) {
         URL.revokeObjectURL(pdfBlobUrl);
         setPdfBlobUrl(null);
       }
       setBarcodeGenerated(false);
     }
-  }, [isOpen, sku, description, pdfBlobUrl, onLabelGenerated]);
+  }, [isOpen, sku, description, pdfBlobUrl]);
 
   if (!isOpen) return null;
 
@@ -95,32 +92,25 @@ export default function LabelPreviewModal({
     try {
       console.log('Generando PDF para imprimir...');
       
+      // Verificar si ya tenemos URL persistente (no blob temporal)
       let urlToUse = pdfBlobUrl;
       
-      // Si no tenemos URL persistente, generar y subir
-      if (!urlToUse) {
+      // Si no tenemos URL persistente O si es un blob temporal, generar y subir
+      if (!urlToUse || urlToUse.startsWith('blob:')) {
+        console.log('Generando y subiendo PDF a Vercel Blob...');
         urlToUse = await LabelGenerator.generateAndUploadPDF({ sku, description }, productId);
         setPdfBlobUrl(urlToUse);
+        
+        // Notificar que se generó la etiqueta persistente
+        onLabelGenerated?.(urlToUse);
+        console.log('PDF guardado en Vercel Blob:', urlToUse);
       }
       
       // Abrir el PDF en una nueva ventana para imprimir
-      const printWindow = window.open(urlToUse, '_blank', 'width=800,height=600');
+      // Agregamos parámetros para que se abra optimizado para impresión
+      window.open(`${urlToUse}#view=FitH`, '_blank');
       
-      if (printWindow) {
-        // Esperar un poco y luego mostrar el diálogo de impresión
-        setTimeout(() => {
-          printWindow.print();
-        }, 1000);
-        
-        // Notificar que se generó la etiqueta
-        onLabelGenerated?.(urlToUse);
-        console.log('onLabelGenerated called - debería aparecer la card');
-        
-      } else {
-        alert('No se pudo abrir la ventana de impresión. Verifica que los pop-ups estén habilitados.');
-      }
-      
-      console.log('PDF preparado para imprimir con URL persistente:', urlToUse);
+      console.log('PDF abierto para imprimir');
       
     } catch (error) {
       console.error('Error preparando PDF para imprimir:', error);
