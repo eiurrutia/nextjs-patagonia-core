@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { 
@@ -16,6 +17,18 @@ interface ProductDetailInfoProps {
 }
 
 export default function ProductDetailInfo({ product }: ProductDetailInfoProps) {
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openImageModal = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+    setIsModalOpen(true);
+  };
+
+  const closeImageModal = () => {
+    setSelectedImage(null);
+    setIsModalOpen(false);
+  };
   // Función para obtener el estado del producto (prioriza el confirmado sobre el calculado)
   const getProductState = () => {
     const confirmedState = product.confirmed_calculated_state;
@@ -174,7 +187,11 @@ export default function ProductDetailInfo({ product }: ProductDetailInfoProps) {
           
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {product.product_images.map((imageUrl: string, index: number) => (
-              <div key={index} className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden">
+              <div 
+                key={index} 
+                className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
+                onClick={() => openImageModal(imageUrl)}
+              >
                 <Image
                   src={imageUrl}
                   alt={`${product.product_style} - Imagen ${index + 1}`}
@@ -219,6 +236,42 @@ export default function ProductDetailInfo({ product }: ProductDetailInfoProps) {
           ))}
         </div>
       </div>
+
+      {/* Image Modal */}
+      {isModalOpen && selectedImage && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4"
+          onClick={closeImageModal}
+        >
+          <div 
+            className="relative max-w-4xl max-h-[90vh] bg-white rounded-lg overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={closeImageModal}
+              className="absolute top-4 right-4 z-10 bg-white rounded-full p-2 hover:bg-gray-100 transition-colors shadow-lg"
+            >
+              <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
+            {/* Image */}
+            <div className="relative w-full h-full">
+              <div className="relative" style={{ width: '800px', height: '600px' }}>
+                <Image
+                  src={selectedImage}
+                  alt="Imagen del producto"
+                  fill
+                  sizes="800px"
+                  className="object-contain"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
