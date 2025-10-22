@@ -3,24 +3,24 @@
 
 export interface ConditionResponses {
   usage_signs: 'yes' | 'no';
-  pilling_level: 'regular' | 'moderate' | 'high';
-  stains_level: 'regular' | 'moderate' | 'high';
-  tears_holes_level: 'regular' | 'moderate' | 'high';
-  repairs_level: 'regular' | 'moderate' | 'high';
+  pilling_level: 'no_presenta' | 'moderate' | 'high';
+  stains_level: 'no_presenta' | 'moderate' | 'high';
+  tears_holes_level: 'no_presenta' | 'moderate' | 'high';
+  repairs_level: 'no_presenta' | 'moderate' | 'high';
 }
 
 export type ProductState = 'Como Nuevo' | 'Con detalles de uso' | 'Reparado' | 'Reciclado';
 
 // Mapping from response values to scoring system
 const responseToScore = {
-  'regular': 0,    // B
-  'moderate': 1,   // M  
-  'high': 3        // A
+  'no_presenta': 0,    // B (antes 'regular')
+  'moderate': 1,       // M  
+  'high': 3            // A
 };
 
 // Mapping from response values to letter grades for readability
 const responseToGrade = {
-  'regular': 'B',
+  'no_presenta': 'B',
   'moderate': 'M',
   'high': 'A'
 };
@@ -34,18 +34,18 @@ export function evaluateProductCondition(responses: ConditionResponses): Product
   const { usage_signs, pilling_level, stains_level, tears_holes_level, repairs_level } = responses;
 
   // Special case: If usage_signs is "no" (no signs of use)
-  // Product can only be "Como Nuevo" if ALL other responses are also "regular"
+  // Product can only be "Como Nuevo" if ALL other responses are also "no_presenta"
   if (usage_signs === 'no') {
-    if (pilling_level === 'regular' && 
-        stains_level === 'regular' &&
-        tears_holes_level === 'regular' && 
-        repairs_level === 'regular') {
+    if (pilling_level === 'no_presenta' && 
+        stains_level === 'no_presenta' &&
+        tears_holes_level === 'no_presenta' && 
+        repairs_level === 'no_presenta') {
       return 'Como Nuevo';
     }
-    // If usage_signs is no but others are not all regular, continue with scoring logic
+    // If usage_signs is no but others are not all no_presenta, continue with scoring logic
   }
 
-  // For all other cases (usage_signs is yes, or usage_signs is no but others aren't all regular)
+  // For all other cases (usage_signs is yes, or usage_signs is no but others aren't all no_presenta)
   // Use scoring table logic
   
   // Calculate scores for the four evaluation criteria (excluding usage_signs)
@@ -54,9 +54,9 @@ export function evaluateProductCondition(responses: ConditionResponses): Product
   const tearsScore = responseToScore[tears_holes_level];
   const repairsScore = responseToScore[repairs_level];
   
-  // Count number of repairs (non-regular responses)
+  // Count number of repairs (non-no_presenta responses)
   const numRepairs = [pilling_level, stains_level, tears_holes_level, repairs_level]
-    .filter(response => response !== 'regular').length;
+    .filter(response => response !== 'no_presenta').length;
   
   // Calculate total score
   const totalScore = pillingScore + stainsScore + tearsScore + repairsScore;
@@ -92,7 +92,7 @@ export function getEvaluationBreakdown(responses: ConditionResponses) {
   const repairsScore = responseToScore[repairs_level];
   
   const numRepairs = [pilling_level, stains_level, tears_holes_level, repairs_level]
-    .filter(response => response !== 'regular').length;
+    .filter(response => response !== 'no_presenta').length;
   
   const totalScore = pillingScore + stainsScore + tearsScore + repairsScore;
   const finalState = evaluateProductCondition(responses);
@@ -111,10 +111,10 @@ export function getEvaluationBreakdown(responses: ConditionResponses) {
     totalScore,
     finalState,
     isSpecialCase: usage_signs === 'no' && 
-                   pilling_level === 'regular' && 
-                   stains_level === 'regular' &&
-                   tears_holes_level === 'regular' && 
-                   repairs_level === 'regular'
+                   pilling_level === 'no_presenta' && 
+                   stains_level === 'no_presenta' &&
+                   tears_holes_level === 'no_presenta' && 
+                   repairs_level === 'no_presenta'
   };
 }
 

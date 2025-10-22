@@ -19,13 +19,13 @@ export default function ConditionAssessment({ values, onChange, errors = {} }: C
 
   const showDetailedQuestions = values.usage_signs === 'yes';
 
-  // Auto-assign "regular" values when user selects "No" for usage signs
+  // Auto-assign "no_presenta" values when user selects "No" for usage signs
   useEffect(() => {
     if (values.usage_signs === 'no') {
-      // Automatically set all other questions to "regular"
+      // Automatically set all other questions to "no_presenta"
       otherQuestions.forEach(question => {
-        if (!values[question.id] || values[question.id] !== 'regular') {
-          onChange(question.id, 'regular');
+        if (!values[question.id] || values[question.id] !== 'no_presenta') {
+          onChange(question.id, 'no_presenta');
         }
       });
     }

@@ -47,8 +47,8 @@ export const conditionQuestions: ConditionQuestion[] = [
     description: 'Evalúa la presencia de bolitas o pilling en el tejido',
     options: [
       {
-        value: 'regular',
-        label: 'Regular',
+        value: 'no_presenta',
+        label: 'No Presenta',
         description: 'Sin pilling visible, tejido liso y uniforme',
         imageUrl: getImageUrl('pilling-none.png')
       },
@@ -72,8 +72,8 @@ export const conditionQuestions: ConditionQuestion[] = [
     description: 'Evalúa la presencia de rasgaduras, hoyos o daños en el tejido',
     options: [
       {
-        value: 'regular',
-        label: 'Regular',
+        value: 'no_presenta',
+        label: 'No Presenta',
         description: 'Sin rasgaduras ni hoyos visibles',
         imageUrl: getImageUrl('tears-none.png')
       },
@@ -97,8 +97,8 @@ export const conditionQuestions: ConditionQuestion[] = [
     description: 'Evalúa si el producto tiene reparaciones visibles',
     options: [
       {
-        value: 'regular',
-        label: 'Regular',
+        value: 'no_presenta',
+        label: 'No Presenta',
         description: 'Sin reparaciones visibles, producto original',
         imageUrl: getImageUrl('repairs-none.png')
       },
@@ -122,8 +122,8 @@ export const conditionQuestions: ConditionQuestion[] = [
     description: 'Evalúa si el producto tiene manchas visibles',
     options: [
       {
-        value: 'regular',
-        label: 'Regular',
+        value: 'no_presenta',
+        label: 'No Presenta',
         description: 'Sin manchas visibles, tela limpia',
         imageUrl: getImageUrl('stains-none.png')
       },

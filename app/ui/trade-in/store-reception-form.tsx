@@ -6,6 +6,10 @@ import { conditionQuestions } from '@/app/lib/trade-in/condition-images';
 import { ProductFormData } from '@/app/ui/trade-in/products-table';
 import { TradeInFormData } from '@/app/lib/trade-in/form-types';
 import Image from 'next/image';
+import { 
+  getRepairOptionsForQuestion, 
+  calculateConditionLevel 
+} from '@/app/lib/trade-in/condition-scoring';
 
 interface StoreReceptionFormProps {
   onSubmit: (data: TradeInFormData & { 
@@ -35,6 +39,7 @@ interface RepairOption {
 
 interface ProductRepairs {
   productId: string;
+  pilling_level_repairs: string[];
   tears_holes_repairs: string[];
   repairs_level_repairs: string[];
   stains_level_repairs: string[];
@@ -67,37 +72,24 @@ export default function StoreReceptionForm({
   const [productRepairs, setProductRepairs] = useState<ProductRepairs[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  
+  // Store original values when products are loaded
+  const [originalProductValues, setOriginalProductValues] = useState<Record<string, Record<string, string>>>({});
 
-  // Repair options for each condition type
-  const repairOptions: Record<string, RepairOption[]> = {
-    tears_holes_level: [
-      { id: 'costura_pequena', label: 'Costuras pequeña (0 a 5 cm)', category: 'costura' },
-      { id: 'costura_mediana', label: 'Costura mediana (5 a 15 cm)', category: 'costura' },
-      { id: 'costura_grande', label: 'Costura grande (+15 cm)', category: 'costura' },
-      { id: 'parche_pequeno', label: 'Parche pequeño (0 a 5 cm)', category: 'parche' },
-      { id: 'parche_mediano', label: 'Parche mediano (5 a 15 cm)', category: 'parche' },
-      { id: 'parche_grande', label: 'Parche grande (+15 cm)', category: 'parche' },
-      { id: 'parche_tenasius', label: 'Poner parche tenasius', category: 'parche' }
-    ],
-    repairs_level: [
-      { id: 'ajuste_elastico', label: 'Ajuste elástico', category: 'ajuste' },
-      { id: 'cambio_carro', label: 'Cambio de carro', category: 'cambio' },
-      { id: 'cambio_broche', label: 'Cambio de broche', category: 'cambio' },
-      { id: 'cambio_boton', label: 'Cambio de botón', category: 'cambio' },
-      { id: 'cambio_velcro', label: 'Cambio de velcro', category: 'cambio' },
-      { id: 'reemplazo_ruedo', label: 'Reemplazo de ruedo', category: 'reemplazo' },
-      { id: 'cambio_cierre_mochila', label: 'Cambio cierre mochila', category: 'cierre' },
-      { id: 'cambio_cierres_cortos', label: 'Cambio cierres cortos (0 a 30cm)', category: 'cierre' },
-      { id: 'cambio_cierre_frontal_medio', label: 'Cambio cierre frontal (30 cm a 90 cm)', category: 'cierre' },
-      { id: 'cambio_cierre_frontal_grande', label: 'Cambio cierre frontal (+ 90cm)', category: 'cierre' },
-      { id: 'cambio_panel', label: 'Cambio de panel', category: 'cambio' }
-    ],
-    stains_level: [
-      { id: 'lavado_normal', label: 'Sale con lavado (polvo, maquillaje, etc)', category: 'lavado' },
-      { id: 'mancha_pequena', label: 'No sale con lavado mancha < 2cm', category: 'mancha' },
-      { id: 'mancha_mediana', label: 'No sale con lavado. 2cm < Mancha < 5cm', category: 'mancha' }
-    ]
-  };
+  // Capture original values on mount
+  useEffect(() => {
+    const originals: Record<string, Record<string, string>> = {};
+    initialProducts.forEach(product => {
+      originals[product.id] = {
+        pilling_level: (product as any).pilling_level,
+        tears_holes_level: (product as any).tears_holes_level,
+        repairs_level: (product as any).repairs_level,
+        stains_level: (product as any).stains_level,
+        usage_signs: (product as any).usage_signs
+      };
+    });
+    setOriginalProductValues(originals);
+  }, [initialProducts]);
 
   const [errors, setErrors] = useState({
     firstName: false,
@@ -123,35 +115,34 @@ export default function StoreReceptionForm({
   };
 
   const handleConditionChange = (productId: string, questionId: string, newValue: string) => {
+    // Get the original value from our stored originals
+    const originalValue = originalProductValues[productId]?.[questionId] || (products.find(p => p.id === productId) as any)?.[questionId];
+    
+    // Track the modification
+    if (originalValue !== newValue) {
+      setModifiedConditions(prev => {
+        const existing = prev.find(m => m.productId === productId && m.questionId === questionId);
+        if (existing) {
+          return prev.map(m => 
+            m.productId === productId && m.questionId === questionId 
+              ? { ...m, newValue }
+              : m
+          );
+        } else {
+          return [...prev, { productId, questionId, originalValue, newValue }];
+        }
+      });
+    } else {
+      // Remove from modified list if back to original
+      setModifiedConditions(prev => 
+        prev.filter(m => !(m.productId === productId && m.questionId === questionId))
+      );
+    }
+
     // Update the product condition
     setProducts(prev => 
       prev.map(product => {
         if (product.id === productId) {
-          // Get the original value (should be set only once)
-          const existingModification = modifiedConditions.find(m => m.productId === productId && m.questionId === questionId);
-          const originalValue = existingModification ? existingModification.originalValue : (product as any)[questionId];
-          
-          // Track the modification
-          if (originalValue !== newValue) {
-            setModifiedConditions(prev => {
-              const existing = prev.find(m => m.productId === productId && m.questionId === questionId);
-              if (existing) {
-                return prev.map(m => 
-                  m.productId === productId && m.questionId === questionId 
-                    ? { ...m, newValue }
-                    : m
-                );
-              } else {
-                return [...prev, { productId, questionId, originalValue, newValue }];
-              }
-            });
-          } else {
-            // Remove from modified list if back to original
-            setModifiedConditions(prev => 
-              prev.filter(m => !(m.productId === productId && m.questionId === questionId))
-            );
-          }
-
           return {
             ...product,
             [questionId]: newValue
@@ -206,8 +197,12 @@ export default function StoreReceptionForm({
 
   // Get original value for a condition
   const getOriginalValue = (productId: string, questionId: string) => {
-    const modification = modifiedConditions.find(m => m.productId === productId && m.questionId === questionId);
-    return modification ? modification.originalValue : (products.find(p => p.id === productId) as any)?.[questionId];
+    // First check if we have the original value stored
+    if (originalProductValues[productId]?.[questionId]) {
+      return originalProductValues[productId][questionId];
+    }
+    // Fallback to current value if not found
+    return (products.find(p => p.id === productId) as any)?.[questionId];
   };
 
   // Initialize product repairs if not exists
@@ -215,6 +210,7 @@ export default function StoreReceptionForm({
     if (!productRepairs.find(pr => pr.productId === productId)) {
       setProductRepairs(prev => [...prev, {
         productId,
+        pilling_level_repairs: [],
         tears_holes_repairs: [],
         repairs_level_repairs: [],
         stains_level_repairs: []
@@ -226,8 +222,8 @@ export default function StoreReceptionForm({
   const handleRepairToggle = (productId: string, questionId: string, repairId: string) => {
     initializeProductRepairs(productId);
     
-    setProductRepairs(prev => 
-      prev.map(pr => {
+    setProductRepairs(prev => {
+      const updated = prev.map(pr => {
         if (pr.productId === productId) {
           const repairKey = `${questionId}_repairs` as keyof ProductRepairs;
           const currentRepairs = (pr[repairKey] as string[]) || [];
@@ -241,8 +237,22 @@ export default function StoreReceptionForm({
           };
         }
         return pr;
-      })
-    );
+      });
+      
+      // Calculate new condition level based on updated repairs
+      const productRepair = updated.find(pr => pr.productId === productId);
+      if (productRepair) {
+        const repairKey = `${questionId}_repairs` as keyof ProductRepairs;
+        const selectedRepairs = productRepair[repairKey] as string[];
+        const repairOptions = getRepairOptionsForQuestion(questionId);
+        const newLevel = calculateConditionLevel(selectedRepairs, repairOptions);
+        
+        // Update the product condition automatically
+        handleConditionChange(productId, questionId, newLevel);
+      }
+      
+      return updated;
+    });
   };
 
   // Get repairs for a product and question
@@ -292,7 +302,7 @@ export default function StoreReceptionForm({
 
   // Render repair options for specific questions
   const renderRepairOptions = (productId: string, questionId: string) => {
-    const options = repairOptions[questionId];
+    const options = getRepairOptionsForQuestion(questionId);
     if (!options || options.length === 0) return null;
 
     const selectedRepairs = getProductRepairs(productId, questionId);
@@ -321,11 +331,6 @@ export default function StoreReceptionForm({
                   <div className={`text-sm font-medium ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}>
                     {option.label}
                   </div>
-                  {option.description && (
-                    <div className={`text-xs mt-1 ${isSelected ? 'text-blue-700' : 'text-gray-600'}`}>
-                      {option.description}
-                    </div>
-                  )}
                 </div>
               </label>
             );
@@ -338,7 +343,7 @@ export default function StoreReceptionForm({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span className="text-sm font-medium text-blue-900">
-                {selectedRepairs.length} reparación{selectedRepairs.length > 1 ? 'es' : ''} seleccionada{selectedRepairs.length > 1 ? 's' : ''}
+                {selectedRepairs.length} {selectedRepairs.length > 1 ? 'opciones seleccionadas' : 'opción seleccionada'}
               </span>
             </div>
           </div>
@@ -644,7 +649,7 @@ export default function StoreReceptionForm({
                           })}
                         </div>
                       ) : (
-                        // Image-based options for other questions
+                        // Image-based options for other questions (NOT clickeable - calculated by selectors)
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                           {question.options.map((option) => {
                             const currentValue = (product as any)[question.id];
@@ -653,30 +658,43 @@ export default function StoreReceptionForm({
                             const isOriginalValue = originalValue === option.value;
                             const isModified = isConditionModified(product.id, question.id);
                             
-                            // Determine border color - can be both blue and orange if it's original and currently selected but modified
-                            let borderClass = 'border-gray-200 hover:border-gray-300';
+                            // Determine styling
+                            let borderClass = 'border-gray-200';
                             let bgClass = '';
                             
-                            if (isCurrentlySelected && isOriginalValue && !isModified) {
+                            // Original value styling (always in blue, but lighter if not current)
+                            if (isOriginalValue && !isModified) {
+                              // Original and still current
                               borderClass = 'border-blue-500';
                               bgClass = 'bg-blue-50';
-                            } else if (isCurrentlySelected && isModified) {
-                              borderClass = 'border-orange-500';
-                              bgClass = 'bg-orange-50';
-                            } else if (isOriginalValue && !isCurrentlySelected) {
+                            } else if (isOriginalValue && isModified) {
+                              // Original but not current anymore (lighter blue)
                               borderClass = 'border-blue-300';
                               bgClass = 'bg-blue-25';
+                            } else if (isCurrentlySelected && isModified) {
+                              // Current calculated value (orange)
+                              borderClass = 'border-orange-500';
+                              bgClass = 'bg-orange-50';
                             }
                             
                             return (
                               <div
                                 key={option.value}
-                                className={`relative cursor-pointer rounded-lg border-2 p-3 transition-all ${borderClass} ${bgClass}`}
-                                onClick={() => handleConditionChange(product.id, question.id, option.value)}
+                                className={`relative rounded-lg border-2 p-3 ${borderClass} ${bgClass}`}
                               >
+                                {/* Badge for modified (orange with !) */}
                                 {isModified && isCurrentlySelected && (
                                   <div className="absolute -top-2 -right-2 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
                                     <span className="text-white text-xs">!</span>
+                                  </div>
+                                )}
+                                
+                                {/* Badge for original when it's still current (blue with check) */}
+                                {isOriginalValue && !isModified && (
+                                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
                                   </div>
                                 )}
                                 
@@ -709,16 +727,20 @@ export default function StoreReceptionForm({
                       )}
                       
                       {/* Repair Options for specific questions - integrated within the same card */}
-                      {(['tears_holes_level', 'repairs_level', 'stains_level'].includes(question.id)) && (
+                      {(['pilling_level', 'tears_holes_level', 'repairs_level', 'stains_level'].includes(question.id)) && (
                         <div className="mt-6 pt-6 border-t border-gray-200">
                           <div className="flex items-center mb-4">
                             <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
                             <h4 className="text-sm font-semibold text-gray-900">
-                              ¿Qué se le requiere hacer al producto para dejarlo en buen estado?
+                              {question.id === 'pilling_level' 
+                                ? 'Selecciona el nivel de pilling' 
+                                : '¿Qué se le requiere hacer al producto para dejarlo en buen estado?'}
                             </h4>
                           </div>
                           <p className="text-xs text-gray-600 mb-4 italic">
-                            Puedes seleccionar más de una opción
+                            {question.id === 'pilling_level'
+                              ? 'Selecciona las opciones que apliquen' 
+                              : 'Puedes seleccionar más de una opción'}
                           </p>
                           {renderRepairOptions(product.id, question.id)}
                         </div>

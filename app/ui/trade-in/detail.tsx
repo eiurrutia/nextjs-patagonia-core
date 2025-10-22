@@ -49,7 +49,7 @@ export default function TradeInDetail({ id }: { id: string }) {
     // Get condition color based on level
     const getConditionColor = (value: string) => {
         switch(value) {
-            case 'regular': return 'text-green-600 bg-green-50 border-green-200';
+            case 'no_presenta': return 'text-green-600 bg-green-50 border-green-200';
             case 'moderate': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
             case 'high': return 'text-red-600 bg-red-50 border-red-200';
             case 'yes': return 'text-orange-600 bg-orange-50 border-orange-200';
