@@ -380,3 +380,28 @@ export type BreakData = {
   STORE: string;
   BREAK_QTY: number;
 }
+
+// Trade-In Product Master Types
+export type TradeInProductMaster = {
+  id: number;
+  style_code: string;
+  product_name: string;
+  condition_state: 'CN' | 'DU' | 'RP'; // Como Nuevo, Detalles de Uso, Reparación
+  credit_amount: number;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type TradeInProductMasterForm = {
+  style_code: string;
+  product_name: string;
+  condition_state: 'CN' | 'DU' | 'RP';
+  credit_amount: number;
+};
+
+export type TradeInProductMasterCSV = {
+  Estilo: string;
+  'PRODUCT NAME': string;
+  Estado: string;
+  Credito: string;
+};

@@ -115,6 +115,10 @@ module.exports = withPWA({
         destination: '/dashboard/stock-planning/:path*',
       },
       {
+        source: '/trade-in/config/:path*',
+        destination: '/dashboard/trade-in/config/:path*',
+      },
+      {
         source: '/users/:path*',
         destination: '/dashboard/users/:path*',
       },
