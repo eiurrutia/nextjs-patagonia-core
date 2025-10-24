@@ -302,7 +302,6 @@ const TradeInFormPage = () => {
       id: Date.now().toString(),
       product_style: '',
       product_size: '',
-      credit_range: '',
       usage_signs: '',
       pilling_level: '',
       tears_holes_level: '',
@@ -746,21 +745,23 @@ const TradeInFormPage = () => {
             </div>
           </div>
 
-          {/* Customer Information */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            {/* Paso 3 Image */}
-            <div className="flex items-start py-4 border-b border-gray-200 pl-6">
-              <Image 
-                src="https://form-builder-by-hulkapps.s3.amazonaws.com/uploads/patagoniachile.myshopify.com/backend_image/Datos.png" 
-                alt="Paso 3: Datos personales"
-                width={160} 
-                height={59}
-                className="object-contain"
-              />
-            </div>
-            
-            <div className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Datos del Cliente</h2>
+          {/* Customer Information - Only show when at least one product is added */}
+          {products.length > 0 && (
+            <>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              {/* Paso 3 Image */}
+              <div className="flex items-start py-4 border-b border-gray-200 pl-6">
+                <Image 
+                  src="https://form-builder-by-hulkapps.s3.amazonaws.com/uploads/patagoniachile.myshopify.com/backend_image/Datos.png" 
+                  alt="Paso 3: Datos personales"
+                  width={160} 
+                  height={59}
+                  className="object-contain"
+                />
+              </div>
+              
+              <div className="p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-6">Datos del Cliente</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* First Name */}
@@ -1066,16 +1067,18 @@ const TradeInFormPage = () => {
             </div>
           </div>
 
-          {/* Submit Button */}
-          <div className="flex justify-end">
-            <Button
-              onClick={handleSubmitTradeInRequest}
-              disabled={isSubmittingRequest || products.length === 0}
-              className="px-8 py-3"
-            >
-              {isSubmittingRequest ? 'Enviando Solicitud...' : 'Enviar Solicitud Trade-in'}
-            </Button>
-          </div>
+            {/* Submit Button */}
+            <div className="flex justify-end">
+              <Button
+                onClick={handleSubmitTradeInRequest}
+                disabled={isSubmittingRequest || products.length === 0}
+                className="cursor-pointer px-8 py-3"
+              >
+                {isSubmittingRequest ? 'Enviando Solicitud...' : 'Enviar Solicitud Trade-in'}
+              </Button>
+            </div>
+            </>
+          )}
         </div>
       </div>
     </div>
