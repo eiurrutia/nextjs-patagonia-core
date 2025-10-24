@@ -6,6 +6,20 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { TradeInProductMasterCSV } from '@/app/lib/definitions';
 
+// Interface for credit information
+interface ProductCredit {
+  condition_state: 'CN' | 'DU' | 'RP';
+  credit_amount: number;
+  product_name: string;
+}
+
+interface CreditRange {
+  minCredit: number;
+  maxCredit: number;
+  productName: string;
+  credits: ProductCredit[];
+}
+
 const FormSchema = z.object({
   id: z.number(),
   styleCode: z.string({
@@ -251,5 +265,47 @@ export async function bulkUploadProductMaster(csvData: TradeInProductMasterCSV[]
       errors: [`General error: ${error}`],
       message: 'Bulk upload failed due to a system error.'
     };
+  }
+}
+
+// Function to get credit information for a product style
+export async function getProductCreditsByStyle(styleCode: string): Promise<CreditRange | null> {
+  try {
+    console.log('🔍 Looking up credits for style:', styleCode);
+    
+    const result = await sql`
+      SELECT condition_state, credit_amount, product_name
+      FROM trade_in_product_master
+      WHERE style_code = ${styleCode}
+      ORDER BY credit_amount ASC
+    `;
+
+    if (result.rows.length === 0) {
+      console.log('❌ No credits found for style:', styleCode);
+      return null;
+    }
+
+    const credits = result.rows.map(row => ({
+      condition_state: row.condition_state as 'CN' | 'DU' | 'RP',
+      credit_amount: row.credit_amount,
+      product_name: row.product_name
+    }));
+
+    const minCredit = Math.min(...credits.map(c => c.credit_amount));
+    const maxCredit = Math.max(...credits.map(c => c.credit_amount));
+    const productName = credits[0].product_name;
+
+    console.log('✅ Found credits for style:', styleCode, { minCredit, maxCredit, count: credits.length });
+
+    return {
+      minCredit,
+      maxCredit,
+      productName,
+      credits
+    };
+
+  } catch (error) {
+    console.error('💥 Error fetching product credits:', error);
+    return null;
   }
 }

@@ -11,6 +11,12 @@ import {
   type ConditionResponses,
   type ProductState
 } from '@/app/lib/trade-in/product-condition-evaluator';
+import {
+  extractStyleCode,
+  calculateCreditMessage,
+  formatChileanPesos,
+  mapProductStateToCondition
+} from '@/app/lib/trade-in/credit-utils';
 
 import { ProductFormData } from './products-table';
 
@@ -34,6 +40,20 @@ interface ProductFormState {
   repairs_level: string;
   meets_minimum_requirements: boolean;
   product_images: string[];
+}
+
+// Interface for credit data from API
+interface ProductCredit {
+  condition_state: 'CN' | 'DU' | 'RP';
+  credit_amount: number;
+  product_name: string;
+}
+
+interface CreditRange {
+  minCredit: number;
+  maxCredit: number;
+  productName: string;
+  credits: ProductCredit[];
 }
 
 const initialFormState: ProductFormState = {
@@ -64,6 +84,9 @@ export default function ProductForm({
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(false);
   const [calculatedState, setCalculatedState] = useState<ProductState | null>(null);
+  const [creditData, setCreditData] = useState<CreditRange | null>(null);
+  const [loadingCredits, setLoadingCredits] = useState(false);
+  const [creditMessage, setCreditMessage] = useState<string>('');
 
   // Refs for form fields to enable scrolling to errors
   const productStyleRef = useRef<HTMLInputElement>(null);
@@ -161,6 +184,76 @@ export default function ProductForm({
       setCalculatedState(null);
     }
   }, [formData.usage_signs, formData.pilling_level, formData.stains_level, formData.tears_holes_level, formData.repairs_level]);
+
+  // Fetch credit data when product style changes
+  useEffect(() => {
+    const fetchCreditData = async () => {
+      if (!formData.product_style) {
+        setCreditData(null);
+        setCreditMessage('');
+        return;
+      }
+
+      const styleCode = extractStyleCode(formData.product_style);
+      if (!styleCode) {
+        setCreditData(null);
+        setCreditMessage('');
+        return;
+      }
+
+      setLoadingCredits(true);
+      try {
+        console.log('🔍 Frontend: Fetching credits for style:', styleCode);
+        const response = await fetch(`/api/trade-in/product-credits?style=${encodeURIComponent(styleCode)}`);
+        
+        if (response.ok) {
+          const result = await response.json();
+          setCreditData(result.data);
+          console.log('✅ Frontend: Credit data loaded for style:', styleCode, result.data);
+        } else if (response.status === 404) {
+          console.log('❌ Frontend: No credit data found for style:', styleCode);
+          setCreditData(null);
+        } else {
+          // Handle other errors (500, etc.)
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          console.error('💥 Frontend: API error:', response.status, errorData);
+          setCreditData(null);
+        }
+      } catch (error) {
+        console.error('💥 Frontend: Network error fetching credit data:', error);
+        setCreditData(null);
+      } finally {
+        setLoadingCredits(false);
+      }
+    };
+
+    // Debounce the API call
+    const timeoutId = setTimeout(fetchCreditData, 500);
+    return () => clearTimeout(timeoutId);
+  }, [formData.product_style]);
+
+  // Update credit message when state or credit data changes
+  useEffect(() => {
+    if (creditData && calculatedState) {
+      const message = calculateCreditMessage(creditData, calculatedState);
+      setCreditMessage(message);
+      
+      // Auto-update the credit_range field
+      if (message.includes('Rango de crédito:') || message.includes('Crédito estimado:')) {
+        setFormData(prev => ({
+          ...prev,
+          credit_range: message
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          credit_range: ''
+        }));
+      }
+    } else {
+      setCreditMessage('');
+    }
+  }, [creditData, calculatedState]);
 
   // Cleanup object URLs when component unmounts to prevent memory leaks
   useEffect(() => {
@@ -406,6 +499,19 @@ export default function ProductForm({
           </div>
         </div>
 
+        {/* Product Not Available Message - Show immediately after product fields */}
+        {!loadingCredits && !creditData && formData.product_style && extractStyleCode(formData.product_style) && (
+          <div className="bg-orange-50 text-orange-800 p-4 rounded-md border border-orange-200">
+            <p className="font-medium mb-2">
+              🌱 Lo siento, este producto no está disponible para trade-in
+            </p>
+            <p className="text-sm">
+              Pero de igual forma nos podemos hacer cargo de reciclarlo si tú quieres! 
+              Puedes enviarlo igual y nosotros nos encargamos de reciclarlo y así cuidar nuestro planeta.
+            </p>
+          </div>
+        )}
+
         {/* Credit Range */}
         <div>
           <label htmlFor="credit_range" className="block text-sm font-medium text-gray-700 mb-1">
@@ -570,22 +676,16 @@ export default function ProductForm({
           />
         </div>
 
-        {/* Calculated Product State */}
-        {calculatedState && (
-          <div className="mt-6 p-4 rounded-lg border bg-gray-50">
-            <h3 className="text-sm font-medium text-gray-900 mb-2">Estado Evaluado del Producto</h3>
-            <div className="flex items-center gap-3">
-              <span 
-                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                  getStateDisplayColors(calculatedState).bg
-                } ${getStateDisplayColors(calculatedState).text} ${
-                  getStateDisplayColors(calculatedState).border
-                } border`}
-              >
-                {calculatedState}
-              </span>
-              <p className="text-xs text-gray-600">
-                Estado calculado automáticamente basado en las respuestas de condición
+        {/* Credit Information - Simple Display */}
+        {calculatedState && creditData && creditMessage && (
+          <div className="mt-6 p-4 rounded-lg border-2 border-blue-200 bg-blue-50">
+            <div className={`text-left ${
+              calculatedState === 'Reciclado' 
+                ? 'text-orange-800' 
+                : 'text-blue-800'
+            }`}>
+              <p className="text-sm font-medium">
+                {creditMessage}
               </p>
             </div>
           </div>
