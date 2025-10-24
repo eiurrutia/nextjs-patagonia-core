@@ -4,6 +4,50 @@ import { sql } from '@vercel/postgres';
 import { updateProductVerification, createTradeInComment, updateProductsStatusToEnTienda } from '@/app/lib/trade-in/sql-data';
 import { evaluateProductCondition } from '@/app/lib/trade-in/product-condition-evaluator';
 
+// Helper function to get credit from product master based on confirmed state
+async function getCreditFromMaster(productStyle, confirmedState) {
+  try {
+    // Map confirmed state to condition_state codes using the same logic as credit-utils.ts
+    // 'Como Nuevo' -> 'CN'
+    // 'Con detalles de uso' -> 'DU'  
+    // 'Reparado' -> 'RP'
+    // 'Reciclado' -> null (no credit)
+    let conditionStateCode = null;
+    if (confirmedState === 'Como Nuevo') {
+      conditionStateCode = 'CN';
+    } else if (confirmedState === 'Con detalles de uso') {
+      conditionStateCode = 'DU';
+    } else if (confirmedState === 'Reparado') {
+      conditionStateCode = 'RP';
+    } else if (confirmedState === 'Reciclado') {
+      // No credit for recycled items
+      return null;
+    }
+    
+    if (!conditionStateCode) {
+      console.log(`No condition state code found for: ${confirmedState}`);
+      return null;
+    }
+    
+    // Extract style code (before the dash)
+    const dashIndex = productStyle.indexOf('-');
+    const styleCode = dashIndex === -1 ? productStyle.trim() : productStyle.substring(0, dashIndex).trim();
+    
+    const result = await sql`
+      SELECT credit_amount as credit_confirmed
+      FROM trade_in_product_master
+      WHERE style_code = ${styleCode}
+        AND condition_state = ${conditionStateCode}
+      LIMIT 1
+    `;
+    
+    return result.rows[0]?.credit_confirmed || null;
+  } catch (error) {
+    console.error('Error fetching credit from master:', error);
+    return null;
+  }
+}
+
 // Aux function to get the confirmed value (modified or original)
 function getConfirmedValue(product, modifications, field) {
   const modification = modifications.find(mod => mod.questionId === field);
@@ -146,6 +190,13 @@ export default async function handler(req, res) {
 
         const confirmedCalculatedState = evaluateProductCondition(conditionResponses);
 
+        // Get confirmed credit from product master based on confirmed state
+        let creditConfirmed = null;
+        if (confirmedCalculatedState && product.product_style) {
+          creditConfirmed = await getCreditFromMaster(product.product_style, confirmedCalculatedState);
+          console.log(`Product ${product.id} - Confirmed State: ${confirmedCalculatedState}, Credit: ${creditConfirmed}`);
+        }
+
         // Check if calculated state changed
         if (product.calculated_state && confirmedCalculatedState && product.calculated_state !== confirmedCalculatedState) {
           stateChanges.push({
@@ -165,6 +216,7 @@ export default async function handler(req, res) {
         const verificationData = {
           ...confirmedValues,
           confirmed_calculated_state: confirmedCalculatedState,
+          credit_confirmed: creditConfirmed,
           ...repairFields,
           store_verified_by: 'sistema_tienda'
         };
@@ -258,7 +310,7 @@ export default async function handler(req, res) {
             await sql`
               UPDATE trade_in_products 
               SET 
-                credit_range = ${product.credit_range || existingProduct.credit_range},
+                credit_estimated = ${product.credit_estimated || existingProduct.credit_estimated},
                 usage_signs = ${product.usage_signs || existingProduct.usage_signs},
                 pilling_level = ${product.pilling_level || existingProduct.pilling_level},
                 tears_holes_level = ${product.tears_holes_level || existingProduct.tears_holes_level},

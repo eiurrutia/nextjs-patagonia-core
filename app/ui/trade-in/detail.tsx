@@ -417,6 +417,15 @@ export default function TradeInDetail({ id }: { id: string }) {
                                             </div>
                                         )}
 
+                                        {/* Credit Confirmed - Only show if verification has been done */}
+                                        {product.credit_confirmed && (
+                                            <div className="mt-2">
+                                                <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
+                                                    ✅ Crédito Confirmado: ${new Intl.NumberFormat('es-CL').format(product.credit_confirmed)}
+                                                </span>
+                                            </div>
+                                        )}
+
                                         {/* Product Images - Moved below credit */}
                                         {product.product_images && product.product_images.length > 0 && (
                                             <div className="mt-4">
