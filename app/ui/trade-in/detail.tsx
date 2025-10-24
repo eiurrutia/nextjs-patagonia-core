@@ -201,7 +201,7 @@ export default function TradeInDetail({ id }: { id: string }) {
                     <div className="space-y-4">
                         {record.products.map((product: any, index: number) => {
                             return (
-                            <div key={product.id} className="p-4 bg-gray-50 rounded-lg border relative">
+                            <div key={product.id} className="p-4 bg-white rounded-lg border relative">
                                 <div className="flex items-start space-x-4">
                                     {/* Product Image */}
                                     <div className="flex-shrink-0">
@@ -259,7 +259,7 @@ export default function TradeInDetail({ id }: { id: string }) {
                                                 <div className="grid grid-cols-2 gap-2 mt-2">
                                                     {/* Pilling Level - Use confirmed value if available */}
                                                     {(product.confirmed_pilling_level || product.pilling_level) && (
-                                                        <div className={`flex items-center p-2 rounded-lg text-xs ${getConditionColor(product.confirmed_pilling_level || product.pilling_level)}`}>
+                                                        <div className="flex items-center p-2 rounded-lg border border-gray-200 text-xs">
                                                             <div className="flex items-center space-x-2">
                                                                 {getConditionDetails('pilling_level', product.confirmed_pilling_level || product.pilling_level).imageUrl && (
                                                                     <div className="w-6 h-6 relative flex-shrink-0">
@@ -272,8 +272,15 @@ export default function TradeInDetail({ id }: { id: string }) {
                                                                     </div>
                                                                 )}
                                                                 <div>
-                                                                    <div className="font-medium">Pilling</div>
-                                                                    <div>{getConditionDetails('pilling_level', product.confirmed_pilling_level || product.pilling_level).label}</div>
+                                                                    <div className="font-medium text-gray-700">Pilling</div>
+                                                                    <div className={`inline-block px-2 py-0.5 rounded ${
+                                                                        (product.confirmed_pilling_level || product.pilling_level) === 'no_presenta' ? 'bg-green-100 text-green-700' :
+                                                                        (product.confirmed_pilling_level || product.pilling_level) === 'moderate' ? 'bg-yellow-100 text-yellow-700' :
+                                                                        (product.confirmed_pilling_level || product.pilling_level) === 'high' ? 'bg-red-100 text-red-700' :
+                                                                        'bg-gray-100 text-gray-700'
+                                                                    }`}>
+                                                                        {getConditionDetails('pilling_level', product.confirmed_pilling_level || product.pilling_level).label}
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -281,7 +288,7 @@ export default function TradeInDetail({ id }: { id: string }) {
 
                                                     {/* Tears and Holes - Use confirmed value if available */}
                                                     {(product.confirmed_tears_holes_level || product.tears_holes_level) && (
-                                                        <div className={`flex items-center p-2 rounded-lg text-xs ${getConditionColor(product.confirmed_tears_holes_level || product.tears_holes_level)}`}>
+                                                        <div className="flex items-center p-2 rounded-lg border border-gray-200 text-xs">
                                                             <div className="flex items-center space-x-2">
                                                                 {getConditionDetails('tears_holes_level', product.confirmed_tears_holes_level || product.tears_holes_level).imageUrl && (
                                                                     <div className="w-6 h-6 relative flex-shrink-0">
@@ -294,8 +301,15 @@ export default function TradeInDetail({ id }: { id: string }) {
                                                                     </div>
                                                                 )}
                                                                 <div>
-                                                                    <div className="font-medium">Rasgaduras</div>
-                                                                    <div>{getConditionDetails('tears_holes_level', product.confirmed_tears_holes_level || product.tears_holes_level).label}</div>
+                                                                    <div className="font-medium text-gray-700">Rasgaduras</div>
+                                                                    <div className={`inline-block px-2 py-0.5 rounded ${
+                                                                        (product.confirmed_tears_holes_level || product.tears_holes_level) === 'no_presenta' ? 'bg-green-100 text-green-700' :
+                                                                        (product.confirmed_tears_holes_level || product.tears_holes_level) === 'moderate' ? 'bg-yellow-100 text-yellow-700' :
+                                                                        (product.confirmed_tears_holes_level || product.tears_holes_level) === 'high' ? 'bg-red-100 text-red-700' :
+                                                                        'bg-gray-100 text-gray-700'
+                                                                    }`}>
+                                                                        {getConditionDetails('tears_holes_level', product.confirmed_tears_holes_level || product.tears_holes_level).label}
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -303,7 +317,7 @@ export default function TradeInDetail({ id }: { id: string }) {
 
                                                     {/* Repairs - Use confirmed value if available */}
                                                     {(product.confirmed_repairs_level || product.repairs_level) && (
-                                                        <div className={`flex items-center p-2 rounded-lg text-xs ${getConditionColor(product.confirmed_repairs_level || product.repairs_level)}`}>
+                                                        <div className="flex items-center p-2 rounded-lg border border-gray-200 text-xs">
                                                             <div className="flex items-center space-x-2">
                                                                 {getConditionDetails('repairs_level', product.confirmed_repairs_level || product.repairs_level).imageUrl && (
                                                                     <div className="w-6 h-6 relative flex-shrink-0">
@@ -316,8 +330,15 @@ export default function TradeInDetail({ id }: { id: string }) {
                                                                     </div>
                                                                 )}
                                                                 <div>
-                                                                    <div className="font-medium">Reparaciones</div>
-                                                                    <div>{getConditionDetails('repairs_level', product.confirmed_repairs_level || product.repairs_level).label}</div>
+                                                                    <div className="font-medium text-gray-700">Reparaciones</div>
+                                                                    <div className={`inline-block px-2 py-0.5 rounded ${
+                                                                        (product.confirmed_repairs_level || product.repairs_level) === 'no_presenta' ? 'bg-green-100 text-green-700' :
+                                                                        (product.confirmed_repairs_level || product.repairs_level) === 'moderate' ? 'bg-yellow-100 text-yellow-700' :
+                                                                        (product.confirmed_repairs_level || product.repairs_level) === 'high' ? 'bg-red-100 text-red-700' :
+                                                                        'bg-gray-100 text-gray-700'
+                                                                    }`}>
+                                                                        {getConditionDetails('repairs_level', product.confirmed_repairs_level || product.repairs_level).label}
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -325,7 +346,7 @@ export default function TradeInDetail({ id }: { id: string }) {
 
                                                     {/* Stains - Use confirmed value if available */}
                                                     {(product.confirmed_stains_level || product.stains_level) && (
-                                                        <div className={`flex items-center p-2 rounded-lg text-xs ${getConditionColor(product.confirmed_stains_level || product.stains_level)}`}>
+                                                        <div className="flex items-center p-2 rounded-lg border border-gray-200 text-xs">
                                                             <div className="flex items-center space-x-2">
                                                                 {getConditionDetails('stains_level', product.confirmed_stains_level || product.stains_level).imageUrl && (
                                                                     <div className="w-6 h-6 relative flex-shrink-0">
@@ -338,8 +359,15 @@ export default function TradeInDetail({ id }: { id: string }) {
                                                                     </div>
                                                                 )}
                                                                 <div>
-                                                                    <div className="font-medium">Manchas</div>
-                                                                    <div>{getConditionDetails('stains_level', product.confirmed_stains_level || product.stains_level).label}</div>
+                                                                    <div className="font-medium text-gray-700">Manchas</div>
+                                                                    <div className={`inline-block px-2 py-0.5 rounded ${
+                                                                        (product.confirmed_stains_level || product.stains_level) === 'no_presenta' ? 'bg-green-100 text-green-700' :
+                                                                        (product.confirmed_stains_level || product.stains_level) === 'moderate' ? 'bg-yellow-100 text-yellow-700' :
+                                                                        (product.confirmed_stains_level || product.stains_level) === 'high' ? 'bg-red-100 text-red-700' :
+                                                                        'bg-gray-100 text-gray-700'
+                                                                    }`}>
+                                                                        {getConditionDetails('stains_level', product.confirmed_stains_level || product.stains_level).label}
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -380,54 +408,54 @@ export default function TradeInDetail({ id }: { id: string }) {
                                             )}
                                         </div>
 
-                                        {/* Credit Range */}
-                                        {product.credit_range && (
+                                        {/* Credit Estimated */}
+                                        {product.credit_estimated && (
                                             <div className="mt-3">
-                                                <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
-                                                    💰 Crédito: {product.credit_range}
+                                                <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-black-800">
+                                                    💰 Crédito Estimado: ${new Intl.NumberFormat('es-CL').format(product.credit_estimated)}
                                                 </span>
+                                            </div>
+                                        )}
+
+                                        {/* Product Images - Moved below credit */}
+                                        {product.product_images && product.product_images.length > 0 && (
+                                            <div className="mt-4">
+                                                <div className="flex flex-wrap gap-2">
+                                                    {product.product_images.slice(0, 4).map((imageUrl: string, imageIndex: number) => (
+                                                        <div 
+                                                            key={imageIndex} 
+                                                            className="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-gray-200 shadow-sm cursor-pointer hover:scale-105 transition-transform duration-200"
+                                                            onClick={() => openImageModal(imageUrl)}
+                                                            title="Click para ver imagen completa"
+                                                        >
+                                                            {imageUrl.startsWith('data:image/') ? (
+                                                                // eslint-disable-next-line @next/next/no-img-element
+                                                                <img
+                                                                    src={imageUrl}
+                                                                    alt={`Producto ${index + 1} - Imagen ${imageIndex + 1}`}
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <Image
+                                                                    src={imageUrl}
+                                                                    alt={`Producto ${index + 1} - Imagen ${imageIndex + 1}`}
+                                                                    fill
+                                                                    sizes="64px"
+                                                                    className="object-cover"
+                                                                />
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                    {product.product_images.length > 4 && (
+                                                        <div className="w-16 h-16 rounded-lg bg-gray-800 bg-opacity-75 border-2 border-gray-200 shadow-sm flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-200">
+                                                            <span className="text-white text-xs font-bold">+{product.product_images.length - 4}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         )}
                                     </div>
                                 </div>
-
-                                {/* Product Images - Bottom Right Corner */}
-                                {product.product_images && product.product_images.length > 0 && (
-                                    <div className="absolute bottom-3 right-3">
-                                        <div className="flex -space-x-1">
-                                            {product.product_images.slice(0, 3).map((imageUrl: string, imageIndex: number) => (
-                                                <div 
-                                                    key={imageIndex} 
-                                                    className="relative w-12 h-12 rounded-lg overflow-hidden border-2 border-white shadow-lg cursor-pointer hover:scale-105 transition-transform duration-200"
-                                                    onClick={() => openImageModal(imageUrl)}
-                                                    title="Click para ver imagen completa"
-                                                >
-                                                    {imageUrl.startsWith('data:image/') ? (
-                                                        // eslint-disable-next-line @next/next/no-img-element
-                                                        <img
-                                                            src={imageUrl}
-                                                            alt={`Producto ${index + 1} - Imagen ${imageIndex + 1}`}
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <Image
-                                                            src={imageUrl}
-                                                            alt={`Producto ${index + 1} - Imagen ${imageIndex + 1}`}
-                                                            fill
-                                                            sizes="48px"
-                                                            className="object-cover"
-                                                        />
-                                                    )}
-                                                </div>
-                                            ))}
-                                            {product.product_images.length > 3 && (
-                                                <div className="w-12 h-12 rounded-lg bg-gray-800 bg-opacity-75 border-2 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-200">
-                                                    <span className="text-white text-xs font-bold">+{product.product_images.length - 3}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                             );
                         })}
