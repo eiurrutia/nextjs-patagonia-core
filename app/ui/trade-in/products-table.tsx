@@ -10,7 +10,7 @@ export interface ProductFormData {
   id: string;
   product_style: string;
   product_size: string;
-  credit_range?: string;
+  credit_estimated?: string;
   usage_signs: string;
   pilling_level: string;
   stains_level: string;
@@ -123,10 +123,10 @@ export default function ProductsTable({ products, onEdit, onDelete, onView }: Pr
                         <span className="text-xs text-gray-500">
                           Talla: <span className="font-medium">{product.product_size}</span>
                         </span>
-                        {product.credit_range && (
-                          <span className="text-xs text-gray-500">
-                            Crédito: <span className="font-medium">{product.credit_range}</span>
-                          </span>
+                        {product.credit_estimated && (
+                          <p className="text-xs text-gray-600 mt-1">
+                            Crédito: <span className="font-medium">{product.credit_estimated}</span>
+                          </p>
                         )}
                       </div>
                     </div>

@@ -27,7 +27,7 @@ export interface TradeInProduct {
   request_id: number;
   product_style: string;
   product_size: string;
-  credit_range?: string;
+  credit_estimated?: string;
   usage_signs: string;
   pilling_level: string;
   stains_level: string;
@@ -62,7 +62,7 @@ export interface CreateTradeInRequestData {
 export interface CreateTradeInProductData {
   product_style: string;
   product_size: string;
-  credit_range?: string;
+  credit_estimated?: string;
   usage_signs: string;
   pilling_level: string;
   stains_level: string;
@@ -154,12 +154,12 @@ export async function createTradeInRequest(data: CreateTradeInRequestData): Prom
     for (const product of data.products) {
       await sql`
         INSERT INTO trade_in_products (
-          request_id, product_style, product_size, credit_range,
+          request_id, product_style, product_size, credit_estimated,
           usage_signs, pilling_level, stains_level, tears_holes_level, repairs_level,
           meets_minimum_requirements, product_images, calculated_state
         ) VALUES (
           ${request.id}, ${product.product_style}, 
-          ${product.product_size}, ${product.credit_range || null},
+          ${product.product_size}, ${product.credit_estimated || null},
           ${product.usage_signs}, ${product.pilling_level}, ${product.stains_level},
           ${product.tears_holes_level}, ${product.repairs_level}, ${product.meets_minimum_requirements},
           ${JSON.stringify(product.product_images || [])}, ${product.calculated_state || null}
@@ -615,7 +615,7 @@ export async function fetchTradeInProducts(query: string, currentPage: number): 
         tp.request_id,
         tp.product_style,
         tp.product_size,
-        tp.credit_range,
+        tp.credit_estimated,
         tp.usage_signs,
         tp.pilling_level,
         tp.stains_level,
@@ -692,7 +692,7 @@ export async function fetchTradeInProductsByStore(
         tp.request_id,
         tp.product_style,
         tp.product_size,
-        tp.credit_range,
+        tp.credit_estimated,
         tp.usage_signs,
         tp.pilling_level,
         tp.stains_level,

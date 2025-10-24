@@ -319,7 +319,6 @@ const TradeInFormPage = () => {
 
   // Handle address selection from Google Maps Autocomplete
   const handleAddressSelect = (addressData: { address: string; region: string; comuna: string; place: google.maps.places.PlaceResult }) => {
-    console.log('Address data received:', addressData); // Para debugging
     setFormData((prevFormData) => ({
       ...prevFormData,
       address: addressData.address,

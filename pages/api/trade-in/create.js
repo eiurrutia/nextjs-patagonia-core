@@ -112,7 +112,7 @@ export default async function handler(req, res) {
         product_style: product.product_style,
         product_color: product.product_color,
         product_size: product.product_size,
-        credit_range: product.credit_range || null,
+        credit_estimated: product.credit_estimated || null,
         usage_signs: product.usage_signs,
         pilling_level: product.pilling_level,
         stains_level: product.stains_level,

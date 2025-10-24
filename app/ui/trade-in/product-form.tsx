@@ -14,6 +14,7 @@ import {
 import {
   extractStyleCode,
   calculateCreditMessage,
+  calculateExactCreditValue,
   formatChileanPesos,
   mapProductStateToCondition
 } from '@/app/lib/trade-in/credit-utils';
@@ -32,7 +33,7 @@ interface ProductFormProps {
 interface ProductFormState {
   product_style: string;
   product_size: string;
-  credit_range: string;
+  credit_estimated: string;
   usage_signs: string;
   pilling_level: string;
   stains_level: string;
@@ -59,7 +60,7 @@ interface CreditRange {
 const initialFormState: ProductFormState = {
   product_style: '',
   product_size: '',
-  credit_range: '',
+  credit_estimated: '',
   usage_signs: '',
   pilling_level: '',
   stains_level: '',
@@ -99,7 +100,7 @@ export default function ProductForm({
       setFormData({
         product_style: editingProduct.product_style,
         product_size: editingProduct.product_size,
-        credit_range: editingProduct.credit_range || '',
+        credit_estimated: editingProduct.credit_estimated || '',
         usage_signs: editingProduct.usage_signs,
         pilling_level: editingProduct.pilling_level,
         stains_level: editingProduct.stains_level || '',
@@ -238,20 +239,20 @@ export default function ProductForm({
       const message = calculateCreditMessage(creditData, calculatedState);
       setCreditMessage(message);
       
-      // Auto-update the credit_range field
-      if (message.includes('Rango de crédito:') || message.includes('Crédito estimado:')) {
-        setFormData(prev => ({
-          ...prev,
-          credit_range: message
-        }));
-      } else {
-        setFormData(prev => ({
-          ...prev,
-          credit_range: ''
-        }));
-      }
+      // Calculate the exact credit value for the calculated state
+      const exactCreditValue = calculateExactCreditValue(creditData, calculatedState);
+      
+      // Auto-update the credit_estimated field with the numeric value
+      setFormData(prev => ({
+        ...prev,
+        credit_estimated: exactCreditValue ? exactCreditValue.toString() : ''
+      }));
     } else {
       setCreditMessage('');
+      setFormData(prev => ({
+        ...prev,
+        credit_estimated: ''
+      }));
     }
   }, [creditData, calculatedState]);
 
@@ -511,21 +512,6 @@ export default function ProductForm({
             </p>
           </div>
         )}
-
-        {/* Credit Range */}
-        <div>
-          <label htmlFor="credit_range" className="block text-sm font-medium text-gray-700 mb-1">
-            Rango de Créditos
-          </label>
-          <input
-            type="text"
-            id="credit_range"
-            value={formData.credit_range}
-            onChange={(e) => handleInputChange('credit_range', e.target.value)}
-            className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
-            placeholder="Ej: $15,000 - $25,000"
-          />
-        </div>
 
         {/* Photo Instructions */}
         <div className="bg-gray-50 p-6 rounded-lg">

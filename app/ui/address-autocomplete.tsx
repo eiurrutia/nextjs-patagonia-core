@@ -27,7 +27,6 @@ const AddressAutocomplete = ({ onPlaceSelected }: { onPlaceSelected: (data: Addr
     };
 
     const extractAddressComponents = (place: google.maps.places.PlaceResult): AddressData => {
-      console.log('Google Maps Place Result:', place); // Para debugging
       
       let region = '';
       let comuna = '';

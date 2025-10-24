@@ -94,6 +94,26 @@ export function getCreditForState(
   return credit ? credit.credit_amount : null;
 }
 
+// Calculate the exact credit value for the calculated state
+export function calculateExactCreditValue(
+  creditData: CreditRange,
+  calculatedState: ProductState | null
+): number | null {
+  if (!calculatedState || calculatedState === 'Reciclado') {
+    return null;
+  }
+
+  // Map the calculated state to database condition
+  const conditionState = mapProductStateToCondition(calculatedState);
+  if (!conditionState) {
+    return null;
+  }
+
+  // Find the exact credit for this specific state
+  const credit = creditData.credits.find(c => c.condition_state === conditionState);
+  return credit ? credit.credit_amount : null;
+}
+
 // Map ProductState to database condition state
 export function mapProductStateToCondition(state: ProductState): 'CN' | 'DU' | 'RP' | null {
   switch (state) {
