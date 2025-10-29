@@ -357,6 +357,7 @@ export async function updateProductVerification(
     confirmed_meets_minimum_requirements?: boolean;
     confirmed_calculated_state?: string;
     credit_confirmed?: number;
+    process?: string;
     tears_holes_repairs?: string;
     repairs_level_repairs?: string;
     stains_level_repairs?: string;
@@ -395,6 +396,7 @@ export async function updateProductVerification(
         confirmed_meets_minimum_requirements = ${verificationData.confirmed_meets_minimum_requirements || null},
         confirmed_calculated_state = ${verificationData.confirmed_calculated_state || null},
         credit_confirmed = ${verificationData.credit_confirmed || null},
+        process = ${verificationData.process || null},
         confirmed_sku = ${confirmedSku},
         tears_holes_repairs = ${verificationData.tears_holes_repairs || null},
         repairs_level_repairs = ${verificationData.repairs_level_repairs || null},
@@ -633,6 +635,7 @@ export async function fetchTradeInProducts(query: string, currentPage: number): 
         tp.confirmed_meets_minimum_requirements,
         tp.confirmed_calculated_state,
         tp.confirmed_sku,
+        tp.process,
         tp.product_status,
         tp.received_store_code as product_received_store_code,
         tp.store_verified_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago' as store_verified_at,
@@ -649,16 +652,19 @@ export async function fetchTradeInProducts(query: string, currentPage: number): 
       FROM trade_in_products tp
       INNER JOIN trade_in_requests tr ON tp.request_id = tr.id
       WHERE 
-        LOWER(tp.product_style) LIKE ${searchQuery} OR 
-        LOWER(tp.product_size) LIKE ${searchQuery} OR 
-        LOWER(tp.calculated_state) LIKE ${searchQuery} OR
-        LOWER(tp.confirmed_calculated_state) LIKE ${searchQuery} OR
-        LOWER(tp.confirmed_sku) LIKE ${searchQuery} OR
-        LOWER(tp.product_status) LIKE ${searchQuery} OR
-        LOWER(tr.request_number) LIKE ${searchQuery} OR
-        LOWER(tr.first_name) LIKE ${searchQuery} OR 
-        LOWER(tr.last_name) LIKE ${searchQuery} OR
-        LOWER(tr.email) LIKE ${searchQuery}
+        tp.product_status != 'Pendiente'
+        AND (
+          LOWER(tp.product_style) LIKE ${searchQuery} OR 
+          LOWER(tp.product_size) LIKE ${searchQuery} OR 
+          LOWER(tp.calculated_state) LIKE ${searchQuery} OR
+          LOWER(tp.confirmed_calculated_state) LIKE ${searchQuery} OR
+          LOWER(tp.confirmed_sku) LIKE ${searchQuery} OR
+          LOWER(tp.product_status) LIKE ${searchQuery} OR
+          LOWER(tr.request_number) LIKE ${searchQuery} OR
+          LOWER(tr.first_name) LIKE ${searchQuery} OR 
+          LOWER(tr.last_name) LIKE ${searchQuery} OR
+          LOWER(tr.email) LIKE ${searchQuery}
+        )
       ORDER BY tp.created_at DESC
       LIMIT ${pageSize}
       OFFSET ${offset}
@@ -725,6 +731,7 @@ export async function fetchTradeInProductsByStore(
       FROM trade_in_products tp
       INNER JOIN trade_in_requests tr ON tp.request_id = tr.id
       WHERE tp.received_store_code = ${storeCode}
+      AND tp.product_status != 'Pendiente'
       AND (
         LOWER(tp.product_style) LIKE ${searchQuery} OR 
         LOWER(tp.product_size) LIKE ${searchQuery} OR 

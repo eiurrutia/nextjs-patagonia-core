@@ -61,6 +61,39 @@ function getConfirmedValue(product, modifications, field) {
   return product[field];
 }
 
+// Function to calculate process based on confirmed conditions
+function calculateProcess(confirmedCalculatedState, confirmedValues) {
+  // If state is "Reciclado" (IN - Invendible), always return "IN"
+  if (confirmedCalculatedState === 'Reciclado') {
+    return 'IN';
+  }
+
+  const pilling = confirmedValues.confirmed_pilling_level;
+  const tearsHoles = confirmedValues.confirmed_tears_holes_level;
+  const repairs = confirmedValues.confirmed_repairs_level;
+  const stains = confirmedValues.confirmed_stains_level;
+
+  // Check if there's physical damage (Moderado or Alto in Pilling, Rasgaduras, or Reparaciones)
+  const hasPhysicalDamage = 
+    pilling === 'moderate' || pilling === 'high' ||
+    tearsHoles === 'moderate' || tearsHoles === 'high' ||
+    repairs === 'moderate' || repairs === 'high';
+
+  // Check if there are stains (Moderado or Alto)
+  const hasStains = stains === 'moderate' || stains === 'high';
+
+  // Apply the logic from Excel formula
+  if (hasPhysicalDamage && hasStains) {
+    return 'LAV-REP'; // Needs washing and repair
+  } else if (hasPhysicalDamage) {
+    return 'REP'; // Only needs repair
+  } else if (hasStains) {
+    return 'LAV'; // Only needs washing
+  } else {
+    return 'ETI'; // Only needs labeling (etiquetado)
+  }
+}
+
 // Aux function to generate change comment
 function generateChangeComment(modifiedConditions, products) {
   const changes = modifiedConditions.map(mod => {
@@ -197,6 +230,10 @@ export default async function handler(req, res) {
           console.log(`Product ${product.id} - Confirmed State: ${confirmedCalculatedState}, Credit: ${creditConfirmed}`);
         }
 
+        // Calculate process based on confirmed state and conditions
+        const process = calculateProcess(confirmedCalculatedState, confirmedValues);
+        console.log(`Product ${product.id} - Process: ${process}`);
+
         // Check if calculated state changed
         if (product.calculated_state && confirmedCalculatedState && product.calculated_state !== confirmedCalculatedState) {
           stateChanges.push({
@@ -217,6 +254,7 @@ export default async function handler(req, res) {
           ...confirmedValues,
           confirmed_calculated_state: confirmedCalculatedState,
           credit_confirmed: creditConfirmed,
+          process: process,
           ...repairFields,
           store_verified_by: 'sistema_tienda'
         };

@@ -108,6 +108,34 @@ export default async function TradeInProductsListTable({
     );
   };
 
+  // Función para mostrar el proceso del producto
+  const getProductProcess = (process: string | null) => {
+    if (!process) {
+      return (
+        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-500">
+          Pendiente
+        </span>
+      );
+    }
+
+    const processInfo: Record<string, { label: string; color: string; icon: string }> = {
+      'IN': { label: 'Invendible', color: 'bg-red-100 text-red-800', icon: '🚫' },
+      'LAV-REP': { label: 'Lav+Rep', color: 'bg-purple-100 text-purple-800', icon: '🧼🔧' },
+      'REP': { label: 'Reparación', color: 'bg-yellow-100 text-yellow-800', icon: '🔧' },
+      'LAV': { label: 'Lavado', color: 'bg-blue-100 text-blue-800', icon: '🧼' },
+      'ETI': { label: 'Etiquetado', color: 'bg-green-100 text-green-800', icon: '🏷️' }
+    };
+    
+    const info = processInfo[process] || { label: process, color: 'bg-gray-100 text-gray-800', icon: '📋' };
+    
+    return (
+      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${info.color}`}>
+        <span className="text-xs">{info.icon}</span>
+        <span>{info.label}</span>
+      </span>
+    );
+  };
+
   return (
     <div className="mt-6 flow-root">
       <div className="inline-block min-w-full align-middle">
@@ -121,6 +149,7 @@ export default async function TradeInProductsListTable({
                 <th scope="col" className="px-3 py-5 font-medium">Bodega Recepción</th>
                 <th scope="col" className="px-3 py-5 font-medium">N° Solicitud</th>
                 <th scope="col" className="px-3 py-5 font-medium">Estado Producto</th>
+                <th scope="col" className="px-3 py-5 font-medium">Proceso</th>
                 <th scope="col" className="px-3 py-5 font-medium">Estado Operativo</th>
                 <th scope="col" className="px-3 py-5 font-medium w-48">Fecha Ingreso</th>
                 <th scope="col" className="px-3 py-5 font-medium">Acciones</th>
@@ -176,6 +205,9 @@ export default async function TradeInProductsListTable({
                   </td>
                   <td className="px-3 py-3">
                     {getProductState(product)}
+                  </td>
+                  <td className="px-3 py-3">
+                    {getProductProcess(product.process)}
                   </td>
                   <td className="px-3 py-3">
                     {getOperationalStatusText(product.product_status)}

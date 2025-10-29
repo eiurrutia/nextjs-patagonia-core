@@ -51,14 +51,63 @@ export default function ProductDetailInfo({ product }: ProductDetailInfoProps) {
     const color = stateColors[state as keyof typeof stateColors] || 'bg-gray-100 text-gray-800';
     
     return (
-      <div className="flex items-center gap-2">
-        <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${color}`}>
-          {state}
+      <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${color}`}>
+        {state}
+      </span>
+    );
+  };
+
+  // Función para obtener el proceso del producto con diseño bonito
+  const getProductProcess = () => {
+    const process = product.process;
+    
+    if (!process) {
+      return (
+        <span className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium bg-gray-100 text-gray-600">
+          Pendiente
         </span>
-        {confirmedState && (
-          <span className="text-sm text-green-600">✓ Verificado en tienda</span>
-        )}
-      </div>
+      );
+    }
+    
+    const processInfo = {
+      'IN': { 
+        label: 'Invendible', 
+        color: 'bg-red-100 text-red-800 border border-red-200',
+        icon: '🚫'
+      },
+      'LAV-REP': { 
+        label: 'Lavado + Reparación', 
+        color: 'bg-purple-100 text-purple-800 border border-purple-200',
+        icon: '🧼🔧'
+      },
+      'REP': { 
+        label: 'Reparación', 
+        color: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
+        icon: '🔧'
+      },
+      'LAV': { 
+        label: 'Lavado', 
+        color: 'bg-blue-100 text-blue-800 border border-blue-200',
+        icon: '🧼'
+      },
+      'ETI': { 
+        label: 'Etiquetado', 
+        color: 'bg-green-100 text-green-800 border border-green-200',
+        icon: '🏷️'
+      }
+    };
+    
+    const info = processInfo[process as keyof typeof processInfo] || {
+      label: process,
+      color: 'bg-gray-100 text-gray-600 border border-gray-200',
+      icon: '📋'
+    };
+    
+    return (
+      <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${info.color}`}>
+        <span>{info.icon}</span>
+        <span>{info.label}</span>
+      </span>
     );
   };
 
@@ -114,13 +163,15 @@ export default function ProductDetailInfo({ product }: ProductDetailInfoProps) {
             <p className="text-sm text-gray-900">{product.product_size}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-500">Rango de Crédito</label>
-            <p className="text-sm text-gray-900">{product.credit_range || 'No especificado'}</p>
-          </div>
-          <div>
             <label className="text-sm font-medium text-gray-500">Estado Evaluado</label>
             <div className="mt-1">
               {getProductState()}
+            </div>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-500">Proceso Asignado</label>
+            <div className="mt-1">
+              {getProductProcess()}
             </div>
           </div>
           <div>
