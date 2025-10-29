@@ -179,16 +179,16 @@ export class LabelGenerator {
     // Configurar fuente
     pdf.setFont('helvetica');
 
-    // SKU superior (negrita, 8pt)
+    // SKU superior (negrita, 8pt) - DESDE ARRIBA
     pdf.setFontSize(8);
     pdf.setFont('helvetica', 'bold');
-    const skuTopY = this.LABEL_HEIGHT_MM - this.MARGIN_TOP_MM;
+    const skuTopY = this.MARGIN_TOP_MM;
     pdf.text(sku, this.LABEL_WIDTH_MM / 2, skuTopY, { align: 'center' });
 
-    // Descripción (normal, 7pt)
+    // Descripción (normal, 7pt) - DEBAJO DEL SKU
     pdf.setFontSize(7);
     pdf.setFont('helvetica', 'normal');
-    const descY = skuTopY - this.GAP_SKU_DESC_MM;
+    const descY = skuTopY + this.GAP_SKU_DESC_MM;
     pdf.text(description, this.LABEL_WIDTH_MM / 2, descY, { align: 'center' });
 
     // Generar código de barras en canvas y agregarlo al PDF
@@ -203,26 +203,28 @@ export class LabelGenerator {
       });
       
       const barcodeDataURL = canvas.toDataURL();
-      const barcodeY = descY - this.GAP_DESC_BAR_MM;
-      const barcodeHeight = barcodeY - this.BARCODE_BOTTOM_MM - 3;
+      // Código de barras DEBAJO de la descripción
+      const barcodeY = descY + this.GAP_DESC_BAR_MM;
+      const barcodeHeight = 8; // altura fija del código de barras
       const barcodeWidth = this.LABEL_WIDTH_MM - 10; // margen total
       const barcodeX = (this.LABEL_WIDTH_MM - barcodeWidth) / 2;
       
-      pdf.addImage(barcodeDataURL, 'PNG', barcodeX, this.BARCODE_BOTTOM_MM + 3, barcodeWidth, barcodeHeight);
+      pdf.addImage(barcodeDataURL, 'PNG', barcodeX, barcodeY, barcodeWidth, barcodeHeight);
     } catch (error) {
       console.error('Error generando código de barras para PDF:', error);
       // Fallback con barras simuladas
-      const barcodeY = descY - this.GAP_DESC_BAR_MM;
-      const barcodeHeight = barcodeY - this.BARCODE_BOTTOM_MM - 3;
+      const barcodeY = descY + this.GAP_DESC_BAR_MM;
+      const barcodeHeight = 8;
       const barcodeStartX = 5;
       const barcodeWidth = this.LABEL_WIDTH_MM - 10;
       
-      this.drawBarcode(pdf, sku, barcodeStartX, this.BARCODE_BOTTOM_MM + 3, barcodeWidth, barcodeHeight);
+      this.drawBarcode(pdf, sku, barcodeStartX, barcodeY, barcodeWidth, barcodeHeight);
     }
 
-    // SKU inferior (6pt)
+    // SKU inferior (6pt) - EN LA PARTE INFERIOR
     pdf.setFontSize(6);
-    pdf.text(sku, this.LABEL_WIDTH_MM / 2, this.SKU_BOTTOM_MM + 1, { align: 'center' });
+    const skuBottomY = this.LABEL_HEIGHT_MM - this.SKU_BOTTOM_MM;
+    pdf.text(sku, this.LABEL_WIDTH_MM / 2, skuBottomY, { align: 'center' });
 
     return pdf;
   }

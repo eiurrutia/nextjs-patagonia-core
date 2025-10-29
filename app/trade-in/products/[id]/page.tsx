@@ -30,6 +30,7 @@ export default function ProductDetailPage({
   const [notFoundError, setNotFoundError] = useState(false);
   const [labelGenerated, setLabelGenerated] = useState(false);
   const [labelPdfUrl, setLabelPdfUrl] = useState<string | null>(null);
+  const [productName, setProductName] = useState<string>('Patagonia');
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -63,6 +64,33 @@ export default function ProductDetailPage({
 
     fetchProduct();
   }, [params.id]);
+
+  // Obtener el nombre del producto desde la tabla maestra
+  useEffect(() => {
+    const fetchProductName = async () => {
+      if (!product?.product_style) return;
+      
+      try {
+        // Extraer el código de estilo (antes del guion)
+        const styleCode = product.product_style.split('-')[0];
+        
+        // Llamar a la API para obtener el nombre del producto
+        const response = await fetch(`/api/trade-in/product-name?styleCode=${styleCode}`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.productName) {
+            setProductName(data.productName);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching product name:', error);
+        // Mantener el valor por defecto 'Patagonia' en caso de error
+      }
+    };
+
+    fetchProductName();
+  }, [product?.product_style]);
 
   // Debug effect for labelGenerated state
   useEffect(() => {
@@ -151,7 +179,7 @@ export default function ProductDetailPage({
           {labelGenerated && product.confirmed_sku && (
             <GeneratedLabelCard
               sku={product.confirmed_sku}
-              description={`Patagonia ${product.brand || ''} ${product.model || ''} ${product.size || ''}`.trim()}
+              description={productName}
               pdfBlobUrl={labelPdfUrl || undefined}
             />
           )}
