@@ -237,7 +237,8 @@ export default function ProductStatusTimeline({ product, onStatusChange, onLabel
                     </div>
                     
                     <div className="whitespace-nowrap text-right text-sm text-gray-500">
-                      {step.canUpdate && (
+                      {/* Ocultar botón "Marcar como completado" para etiqueta_generada */}
+                      {step.canUpdate && step.id !== 'etiqueta_generada' && (
                         <button
                           onClick={() => handleStatusUpdate(step.id)}
                           disabled={isUpdating === step.id}
@@ -247,8 +248,8 @@ export default function ProductStatusTimeline({ product, onStatusChange, onLabel
                         </button>
                       )}
                       
-                      {/* Botón Generar Etiqueta - solo cuando está en en_tienda */}
-                      {step.id === 'en_tienda' && step.isCompleted && product.confirmed_sku && !labelGenerated && (
+                      {/* Botón Generar Etiqueta - solo cuando está ACTUALMENTE en en_tienda */}
+                      {step.id === 'en_tienda' && step.isCompleted && step.isCurrent && product.confirmed_sku && !labelGenerated && (
                         <button
                           onClick={() => setShowLabelPreview(true)}
                           className="inline-flex items-center px-3 py-1.5 ml-2 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -296,8 +297,32 @@ export default function ProductStatusTimeline({ product, onStatusChange, onLabel
         sku={product.confirmed_sku || product.id}
         productId={product.id}
         description={productName}
-        onLabelGenerated={(pdfBlobUrl: string) => {
+        onLabelGenerated={async (pdfBlobUrl: string) => {
           setLabelGenerated(true);
+          
+          // Actualizar automáticamente el estado a "etiqueta_generada"
+          try {
+            const response = await fetch(`/api/trade-in/products/${product.id}/status`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ 
+                status: 'etiqueta_generada'
+              }),
+            });
+            
+            if (response.ok) {
+              // Notificar el cambio de estado
+              onStatusChange?.('etiqueta_generada');
+            } else {
+              console.error('Error updating status after label generation');
+            }
+          } catch (error) {
+            console.error('Error updating status:', error);
+          }
+          
+          // Notificar al componente padre sobre la etiqueta generada
           onLabelGenerated?.(pdfBlobUrl);
         }}
       />

@@ -93,11 +93,11 @@ export default function GeneratedLabelCard({
       {/* Preview del PDF Real */}
       <div className="mb-4 flex justify-center">
         {/* Mostrar el PDF real directamente */}
-        <div className="w-2/3">
+        <div style={{ width: '300px' }}>
           {pdfBlobUrl ? (
             <div className="w-full border border-gray-300 rounded bg-white shadow-sm overflow-hidden">
               <iframe
-                src={`${pdfBlobUrl}#toolbar=0&navpanes=0&scrollbar=0&zoom=100`}
+                src={`${pdfBlobUrl}#toolbar=0&navpanes=0&scrollbar=0&zoom=150`}
                 className="w-full"
                 style={{ 
                   height: '150px',
