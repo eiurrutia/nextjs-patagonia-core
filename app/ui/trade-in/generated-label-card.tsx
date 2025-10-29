@@ -91,21 +91,17 @@ export default function GeneratedLabelCard({
       </div>
 
       {/* Preview del PDF Real */}
-      <div className="mb-4">
-        <p className="text-xs text-gray-600 mb-3 text-center">Vista Previa</p>
-        
+      <div className="mb-4 flex justify-center">
         {/* Mostrar el PDF real directamente */}
-        <div className="w-full">
+        <div className="w-2/3">
           {pdfBlobUrl ? (
             <div className="w-full border border-gray-300 rounded bg-white shadow-sm overflow-hidden">
               <iframe
-                src={`${pdfBlobUrl}#toolbar=0&navpanes=0&scrollbar=0&zoom=150`}
+                src={`${pdfBlobUrl}#toolbar=0&navpanes=0&scrollbar=0&zoom=100`}
                 className="w-full"
                 style={{ 
-                  height: '200px',
-                  border: 'none',
-                  transform: 'scale(1.2)',
-                  transformOrigin: 'top center'
+                  height: '150px',
+                  border: 'none'
                 }}
                 title="Vista previa de la etiqueta"
               />
