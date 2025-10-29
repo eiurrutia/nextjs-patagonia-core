@@ -31,7 +31,7 @@ export class LabelGenerator {
       JsBarcode(canvas, sku, {
         format: "CODE128",
         width: 1,
-        height: 40,
+        height: 50, // Aumentado de 40 a 50 para más altura
         displayValue: false,
         margin: 0
       });
@@ -48,7 +48,7 @@ export class LabelGenerator {
           font-family: Arial, sans-serif;
           margin: 0 auto;
           box-sizing: border-box;
-          padding: 2mm;
+          padding: 2mm 8mm; 
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -82,8 +82,9 @@ export class LabelGenerator {
             display: flex;
             align-items: center;
             justify-content: center;
+            width: 100%;
           ">
-            <img src="${barcodeDataURL}" style="max-width: 90%; max-height: 10mm;" alt="Código de barras" />
+            <img src="${barcodeDataURL}" style="width: 80%; max-height: 12mm; object-fit: contain;" alt="Código de barras" />
           </div>
           
           <!-- SKU Inferior -->
@@ -197,7 +198,7 @@ export class LabelGenerator {
       JsBarcode(canvas, sku, {
         format: "CODE128",
         width: 1.5,
-        height: 35,
+        height: 50, // Aumentado de 35 a 50 para más altura
         displayValue: false,
         margin: 0
       });
@@ -205,8 +206,8 @@ export class LabelGenerator {
       const barcodeDataURL = canvas.toDataURL();
       // Código de barras DEBAJO de la descripción
       const barcodeY = descY + this.GAP_DESC_BAR_MM;
-      const barcodeHeight = 8; // altura fija del código de barras
-      const barcodeWidth = this.LABEL_WIDTH_MM - 10; // margen total
+      const barcodeHeight = 10; // Aumentado de 8 a 10 para ocupar más altura
+      const barcodeWidth = this.LABEL_WIDTH_MM - 16; // Reducido de 10 a 16 para más margen lateral
       const barcodeX = (this.LABEL_WIDTH_MM - barcodeWidth) / 2;
       
       pdf.addImage(barcodeDataURL, 'PNG', barcodeX, barcodeY, barcodeWidth, barcodeHeight);
@@ -214,9 +215,9 @@ export class LabelGenerator {
       console.error('Error generando código de barras para PDF:', error);
       // Fallback con barras simuladas
       const barcodeY = descY + this.GAP_DESC_BAR_MM;
-      const barcodeHeight = 8;
-      const barcodeStartX = 5;
-      const barcodeWidth = this.LABEL_WIDTH_MM - 10;
+      const barcodeHeight = 10;
+      const barcodeStartX = 8; // Más margen
+      const barcodeWidth = this.LABEL_WIDTH_MM - 16;
       
       this.drawBarcode(pdf, sku, barcodeStartX, barcodeY, barcodeWidth, barcodeHeight);
     }
