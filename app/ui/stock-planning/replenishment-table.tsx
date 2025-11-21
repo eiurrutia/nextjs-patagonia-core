@@ -39,6 +39,7 @@ export default function ReplenishmentTable({
   const [selectedStores, setSelectedStores] = useState<string[]>([]);
   const [createERPchecked, setCreateERPChecked] = useState(false);
   const [createERPBackgroundChecked, setCreateERPBackgroundChecked] = useState(false);
+  const [sendToWMSchecked, setSendToWMSChecked] = useState(false);
   const [storeList, setStoreList] = useState<string[]>([]);
   const [progressSteps, setProgressSteps] = useState<{ message: string; completed: boolean; level: number }[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -433,7 +434,8 @@ export default function ReplenishmentTable({
               dagRunId,
               conf: {
                 replenishmentID,
-                user: session?.user?.email || 'unknown'
+                user: session?.user?.email || 'unknown',
+                sendToWMS: sendToWMSchecked,
               }
             }),
           });
@@ -969,6 +971,7 @@ export default function ReplenishmentTable({
                             setCreateERPChecked(e.target.checked);
                             if (e.target.checked) {
                               setCreateERPBackgroundChecked(false);
+                              setSendToWMSChecked(false);
                             }
                           }}
                       />
@@ -979,13 +982,28 @@ export default function ReplenishmentTable({
                           type="checkbox"
                           checked={createERPBackgroundChecked} 
                           onChange={(e) => {
-                            setCreateERPBackgroundChecked(e.target.checked);
-                            if (e.target.checked) {
+                            const isChecked = e.target.checked;
+                            setCreateERPBackgroundChecked(isChecked);
+                            if (isChecked) {
                               setCreateERPChecked(false);
+                            } else {
+                              setSendToWMSChecked(false);
                             }
                           }}
                       />
                       <span>Crear reposiciones en ERP en segundo plano (Airflow)</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                          type="checkbox"
+                          checked={sendToWMSchecked}
+                          onChange={(e) => setSendToWMSChecked(e.target.checked)}
+                          disabled={!createERPBackgroundChecked}
+                      />
+                      <span>
+                        Enviar reposiciones creadas en ERP al WMS
+                        {!createERPBackgroundChecked && ' (requiere crear repos en ERP en segundo plano)'}
+                      </span>
                     </label>
                   </div>
                 </>
