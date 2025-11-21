@@ -79,7 +79,7 @@ export async function calculateReplenishment(
     );
 
     for (const storeName of prioritizedStores) {
-      const stockActual = (stockByStore as Record<string, number>)[`${storeName}_AVAILABLE`];
+      const stockActual = Math.max((stockByStore as Record<string, number>)[`${storeName}_AVAILABLE`] || 0, 0);
       const orderedQuantity =
         (stockByStore as Record<string, number>)[`${storeName}_ORDERED`] || 0;
       const sales = Number(salesMap.get(SKU)?.[storeName]) || 0;
