@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { CardSkeleton } from '../skeletons';
 import { ChevronRightIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-import { ReplenishmentData, BreakData, StockSegment } from '@/app/lib/definitions';
+import { ReplenishmentData, BreakData, StockSegment, SalesData } from '@/app/lib/definitions';
 import { getISOWeekNumber } from '@/app/utils/dateUtils';
 import { toZonedTime } from 'date-fns-tz';
 import Pagination from '../pagination';
@@ -14,12 +14,14 @@ export default function ReplenishmentTable({
     endDate,
     selectedDeliveryOptions,
     editedSegments,
+    editedSales,
     storePriority
   }: {
     startDate: string;
     endDate: string
     selectedDeliveryOptions: string[];
     editedSegments: StockSegment[];
+    editedSales?: SalesData[];
     storePriority: string[];
   }) {
   const router = useRouter();
@@ -61,6 +63,7 @@ export default function ReplenishmentTable({
             endDate,
             selectedDeliveryOptions,
             editedSegments,
+            editedSales,
             storePriority,
           }),
         });
@@ -77,7 +80,7 @@ export default function ReplenishmentTable({
     }
 
     fetchReplenishmentData();
-  }, [startDate, endDate, selectedDeliveryOptions, editedSegments, storePriority]);
+  }, [startDate, endDate, selectedDeliveryOptions, editedSegments, editedSales, storePriority]);
 
   // Store list
   useEffect(() => {

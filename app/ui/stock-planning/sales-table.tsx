@@ -10,13 +10,17 @@ interface SalesTableProps {
   query: string;
   currentPage: number;
   setPage: (page: number) => void;
+  editedSales?: SalesData[];
+  setEditedSales?: React.Dispatch<React.SetStateAction<SalesData[]>>;
 }
 
-export default function SalesTable({ startDate, endDate, query, currentPage, setPage }: SalesTableProps) {
+export default function SalesTable({ startDate, endDate, query, currentPage, setPage, editedSales = [], setEditedSales }: SalesTableProps) {
   const [salesData, setSalesData] = useState<SalesData[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [localEdits, setLocalEdits] = useState<SalesData[]>([]);
   const limit = 10;
 
   useEffect(() => {
@@ -61,8 +65,49 @@ export default function SalesTable({ startDate, endDate, query, currentPage, set
     setSortConfig({ key, direction });
   };
 
+  const handleEditToggle = () => {
+    if (isEditing) {
+      // Saving
+      if (setEditedSales) {
+        setEditedSales(localEdits);
+      }
+      setIsEditing(false);
+    } else {
+      // Starting edit
+      setLocalEdits(editedSales);
+      setIsEditing(true);
+    }
+  };
+
+  const handleInputChange = (sku: string, field: string, value: string) => {
+    const numValue = Number(value);
+    if (isNaN(numValue)) return;
+
+    setLocalEdits((prev) => {
+      const existingIndex = prev.findIndex((item) => item.SKU === sku);
+      if (existingIndex >= 0) {
+        const updated = [...prev];
+        updated[existingIndex] = { ...updated[existingIndex], [field]: numValue };
+        return updated;
+      } else {
+        const original = salesData.find((s) => s.SKU === sku);
+        if (!original) return prev;
+        return [...prev, { ...original, [field]: numValue }];
+      }
+    });
+  };
+
+  const currentEdits = isEditing ? localEdits : editedSales;
+
+  const mergedData = useMemo(() => {
+    return salesData.map((item) => {
+      const edited = currentEdits.find((e) => e.SKU === item.SKU);
+      return edited ? { ...item, ...edited } : item;
+    });
+  }, [salesData, currentEdits]);
+
   const sortedData = useMemo(() => {
-    let sortableData = [...salesData];
+    let sortableData = [...mergedData];
     if (sortConfig !== null) {
       sortableData.sort((a, b) => {
         const aValue = a[sortConfig.key as keyof SalesData];
@@ -85,12 +130,22 @@ export default function SalesTable({ startDate, endDate, query, currentPage, set
       });
     }
     return sortableData;
-  }, [salesData, sortConfig]);
+  }, [mergedData, sortConfig]);
 
   if (loading) return <CardSkeleton />;
 
   return (
     <div className="w-full overflow-auto mt-4">
+      <div className="flex justify-end mb-2">
+        <button
+          onClick={handleEditToggle}
+          className={`px-4 py-2 rounded text-white ${
+            isEditing ? 'bg-green-500 hover:bg-green-600' : 'bg-blue-500 hover:bg-blue-600'
+          }`}
+        >
+          {isEditing ? 'Guardar' : 'Editar'}
+        </button>
+      </div>
       <table className="min-w-full border-collapse border border-gray-300">
         <thead>
           <tr>
@@ -125,20 +180,35 @@ export default function SalesTable({ startDate, endDate, query, currentPage, set
           {sortedData.map((sale) => (
             <tr key={sale.SKU}>
               <td className="border px-4 py-2">{sale.SKU}</td>
-              <td className="border px-4 py-2">{sale.ECOM}</td>
-              <td className="border px-4 py-2">{sale.COYHAIQUE}</td>
-              <td className="border px-4 py-2">{sale.LASCONDES}</td>
-              <td className="border px-4 py-2">{sale.MALLSPORT}</td>
-              <td className="border px-4 py-2">{sale.COSTANERA}</td>
-              <td className="border px-4 py-2">{sale.CONCEPCION}</td>
-              <td className="border px-4 py-2">{sale.PTOVARAS}</td>
-              <td className="border px-4 py-2">{sale.LADEHESA}</td>
-              <td className="border px-4 py-2">{sale.PUCON}</td>
-              <td className="border px-4 py-2">{sale.TEMUCO}</td>
-              <td className="border px-4 py-2">{sale.OSORNO}</td>
-              <td className="border px-4 py-2">{sale.ALERCE}</td>
-              <td className="border px-4 py-2">{sale.BNAVENTURA}</td>
-              <td className="border px-4 py-2">{sale.ADMIN}</td>
+              {[
+                'ECOM',
+                'COYHAIQUE',
+                'LASCONDES',
+                'MALLSPORT',
+                'COSTANERA',
+                'CONCEPCION',
+                'PTOVARAS',
+                'LADEHESA',
+                'PUCON',
+                'TEMUCO',
+                'OSORNO',
+                'ALERCE',
+                'BNAVENTURA',
+                'ADMIN',
+              ].map((store) => (
+                <td key={store} className="border px-4 py-2">
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      value={sale[store]}
+                      onChange={(e) => handleInputChange(sale.SKU, store, e.target.value)}
+                      className="w-20 border rounded px-1"
+                    />
+                  ) : (
+                    sale[store]
+                  )}
+                </td>
+              ))}
             </tr>
           ))}
         </tbody>
