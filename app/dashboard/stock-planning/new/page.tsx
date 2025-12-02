@@ -34,6 +34,7 @@ export default function NewStockPlanning({
   const [selectedDeliveryOptions, setSelectedDeliveryOptions] = useState<string[]>([]);
   const [loadingSelectedDeliveryOptions, setLoadingSelectedDeliveryOptions] = useState(false);
   const [editedSegments, setEditedSegments] = useState<StockSegment[]>([]);
+  const [editedSales, setEditedSales] = useState<any[]>([]);
   const [storePriority, setStorePriority] = useState<string[]>([]);
 
   useEffect(() => {
@@ -182,6 +183,8 @@ export default function NewStockPlanning({
             query={query}
             currentPage={salesPage}
             setPage={setSalesPage}
+            editedSales={editedSales}
+            setEditedSales={setEditedSales}
           />
         </Suspense>
       </div>
@@ -230,6 +233,7 @@ export default function NewStockPlanning({
             endDate={endDate}
             selectedDeliveryOptions={selectedDeliveryOptions}
             editedSegments={editedSegments}
+            editedSales={editedSales}
             storePriority={storePriority}
           />
         </div>

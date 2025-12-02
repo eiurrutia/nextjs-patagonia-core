@@ -31,13 +31,14 @@ export async function calculateReplenishment(
   endDate: string,
   selectedDeliveryOptions: string[] = [],
   editedSegments: StockSegment[] = [],
-  storePriority: string[] = []
+  storePriority: string[] = [],
+  editedSales: SalesData[] = []
 ): Promise<{
   replenishmentTable: ReplenishmentData[];
   breakData: BreakData[];
   stockSegments: StockSegment[];
 }> {
-  const salesData: SalesData[] = await fetchSalesData(query, startDate, endDate, 1, true);
+  const fetchedSalesData: SalesData[] = await fetchSalesData(query, startDate, endDate, 1, true);
   const cdStockData: CDStockData[] = await fetchCDStockData(query, 1, true);
   const storesStockData: StoresStockData[] = await fetchStoresStockData(query, 1, true);
   const fetchedStockSegments: StockSegment[] = await fetchStockSegments(
@@ -57,6 +58,12 @@ export async function calculateReplenishment(
   const stockSegments = fetchedStockSegments.map((segment) => {
     const editedSegment = editedSegments.find((edited) => edited.SKU === segment.SKU);
     return editedSegment ? { ...segment, ...editedSegment } : segment;
+  });
+
+  // Merge fetched salesData with editedSales
+  const salesData = fetchedSalesData.map((sale) => {
+    const editedSale = editedSales.find((edited) => edited.SKU === sale.SKU);
+    return editedSale ? { ...sale, ...editedSale } : sale;
   });
 
   // Create maps for quick lookup

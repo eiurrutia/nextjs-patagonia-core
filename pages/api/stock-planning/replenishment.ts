@@ -18,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ message: 'No autorizado. Debes iniciar sesión.' });
   }
   if (req.method === 'POST') {
-    const { startDate, endDate, selectedDeliveryOptions, editedSegments, storePriority } = req.body;
+    const { startDate, endDate, selectedDeliveryOptions, editedSegments, editedSales, storePriority } = req.body;
 
     try {
       const data = await calculateReplenishment(
@@ -27,7 +27,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         endDate,
         selectedDeliveryOptions,
         editedSegments,
-        storePriority
+        storePriority,
+        editedSales
       );
       res.status(200).json(data);
     } catch (error) {
