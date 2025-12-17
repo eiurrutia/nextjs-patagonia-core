@@ -591,6 +591,9 @@ export default function ProductForm({
     if (!formData.product_color.trim()) newErrors.product_color = true;
     if (!formData.product_size.trim()) newErrors.product_size = true;
 
+    // Product images (at least one required)
+    if (formData.product_images.length === 0) newErrors.product_images = true;
+
     // Condition questions
     if (!formData.usage_signs) newErrors.usage_signs = true;
     if (!formData.pilling_level) newErrors.pilling_level = true;
@@ -945,11 +948,7 @@ export default function ProductForm({
         {!loadingCredits && !creditData && formData.product_style && formData.product_style.length >= 4 && (
           <div className="bg-orange-50 text-orange-800 p-4 rounded-md border border-orange-200">
             <p className="font-medium mb-2">
-              🌱 Lo siento, este producto no está disponible para trade-in
-            </p>
-            <p className="text-sm">
-              Pero de igual forma nos podemos hacer cargo de reciclarlo si tú quieres! 
-              Puedes enviarlo igual y nosotros nos encargamos de reciclarlo y así cuidar nuestro planeta.
+              🌱 Lo sentimos, este producto no está disponible para trade-in
             </p>
           </div>
         )}
@@ -977,10 +976,12 @@ export default function ProductForm({
         {/* Product Images Section */}
         <div className="space-y-4">
           <div>
-            <h4 className="text-lg font-semibold text-gray-900 mb-4">Imágenes del Producto</h4>
+            <h4 className="text-lg font-semibold text-gray-900 mb-4">
+              Imágenes del Producto <span className="text-red-500">*</span>
+            </h4>
             
             {/* Image Upload Area */}
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+            <div className={`border-2 border-dashed rounded-lg p-6 ${errors.product_images ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}>
               <div className="text-center">
                 <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                   <path
@@ -1090,6 +1091,9 @@ export default function ProductForm({
                   ))}
                 </div>
               </div>
+            )}
+            {errors.product_images && (
+              <p className="text-red-500 text-xs mt-2">Debes subir al menos una imagen del producto</p>
             )}
           </div>
         </div>
