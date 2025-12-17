@@ -102,6 +102,7 @@ export default function ProductForm({
   const [sizeSuggestions, setSizeSuggestions] = useState<string[]>([]);
   const [selectedColorName, setSelectedColorName] = useState<string>('');
   const [selectedSizeDescription, setSelectedSizeDescription] = useState<string>('');
+  const [styleExistsInERP, setStyleExistsInERP] = useState<boolean | null>(null);
   const [showStyleDropdown, setShowStyleDropdown] = useState(false);
   const [showColorDropdown, setShowColorDropdown] = useState(false);
   const [showSizeDropdown, setShowSizeDropdown] = useState(false);
@@ -167,12 +168,22 @@ export default function ProductForm({
   const fetchStyleSuggestions = async (search: string) => {
     if (search.length < 2) {
       setStyleSuggestions([]);
+      setStyleExistsInERP(null);
       return;
     }
     try {
       const res = await fetch(`/api/trade-in/erp-autocomplete?type=styles&search=${encodeURIComponent(search)}`);
       const data = await res.json();
-      setStyleSuggestions(data.styles || []);
+      const styles = data.styles || [];
+      setStyleSuggestions(styles);
+      
+      // Check if the exact style exists in ERP (when style is complete - 5 digits)
+      if (search.length >= 5) {
+        const exactMatch = styles.some((s: string) => s === search);
+        setStyleExistsInERP(exactMatch);
+      } else {
+        setStyleExistsInERP(null);
+      }
     } catch (error) {
       console.error('Error fetching style suggestions:', error);
     }
@@ -361,6 +372,10 @@ export default function ProductForm({
         setSelectedSizeDescription('');
         setColorSuggestions([]);
         setSizeSuggestions([]);
+        // Reset style exists check when user is editing
+        if (value.length < 5) {
+          setStyleExistsInERP(null);
+        }
       }
       
       // Fetch style suggestions if typing
@@ -944,8 +959,29 @@ export default function ProductForm({
           )}
         </div>
 
-        {/* Product Not Available Message - Show immediately after product fields */}
-        {!loadingCredits && !creditData && formData.product_style && formData.product_style.length >= 4 && (
+        {/* Style Not Found in ERP Message */}
+        {!loadingCredits && styleExistsInERP === false && formData.product_style && formData.product_style.length >= 5 && (
+          <div className="bg-yellow-50 text-yellow-800 p-4 rounded-md border border-yellow-200">
+            <p className="font-medium mb-2">
+              No encontramos ese número de estilo.
+            </p>
+            <p className="text-sm">
+              Revisa que esté correcto, si necesitas ayuda,{' '}
+              <a 
+                href="https://cl.patagonia.com/pages/formulario-de-intercambios-alternativo" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-yellow-900 underline hover:text-yellow-700 font-medium"
+              >
+                contáctanos
+              </a>
+              {' '}y te orientaremos.
+            </p>
+          </div>
+        )}
+
+        {/* Product Not Available for Trade-in Message (exists in ERP but not in credits) */}
+        {!loadingCredits && !creditData && styleExistsInERP === true && formData.product_style && formData.product_style.length >= 5 && (
           <div className="bg-orange-50 text-orange-800 p-4 rounded-md border border-orange-200">
             <p className="font-medium mb-2">
               🌱 Lo sentimos, este producto no está disponible para trade-in
