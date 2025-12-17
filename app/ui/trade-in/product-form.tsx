@@ -780,7 +780,7 @@ export default function ProductForm({
               type="text"
               id="product_color"
               value={formData.product_color}
-              onChange={(e) => handleInputChange('product_color', e.target.value)}
+              onChange={(e) => handleInputChange('product_color', e.target.value.toUpperCase())}
               onFocus={() => {
                 setShowColorDropdown(true);
                 if (formData.product_style) {
@@ -797,7 +797,13 @@ export default function ProductForm({
             {/* Color Suggestions Dropdown */}
             {showColorDropdown && colorSuggestions.length > 0 && (
               <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                {colorSuggestions.map((colorOpt, index) => (
+                {colorSuggestions
+                  .filter(colorOpt => 
+                    !formData.product_color || 
+                    colorOpt.code.toUpperCase().includes(formData.product_color.toUpperCase()) ||
+                    (colorOpt.name && colorOpt.name.toUpperCase().includes(formData.product_color.toUpperCase()))
+                  )
+                  .map((colorOpt, index) => (
                   <div
                     key={index}
                     className="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm"
