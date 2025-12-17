@@ -101,9 +101,20 @@ export default function ProductForm({
   const [colorSuggestions, setColorSuggestions] = useState<ColorOption[]>([]);
   const [sizeSuggestions, setSizeSuggestions] = useState<string[]>([]);
   const [selectedColorName, setSelectedColorName] = useState<string>('');
+  const [selectedSizeDescription, setSelectedSizeDescription] = useState<string>('');
   const [showStyleDropdown, setShowStyleDropdown] = useState(false);
   const [showColorDropdown, setShowColorDropdown] = useState(false);
   const [showSizeDropdown, setShowSizeDropdown] = useState(false);
+
+  // Helper function to get size description for special baby/toddler sizes
+  const getSizeDescription = (size: string): string => {
+    const sizeDescriptions: Record<string, string> = {
+      '6M': '3M a 6M',
+      '12M': '6M a 12M',
+      '18M': '12M a 18M',
+    };
+    return sizeDescriptions[size] || '';
+  };
   
   // Image fallback state - list of colors to try when image fails
   const [availableColorsForImage, setAvailableColorsForImage] = useState<string[]>([]);
@@ -347,6 +358,7 @@ export default function ProductForm({
           product_size: ''
         }));
         setSelectedColorName('');
+        setSelectedSizeDescription('');
         setColorSuggestions([]);
         setSizeSuggestions([]);
       }
@@ -376,6 +388,7 @@ export default function ProductForm({
           product_size: ''
         }));
         setSizeSuggestions([]);
+        setSelectedSizeDescription('');
       }
       
       // Find color name from suggestions
@@ -391,7 +404,8 @@ export default function ProductForm({
     }
 
     if (field === 'product_size' && typeof value === 'string') {
-      // Just update the size, no cascading needed
+      // Update size description based on typed value
+      setSelectedSizeDescription(getSizeDescription(value));
     }
   };
 
@@ -638,6 +652,7 @@ export default function ProductForm({
         setImageError(false);
         setImageLoading(false);
         setSelectedColorName('');
+        setSelectedSizeDescription('');
         setStyleSuggestions([]);
         setColorSuggestions([]);
         setSizeSuggestions([]);
@@ -658,6 +673,7 @@ export default function ProductForm({
     setImageError(false);
     setImageLoading(false);
     setSelectedColorName('');
+    setSelectedSizeDescription('');
     setStyleSuggestions([]);
     setColorSuggestions([]);
     setSizeSuggestions([]);
@@ -834,22 +850,33 @@ export default function ProductForm({
             {/* Size Suggestions Dropdown */}
             {showSizeDropdown && sizeSuggestions.length > 0 && (
               <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                {sizeSuggestions.map((size, index) => (
-                  <div
-                    key={index}
-                    className="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm"
-                    onMouseDown={() => {
-                      handleInputChange('product_size', size);
-                      setShowSizeDropdown(false);
-                    }}
-                  >
-                    {size}
-                  </div>
-                ))}
+                {sizeSuggestions.map((size, index) => {
+                  const sizeDesc = getSizeDescription(size);
+                  return (
+                    <div
+                      key={index}
+                      className="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm"
+                      onMouseDown={() => {
+                        handleInputChange('product_size', size);
+                        setSelectedSizeDescription(sizeDesc);
+                        setShowSizeDropdown(false);
+                      }}
+                    >
+                      <span className="font-medium">{size}</span>
+                      {sizeDesc && (
+                        <span className="text-gray-500 ml-1">- {sizeDesc}</span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
             {errors.product_size && (
               <p className="text-red-500 text-xs mt-1">La talla es obligatoria</p>
+            )}
+            {/* Show selected size description below field */}
+            {selectedSizeDescription && (
+              <p className="text-xs text-gray-500 mt-1">{selectedSizeDescription}</p>
             )}
           </div>
         </div>

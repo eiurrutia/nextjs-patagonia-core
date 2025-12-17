@@ -68,7 +68,6 @@ export default async function handler(req, res) {
         ${style ? `AND ITEMNUMBER = ?` : ''}
         ${color ? `AND COLOR = ?` : ''}
         ${search ? `AND SIZE LIKE ?` : ''}
-        ORDER BY SIZE
         LIMIT 100
       `;
       if (style) binds.push(style);
@@ -76,7 +75,25 @@ export default async function handler(req, res) {
       if (search) binds.push(`%${search}%`);
 
       const results = await executeQuery(query, binds);
-      const sizes = results.map(row => row.SIZE);
+      
+      // Custom sort order for sizes (baby/toddler sizes first in logical order, then alphabetical)
+      const sizeOrder = {
+        '3M': 1, '6M': 2, '12M': 3, '18M': 4, '24M': 5,
+        '2T': 10, '3T': 11, '4T': 12, '5T': 13,
+        'XXS': 20, 'XS': 21, 'S': 22, 'M': 23, 'L': 24, 'XL': 25, 'XXL': 26, 'XXXL': 27,
+        '28': 30, '29': 31, '30': 32, '31': 33, '32': 34, '33': 35, '34': 36, '36': 37, '38': 38, '40': 39,
+      };
+      
+      const sizes = results
+        .map(row => row.SIZE)
+        .sort((a, b) => {
+          const orderA = sizeOrder[a] ?? 100;
+          const orderB = sizeOrder[b] ?? 100;
+          if (orderA !== orderB) return orderA - orderB;
+          // If both have same order (or both unknown), sort alphabetically
+          return a.localeCompare(b);
+        });
+      
       return res.status(200).json({ sizes });
 
     } else if (type === 'first-color') {
