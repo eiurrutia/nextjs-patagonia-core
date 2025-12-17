@@ -528,9 +528,8 @@ const TradeInFormPage = () => {
                 Formulario de intercambio
               </h1>
               <p className="text-lg text-gray-700 leading-relaxed">
-                <strong>Tráenos o envíanos esos productos que ya no quieras</strong> y que cumplan con nuestros 
-                criterios de intercambio. A cambio, recibirás un crédito que podrás usar en cualquiera de 
-                nuestras tiendas o en nuestra página web.
+                <strong>Tráenos o envíanos lo que ya no uses </strong> y recibe crédito para seguir
+                explorando con Patagonia. Completa este formulario por cada prenda: revisaremos si puede ser parte del programa de intercambio. Tu crédito podrás usarlo en tiendas o en nuestra web.
               </p>
             </div>
           </div>
