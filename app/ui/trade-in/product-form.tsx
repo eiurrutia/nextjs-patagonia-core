@@ -989,6 +989,9 @@ export default function ProductForm({
           </div>
         )}
 
+        {/* Only show the rest of the form when product is valid (exists in ERP AND has credit data) */}
+        {creditData && styleExistsInERP === true && (
+          <>
         {/* Photo Instructions */}
         <div className="bg-gray-50 p-6 rounded-lg">
           <h3 className="text-sm font-bold text-gray-900 mb-3">
@@ -1176,6 +1179,8 @@ export default function ProductForm({
               {isSubmitting ? 'Guardando...' : editingProduct ? 'Actualizar Producto' : 'Agregar Producto'}
             </Button>
           </div>
+        )}
+          </>
         )}
       </form>
       </div>
