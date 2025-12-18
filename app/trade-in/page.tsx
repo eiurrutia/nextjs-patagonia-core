@@ -44,16 +44,10 @@ export default async function Page({
       {/* Action buttons */}
       <div className="flex w-full items-center justify-end mb-6">
         <div className="flex gap-3">
-          <Link href="/trade-in/store/new">
-            <button className="flex items-center gap-1 rounded-md bg-green-500 px-3 py-2 text-white hover:bg-green-600">
-              <BuildingStorefrontIcon className="h-5 w-5" />
-              <span>Recepción Tienda</span>
-            </button>
-          </Link> 
           <Link href="/trade-in/new">
             <button className="flex items-center gap-1 rounded-md bg-blue-500 px-3 py-2 text-white hover:bg-blue-600">
               <PlusIcon className="h-5 w-5" />
-              <span>Nuevo Ecom</span>
+              <span>Nueva Solicitud</span>
             </button>
           </Link>
         </div>
