@@ -456,12 +456,6 @@ const TradeInFormPage = () => {
       return false;
     }
 
-    // Validate store selection if store delivery is chosen
-    if (deliveryOption === 'store' && !selectedStoreCode) {
-      setError('Por favor selecciona una tienda para la entrega');
-      return false;
-    }
-
     return !Object.values(newErrors).some(Boolean);
   };
 
@@ -1109,20 +1103,6 @@ const TradeInFormPage = () => {
                   </div>
                 </div>
               </div>
-
-              {/* Store Selection - Only show when store delivery is selected */}
-              {deliveryOption === 'store' && (
-                <div className="mt-4 p-4 rounded-lg">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Selecciona la tienda <span className="text-red-500">*</span>
-                  </label>
-                  <StoreSelect 
-                    value={selectedStoreCode}
-                    onChange={setSelectedStoreCode}
-                    placeholder="Selecciona una tienda..."
-                  />
-                </div>
-              )}
             </div>
             </div>
           </div>

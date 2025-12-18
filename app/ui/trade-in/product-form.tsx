@@ -128,6 +128,11 @@ export default function ProductForm({
   const productColorRef = useRef<HTMLInputElement>(null);
   const productSizeRef = useRef<HTMLInputElement>(null);
   const conditionAssessmentRef = useRef<HTMLDivElement>(null);
+  
+  // Ref to track the latest style search to prevent race conditions
+  const latestStyleSearchRef = useRef<string>('');
+  // Ref to track the latest credit search to prevent race conditions
+  const latestCreditSearchRef = useRef<string>('');
 
   // Load editing product data
   useEffect(() => {
@@ -182,6 +187,9 @@ export default function ProductForm({
 
   // Fetch style suggestions
   const fetchStyleSuggestions = async (search: string) => {
+    // Track this search to prevent race conditions
+    latestStyleSearchRef.current = search;
+    
     if (search.length < 2) {
       setStyleSuggestions([]);
       setStyleExistsInERP(null);
@@ -189,6 +197,13 @@ export default function ProductForm({
     }
     try {
       const res = await fetch(`/api/trade-in/erp-autocomplete?type=styles&search=${encodeURIComponent(search)}`);
+      
+      // Check if this is still the latest search (prevent race condition)
+      if (latestStyleSearchRef.current !== search) {
+        console.log('🔄 Ignoring stale style search response for:', search);
+        return;
+      }
+      
       const data = await res.json();
       const styles = data.styles || [];
       setStyleSuggestions(styles);
@@ -518,10 +533,19 @@ export default function ProductForm({
         return;
       }
 
+      // Track this search to prevent race conditions
+      latestCreditSearchRef.current = styleCode;
+
       setLoadingCredits(true);
       try {
         console.log('🔍 Frontend: Fetching credits for style:', styleCode);
         const response = await fetch(`/api/trade-in/product-credits?style=${encodeURIComponent(styleCode)}`);
+        
+        // Check if this is still the latest search (prevent race condition)
+        if (latestCreditSearchRef.current !== styleCode) {
+          console.log('🔄 Ignoring stale credit search response for:', styleCode);
+          return;
+        }
         
         if (response.ok) {
           const result = await response.json();
