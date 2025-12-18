@@ -468,7 +468,34 @@ const TradeInFormPage = () => {
   // Submit the complete trade-in request
   const handleSubmitTradeInRequest = async () => {
     if (!validateMainForm()) {
-      setError('Por favor completa todos los campos obligatorios');
+      // Debug: mostrar qué campos fallan
+      const debugErrors = {
+        firstName: !formData.firstName.trim(),
+        lastName: !formData.lastName.trim(),
+        rut: !formData.rut.trim() || !validateRut(formData.rut),
+        email: !formData.email.trim() || !validateEmail(formData.email),
+        phone: !formData.phone.trim() || !validatePhone(formData.phone),
+        region: !formData.region.trim(),
+        comuna: !formData.comuna.trim(),
+        address: !formData.address.trim(),
+      };
+      const camposFallidos = Object.entries(debugErrors)
+        .filter(([_, hasError]) => hasError)
+        .map(([field]) => field);
+      console.log('Campos con error:', camposFallidos);
+      console.log('Valores actuales:', {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        rut: formData.rut,
+        email: formData.email,
+        phone: formData.phone,
+        region: formData.region,
+        comuna: formData.comuna,
+        address: formData.address,
+        deliveryOption,
+        selectedStoreCode
+      });
+      setError(`Por favor completa todos los campos obligatorios. Campos con error: ${camposFallidos.join(', ')}`);
       setShowConfirmationModal(false);
       return;
     }

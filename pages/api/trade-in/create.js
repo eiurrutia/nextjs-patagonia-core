@@ -3,6 +3,15 @@ import { sql } from '@vercel/postgres';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/pages/api/auth/[...nextauth]';
 
+// Increase body size limit to handle base64 images
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb',
+    },
+  },
+};
+
 /**
  * API route handler for creating a new Trade-In request with multiple products
  * @param req - The HTTP request object
