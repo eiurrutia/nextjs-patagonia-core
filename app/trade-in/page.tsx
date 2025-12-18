@@ -34,7 +34,7 @@ export default async function Page({
       {/* Header with user info */}
       <div className="flex w-full items-start justify-between mb-6">
         <div className="flex-1">
-          <h1 className={`${lusitana.className} text-2xl`}>Trade-In Records</h1>
+          <h1 className={`${lusitana.className} text-2xl`}>Solicitudes Trade-In</h1>
         </div>
         <div className="flex-shrink-0 ml-4">
           <UserInfoCard />
