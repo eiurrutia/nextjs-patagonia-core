@@ -676,6 +676,10 @@ export default function ProductForm({
         setSizeSuggestions([]);
         setAvailableColorsForImage([]);
         setCurrentColorIndex(0);
+        setStyleExistsInERP(null);
+        setCreditData(null);
+        setCreditMessage('');
+        setCalculatedState(null);
       }
     } catch (error) {
       console.error('Error saving product:', error);
@@ -697,6 +701,10 @@ export default function ProductForm({
     setSizeSuggestions([]);
     setAvailableColorsForImage([]);
     setCurrentColorIndex(0);
+    setStyleExistsInERP(null);
+    setCreditData(null);
+    setCreditMessage('');
+    setCalculatedState(null);
     if (onCancel) {
       onCancel();
     }
