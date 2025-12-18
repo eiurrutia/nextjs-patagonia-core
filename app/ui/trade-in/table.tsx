@@ -74,6 +74,17 @@ export default async function TradeInTable({
       );
     }
     
+    if (delivery_method === 'store' && !received_store_code) {
+      return (
+        <div className="text-sm">
+          <div className="font-medium text-orange-600">🏪 Entrega en tienda</div>
+          <div className="text-yellow-600 text-xs font-medium">
+            Pendiente de entrega
+          </div>
+        </div>
+      );
+    }
+    
     // Fallback para casos no esperados
     return (
       <div className="text-sm">
