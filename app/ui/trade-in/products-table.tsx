@@ -20,6 +20,7 @@ export interface ProductFormData {
   meets_minimum_requirements: boolean;
   product_images?: string[];
   calculated_state?: string;
+  product_comment?: string;
 }
 
 interface ProductsTableProps {

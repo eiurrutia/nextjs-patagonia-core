@@ -71,6 +71,7 @@ export interface CreateTradeInProductData {
   meets_minimum_requirements: boolean;
   product_images?: string[];
   calculated_state?: string;
+  product_comment?: string;
 }
 
 /**
@@ -156,13 +157,14 @@ export async function createTradeInRequest(data: CreateTradeInRequestData): Prom
         INSERT INTO trade_in_products (
           request_id, product_style, product_size, credit_estimated,
           usage_signs, pilling_level, stains_level, tears_holes_level, repairs_level,
-          meets_minimum_requirements, product_images, calculated_state
+          meets_minimum_requirements, product_images, calculated_state, product_comment
         ) VALUES (
           ${request.id}, ${product.product_style}, 
           ${product.product_size}, ${product.credit_estimated || null},
           ${product.usage_signs}, ${product.pilling_level}, ${product.stains_level},
           ${product.tears_holes_level}, ${product.repairs_level}, ${product.meets_minimum_requirements},
-          ${JSON.stringify(product.product_images || [])}, ${product.calculated_state || null}
+          ${JSON.stringify(product.product_images || [])}, ${product.calculated_state || null},
+          ${product.product_comment || null}
         )
       `;
     }

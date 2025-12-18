@@ -26,7 +26,6 @@ interface FormData {
   comuna: string;
   address: string;
   houseDetails: string;
-  client_comment: string;
 }
 
 // Validation functions
@@ -211,8 +210,7 @@ const TradeInFormPage = () => {
     region: '',
     comuna: '',
     address: '',
-    houseDetails: '',
-    client_comment: ''
+    houseDetails: ''
   });
 
   const [errors, setErrors] = useState({
@@ -497,7 +495,6 @@ const TradeInFormPage = () => {
         receivedStoreCode: deliveryOption === 'store' ? selectedStoreCode : null,
         address: formData.address,
         houseDetails: formData.houseDetails,
-        clientComment: formData.client_comment,
         products: products
       };
 
@@ -1100,24 +1097,6 @@ const TradeInFormPage = () => {
                 </div>
               )}
             </div>
-
-            {/* Client Comment */}
-            <div className="mt-6">
-              <label htmlFor="client_comment" className="block text-sm font-medium text-gray-700 mb-1">
-                Cuéntanos algo más sobre la historia de tu(s) producto(s)
-              </label>
-              <p className="text-xs text-gray-500 mb-2">
-                Nos interesa mucho saber las historias que viviste con el producto y las historias que él tiene para contarnos!
-              </p>
-              <textarea
-                id="client_comment"
-                rows={4}
-                value={formData.client_comment}
-                onChange={(e) => handleInputChange('client_comment', e.target.value)}
-                className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Comparte la historia de tu producto: aventuras, momentos especiales, lugares que visitaste con él..."
-              />
-            </div>
             </div>
           </div>
 
@@ -1259,6 +1238,16 @@ const TradeInFormPage = () => {
                               <div className="bg-blue-50 p-3 rounded-lg">
                                 <p className="text-sm text-blue-800 font-medium">
                                   {product.credit_message}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Product Comment */}
+                            {product.product_comment && (
+                              <div className="bg-gray-50 p-3 rounded-lg">
+                                <p className="text-xs font-medium text-gray-500 mb-1">Comentario:</p>
+                                <p className="text-sm text-gray-700 italic">
+                                  &ldquo;{product.product_comment}&rdquo;
                                 </p>
                               </div>
                             )}

@@ -42,6 +42,7 @@ interface ProductFormState {
   repairs_level: string;
   meets_minimum_requirements: boolean;
   product_images: string[];
+  product_comment: string;
 }
 
 interface ColorOption {
@@ -74,7 +75,8 @@ const initialFormState: ProductFormState = {
   tears_holes_level: '',
   repairs_level: '',
   meets_minimum_requirements: false,
-  product_images: []
+  product_images: [],
+  product_comment: ''
 };
 
 export default function ProductForm({ 
@@ -146,7 +148,8 @@ export default function ProductForm({
         tears_holes_level: editingProduct.tears_holes_level,
         repairs_level: editingProduct.repairs_level,
         meets_minimum_requirements: editingProduct.meets_minimum_requirements,
-        product_images: editingProduct.product_images || []
+        product_images: editingProduct.product_images || [],
+        product_comment: editingProduct.product_comment || ''
       });
       
       // Fetch color name if color exists
@@ -668,7 +671,8 @@ export default function ProductForm({
         repairs_level: formData.repairs_level,
         meets_minimum_requirements: formData.meets_minimum_requirements,
         product_images: formData.product_images,
-        calculated_state: calculatedState || undefined
+        calculated_state: calculatedState || undefined,
+        product_comment: formData.product_comment || undefined
       };
 
       if (editingProduct && onUpdateProduct) {
@@ -1180,6 +1184,24 @@ export default function ProductForm({
                 {creditMessage}
               </p>
             </div>
+          </div>
+        )}
+
+        {/* Product Comment */}
+        {formData.meets_minimum_requirements && (
+          <div className="mt-6">
+            <label htmlFor="product_comment" className="block text-sm font-medium text-gray-700 mb-1">
+              Cuéntanos sobre la historia de tu producto (opcional)
+            </label>
+            <textarea
+              id="product_comment"
+              name="product_comment"
+              rows={3}
+              value={formData.product_comment}
+              onChange={(e) => setFormData({ ...formData, product_comment: e.target.value })}
+              placeholder="Nos interesa mucho saber la historia detrás de tu producto Patagonia; aventuras, momentos especiales, lugares que visitate con él, etc."
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            />
           </div>
         )}
 

@@ -29,7 +29,6 @@ export default async function handler(req, res) {
       deliveryMethod,
       address,
       houseDetails,
-      clientComment,
       products,
       receivedStoreCode // Nuevo campo para cuando es recepción en tienda
     } = req.body;
@@ -105,7 +104,6 @@ export default async function handler(req, res) {
       delivery_method: deliveryMethod,
       address: address || null,
       house_details: houseDetails || null,
-      client_comment: clientComment || null,
       received_store_code: receivedStoreCode || null,
       status: 'solicitud_recibida',
       products: products.map(product => ({
@@ -120,7 +118,8 @@ export default async function handler(req, res) {
         repairs_level: product.repairs_level,
         meets_minimum_requirements: product.meets_minimum_requirements !== false,
         product_images: product.product_images || [],
-        calculated_state: product.calculated_state || null
+        calculated_state: product.calculated_state || null,
+        product_comment: product.product_comment || null
       }))
     };
 
