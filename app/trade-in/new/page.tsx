@@ -9,10 +9,11 @@ import ProductForm from '@/app/ui/trade-in/product-form';
 import ProductsTable, { ProductFormData } from '@/app/ui/trade-in/products-table';
 import AddressAutocomplete from '@/app/ui/address-autocomplete';
 import StoreSelect from '@/app/ui/stores/store-select';
-import { conditionQuestions } from '@/app/lib/trade-in/condition-images';
+import { conditionQuestions, getConditionOptionLabel } from '@/app/lib/trade-in/condition-images';
+import { getStateDisplayColors } from '@/app/lib/trade-in/product-condition-evaluator';
 import {
   ChevronRightIcon, ChevronDownIcon,
-  HomeIcon, MapPinIcon, PlusIcon, CheckCircleIcon
+  HomeIcon, MapPinIcon, PlusIcon, CheckCircleIcon, XMarkIcon
 } from '@heroicons/react/24/outline';
 
 interface FormData {
@@ -158,6 +159,9 @@ const TradeInFormPage = () => {
   const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(1); // Estado para controlar el paso actual
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false); // Modal de confirmación
+  const [catalogImagesLoaded, setCatalogImagesLoaded] = useState<Set<string>>(new Set()); // Track loaded catalog images
+  const [catalogImagesFailed, setCatalogImagesFailed] = useState<Set<string>>(new Set()); // Track failed catalog images
   
   // Create ref for products section
   const productsRef = useRef<HTMLDivElement>(null);
@@ -1069,7 +1073,7 @@ const TradeInFormPage = () => {
             {/* Submit Button */}
             <div className="flex justify-end">
               <Button
-                onClick={handleSubmitTradeInRequest}
+                onClick={() => setShowConfirmationModal(true)}
                 disabled={isSubmittingRequest || products.length === 0}
                 className="cursor-pointer px-8 py-3"
               >
@@ -1080,6 +1084,226 @@ const TradeInFormPage = () => {
           )}
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmationModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4">
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+              onClick={() => {
+                setShowConfirmationModal(false);
+                setCatalogImagesLoaded(new Set());
+                setCatalogImagesFailed(new Set());
+              }}
+            />
+            
+            {/* Modal Content */}
+            <div className="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              {/* Header */}
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Confirmar Solicitud Trade-in
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowConfirmationModal(false);
+                    setCatalogImagesLoaded(new Set());
+                    setCatalogImagesFailed(new Set());
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XMarkIcon className="h-6 w-6" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="px-6 py-4">
+                <p className="text-sm text-gray-600 mb-6">
+                  Revisa el resumen de tu solicitud antes de confirmar:
+                </p>
+
+                {/* Products Summary */}
+                <div className="space-y-6">
+                  {products.map((product, index) => {
+                    // Generate catalog image URL
+                    const getCatalogImageUrl = (productStyle: string) => {
+                      if (!productStyle || productStyle.length < 8) return null;
+                      const formattedStyle = productStyle.replace('-', '_');
+                      return `https://production-us2.patagonia.com/dw/image/v2/BDJB_PRD/on/demandware.static/-/Sites-patagonia-master/default/images/hi-res/${formattedStyle}.jpg?sw=400&sh=400&sfrm=png&q=90&bgcolor=f5f5f5`;
+                    };
+                    const catalogImageUrl = getCatalogImageUrl(product.product_style);
+                    
+                    return (
+                    <div key={product.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                      <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center gap-4">
+                        {/* Catalog Image in Header */}
+                        <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0 relative">
+                          {catalogImageUrl && !catalogImagesFailed.has(product.id) ? (
+                            <>
+                              {/* Loading skeleton */}
+                              {!catalogImagesLoaded.has(product.id) && (
+                                <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+                                  <div className="w-6 h-6 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                              )}
+                              <Image
+                                src={catalogImageUrl}
+                                alt={`${product.product_style} - Catálogo`}
+                                width={64}
+                                height={64}
+                                className={`object-cover w-full h-full transition-opacity duration-200 ${
+                                  catalogImagesLoaded.has(product.id) ? 'opacity-100' : 'opacity-0'
+                                }`}
+                                onLoad={() => {
+                                  setCatalogImagesLoaded(prev => new Set(prev).add(product.id));
+                                }}
+                                onError={() => {
+                                  setCatalogImagesFailed(prev => new Set(prev).add(product.id));
+                                }}
+                              />
+                            </>
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100">
+                              <span className="text-xs">Sin imagen</span>
+                            </div>
+                          )}
+                        </div>
+                        <h3 className="font-medium text-gray-900">
+                          Producto {index + 1}: {product.product_style}
+                        </h3>
+                      </div>
+                      
+                      <div className="p-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {/* Product Info & Condition */}
+                          <div className="space-y-4">
+                            {/* Basic Info */}
+                            <div>
+                              <p className="text-sm text-gray-600">
+                                <span className="font-medium">Talla:</span> {product.product_size}
+                              </p>
+                            </div>
+
+                            {/* State */}
+                            {product.calculated_state && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-600">Estado:</span>
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  getStateDisplayColors(product.calculated_state as any).bg
+                                } ${getStateDisplayColors(product.calculated_state as any).text}`}>
+                                  {product.calculated_state}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Credit Message */}
+                            {product.credit_message && (
+                              <div className="bg-blue-50 p-3 rounded-lg">
+                                <p className="text-sm text-blue-800 font-medium">
+                                  {product.credit_message}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Condition Details */}
+                            <div className="text-xs space-y-1">
+                              <p className="font-medium text-gray-700 mb-2">Condición declarada:</p>
+                              <div className="grid grid-cols-2 gap-1">
+                                <span className="text-gray-500">Señales de uso:</span>
+                                <span className="font-medium">{getConditionOptionLabel('usage_signs', product.usage_signs)}</span>
+                                
+                                {product.usage_signs === 'yes' && (
+                                  <>
+                                    <span className="text-gray-500">Pilling:</span>
+                                    <span className="font-medium">{getConditionOptionLabel('pilling_level', product.pilling_level)}</span>
+                                    
+                                    <span className="text-gray-500">Manchas:</span>
+                                    <span className="font-medium">{getConditionOptionLabel('stains_level', product.stains_level)}</span>
+                                    
+                                    <span className="text-gray-500">Rasgaduras:</span>
+                                    <span className="font-medium">{getConditionOptionLabel('tears_holes_level', product.tears_holes_level)}</span>
+                                    
+                                    <span className="text-gray-500">Reparaciones:</span>
+                                    <span className="font-medium">{getConditionOptionLabel('repairs_level', product.repairs_level)}</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Product Images */}
+                          {product.product_images && product.product_images.length > 0 && (
+                            <div>
+                              <p className="text-sm font-medium text-gray-700 mb-2">
+                                Imágenes cargadas ({product.product_images.length})
+                              </p>
+                              <div className="grid grid-cols-3 gap-2">
+                                {product.product_images.slice(0, 6).map((imageUrl, imgIndex) => (
+                                  <div key={imgIndex} className="relative aspect-square bg-gray-100 rounded overflow-hidden">
+                                    <Image
+                                      src={imageUrl}
+                                      alt={`${product.product_style} - Imagen ${imgIndex + 1}`}
+                                      fill
+                                      className="object-cover"
+                                    />
+                                  </div>
+                                ))}
+                                {product.product_images.length > 6 && (
+                                  <div className="aspect-square bg-gray-100 rounded flex items-center justify-center">
+                                    <span className="text-sm text-gray-500">
+                                      +{product.product_images.length - 6}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                  })}
+                </div>
+
+                {/* Disclaimer */}
+                <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <p className="text-sm text-yellow-800">
+                    <span className="font-semibold">Importante:</span> Entiendo que Patagonia revisará el producto y que la evaluación final podría modificar el estado declarado y el crédito asociado.
+                  </p>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowConfirmationModal(false);
+                    setCatalogImagesLoaded(new Set());
+                    setCatalogImagesFailed(new Set());
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Volver a Editar
+                </button>
+                <Button
+                  onClick={() => {
+                    setShowConfirmationModal(false);
+                    setCatalogImagesLoaded(new Set());
+                    setCatalogImagesFailed(new Set());
+                    handleSubmitTradeInRequest();
+                  }}
+                  disabled={isSubmittingRequest}
+                >
+                  {isSubmittingRequest ? 'Enviando...' : 'Confirmar y Enviar'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -11,6 +11,7 @@ export interface ProductFormData {
   product_style: string;
   product_size: string;
   credit_estimated?: string;
+  credit_message?: string;
   usage_signs: string;
   pilling_level: string;
   stains_level: string;
@@ -118,17 +119,14 @@ export default function ProductsTable({ products, onEdit, onDelete, onView }: Pr
                       </h4>
                       <div className="flex items-center space-x-4 mt-1">
                         <span className="text-xs text-gray-500">
-                          Estilo: <span className="font-medium">{product.product_style}</span>
-                        </span>
-                        <span className="text-xs text-gray-500">
                           Talla: <span className="font-medium">{product.product_size}</span>
                         </span>
-                        {product.credit_estimated && (
-                          <p className="text-xs text-gray-600 mt-1">
-                            Crédito: <span className="font-medium">{product.credit_estimated}</span>
-                          </p>
-                        )}
                       </div>
+                      {product.credit_message && (
+                        <p className="text-xs text-blue-600 mt-1 font-medium">
+                          {product.credit_message}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>

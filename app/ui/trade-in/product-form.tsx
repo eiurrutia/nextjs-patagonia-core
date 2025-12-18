@@ -153,6 +153,19 @@ export default function ProductForm({
       if (color) {
         fetchColorName(style, color);
       }
+      
+      // Restore calculated state if available
+      if (editingProduct.calculated_state) {
+        setCalculatedState(editingProduct.calculated_state as any);
+      }
+      
+      // Restore credit message if available
+      if (editingProduct.credit_message) {
+        setCreditMessage(editingProduct.credit_message);
+      }
+      
+      // Set styleExistsInERP to true since this product was already validated
+      setStyleExistsInERP(true);
     }
   }, [editingProduct]);
 
@@ -647,6 +660,7 @@ export default function ProductForm({
         product_style: combinedStyleColor,
         product_size: formData.product_size,
         credit_estimated: formData.credit_estimated,
+        credit_message: creditMessage,
         usage_signs: formData.usage_signs,
         pilling_level: formData.pilling_level,
         stains_level: formData.stains_level,
@@ -997,8 +1011,8 @@ export default function ProductForm({
           </div>
         )}
 
-        {/* Only show the rest of the form when product is valid (exists in ERP AND has credit data) */}
-        {creditData && styleExistsInERP === true && (
+        {/* Only show the rest of the form when product is valid (exists in ERP AND has credit data) OR when editing an existing product */}
+        {((creditData && styleExistsInERP === true) || editingProduct) && (
           <>
         {/* Photo Instructions */}
         <div className="bg-gray-50 p-6 rounded-lg">
