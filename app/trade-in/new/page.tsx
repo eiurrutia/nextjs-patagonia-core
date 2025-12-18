@@ -72,10 +72,45 @@ const validateEmail = (email: string): boolean => {
 };
 
 const validatePhone = (phone: string): boolean => {
-  // Chilean phone format: +56 9 XXXX XXXX or 9 XXXX XXXX
-  const cleanPhone = phone.replace(/[\s\-\+]/g, '');
-  const phoneRegex = /^(56)?9[0-9]{8}$/;
-  return phoneRegex.test(cleanPhone);
+  // Remove spaces and dashes for validation
+  const cleanPhone = phone.replace(/[\s\-]/g, '');
+  
+  // Accept Chilean format: +569XXXXXXXX or 9XXXXXXXX or 569XXXXXXXX
+  const chileanRegex = /^(\+?56)?9[0-9]{8}$/;
+  
+  // Accept international format: +XX... (at least 10 digits after +)
+  const internationalRegex = /^\+[0-9]{10,15}$/;
+  
+  return chileanRegex.test(cleanPhone) || internationalRegex.test(cleanPhone);
+};
+
+// Format phone number - add +569 prefix for Chilean numbers without country code
+const formatPhone = (phone: string): string => {
+  // Remove spaces and dashes
+  const cleanPhone = phone.replace(/[\s\-]/g, '');
+  
+  // If it already starts with +, don't modify it (user provided country code)
+  if (cleanPhone.startsWith('+')) {
+    return cleanPhone;
+  }
+  
+  // If it starts with 56 and has 11 digits (569XXXXXXXX), add the +
+  if (cleanPhone.startsWith('56') && cleanPhone.length === 11) {
+    return `+${cleanPhone}`;
+  }
+  
+  // If it's 9 digits starting with 9 (9XXXXXXXX), add +56
+  if (cleanPhone.startsWith('9') && cleanPhone.length === 9) {
+    return `+56${cleanPhone}`;
+  }
+  
+  // If it's exactly 8 digits (XXXXXXXX), assume Chilean mobile and add +569
+  if (/^[0-9]{8}$/.test(cleanPhone)) {
+    return `+569${cleanPhone}`;
+  }
+  
+  // Otherwise return as-is
+  return cleanPhone;
 };
 
 const formatRut = (rut: string): string => {
@@ -436,11 +471,13 @@ const TradeInFormPage = () => {
   const handleSubmitTradeInRequest = async () => {
     if (!validateMainForm()) {
       setError('Por favor completa todos los campos obligatorios');
+      setShowConfirmationModal(false);
       return;
     }
 
     if (products.length === 0) {
       setError('Debes agregar al menos un producto');
+      setShowConfirmationModal(false);
       return;
     }
 
@@ -478,6 +515,12 @@ const TradeInFormPage = () => {
       }
 
       const result = await response.json();
+      
+      // Close modal and clean up on success
+      setShowConfirmationModal(false);
+      setCatalogImagesLoaded(new Set());
+      setCatalogImagesFailed(new Set());
+      
       setSuccessMessage(`¡Solicitud creada exitosamente! Número de solicitud: ${result.requestNumber}`);
       
       // Different behavior based on authentication status
@@ -494,6 +537,7 @@ const TradeInFormPage = () => {
     } catch (error) {
       console.error('Error submitting trade-in request:', error);
       setError(error instanceof Error ? error.message : 'Error al crear la solicitud');
+      // Keep modal open on error so user can try again
     } finally {
       setIsSubmittingRequest(false);
     }
@@ -869,7 +913,14 @@ const TradeInFormPage = () => {
                   id="phone"
                   value={formData.phone}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
-                  onBlur={(e) => validateField('phone', e.target.value, setErrors)}
+                  onBlur={(e) => {
+                    // Format the phone number (add +569 if needed)
+                    const formattedPhone = formatPhone(e.target.value);
+                    if (formattedPhone !== e.target.value) {
+                      handleInputChange('phone', formattedPhone);
+                    }
+                    validateField('phone', formattedPhone, setErrors);
+                  }}
                   placeholder="+56 9 1234 5678"
                   className={`block w-full rounded-md border px-3 py-2 text-sm ${
                     errors.phone ? 'border-red-500' : 'border-gray-300'
@@ -1093,26 +1144,31 @@ const TradeInFormPage = () => {
             <div 
               className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
               onClick={() => {
-                setShowConfirmationModal(false);
-                setCatalogImagesLoaded(new Set());
-                setCatalogImagesFailed(new Set());
+                if (!isSubmittingRequest) {
+                  setShowConfirmationModal(false);
+                  setCatalogImagesLoaded(new Set());
+                  setCatalogImagesFailed(new Set());
+                }
               }}
             />
             
             {/* Modal Content */}
             <div className="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               {/* Header */}
-              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-20">
                 <h2 className="text-xl font-semibold text-gray-900">
                   Confirmar Solicitud Trade-in
                 </h2>
                 <button
                   onClick={() => {
-                    setShowConfirmationModal(false);
-                    setCatalogImagesLoaded(new Set());
-                    setCatalogImagesFailed(new Set());
+                    if (!isSubmittingRequest) {
+                      setShowConfirmationModal(false);
+                      setCatalogImagesLoaded(new Set());
+                      setCatalogImagesFailed(new Set());
+                    }
                   }}
-                  className="text-gray-400 hover:text-gray-600"
+                  disabled={isSubmittingRequest}
+                  className="text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <XMarkIcon className="h-6 w-6" />
                 </button>
@@ -1284,15 +1340,13 @@ const TradeInFormPage = () => {
                     setCatalogImagesLoaded(new Set());
                     setCatalogImagesFailed(new Set());
                   }}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                  disabled={isSubmittingRequest}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Volver a Editar
                 </button>
                 <Button
                   onClick={() => {
-                    setShowConfirmationModal(false);
-                    setCatalogImagesLoaded(new Set());
-                    setCatalogImagesFailed(new Set());
                     handleSubmitTradeInRequest();
                   }}
                   disabled={isSubmittingRequest}
@@ -1300,6 +1354,15 @@ const TradeInFormPage = () => {
                   {isSubmittingRequest ? 'Enviando...' : 'Confirmar y Enviar'}
                 </Button>
               </div>
+
+              {/* Loading Overlay */}
+              {isSubmittingRequest && (
+                <div className="absolute inset-0 bg-white bg-opacity-90 flex flex-col items-center justify-center z-10 rounded-lg">
+                  <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+                  <p className="text-lg font-medium text-gray-900">Enviando solicitud...</p>
+                  <p className="text-sm text-gray-500 mt-2">Por favor espera mientras procesamos tu solicitud</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
