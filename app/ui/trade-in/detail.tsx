@@ -255,18 +255,43 @@ export default function TradeInDetail({ id }: { id: string }) {
                                                         {product.confirmed_calculated_state || product.calculated_state}
                                                     </span>
                                                 )}
-                                                {/* Credit Estimated - Moved here */}
-                                                {product.credit_estimated && (
-                                                    <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800">
-                                                        💰 ${new Intl.NumberFormat('es-CL').format(product.credit_estimated)}
-                                                    </span>
-                                                )}
-                                                {/* Credit Confirmed */}
-                                                {product.credit_confirmed && (
-                                                    <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
-                                                        ✅ ${new Intl.NumberFormat('es-CL').format(product.credit_confirmed)}
-                                                    </span>
-                                                )}
+                                                {/* Credit Display - Logic based on reception status */}
+                                                {(() => {
+                                                    // Check if product is "Reciclado" (no credit)
+                                                    const currentState = product.confirmed_calculated_state || product.calculated_state;
+                                                    const isRecycled = currentState === 'Reciclado';
+                                                    
+                                                    // Check if reception is confirmed (has confirmed_calculated_state from store)
+                                                    const isReceptionConfirmed = !!product.confirmed_calculated_state && 
+                                                        ['recepcionado_tienda', 'verificado_tienda', 'en_proceso', 'completado'].includes(record.status);
+                                                    
+                                                    // Get the best available credit value
+                                                    const creditValue = product.credit_confirmed || product.credit_estimated;
+                                                    
+                                                    if (isRecycled) {
+                                                        // Recycled product - no credit
+                                                        return (
+                                                            <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+                                                                💰 Sin Crédito
+                                                            </span>
+                                                        );
+                                                    } else if (isReceptionConfirmed && creditValue) {
+                                                        // Reception confirmed - show final credit
+                                                        return (
+                                                            <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800">
+                                                                💰 ${new Intl.NumberFormat('es-CL').format(creditValue)}
+                                                            </span>
+                                                        );
+                                                    } else if (creditValue) {
+                                                        // Not yet received - show estimated credit (use credit_confirmed if saved from verification, else credit_estimated)
+                                                        return (
+                                                            <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800">
+                                                                💰 Crédito estimado: ${new Intl.NumberFormat('es-CL').format(creditValue)}
+                                                            </span>
+                                                        );
+                                                    }
+                                                    return null;
+                                                })()}
                                             </div>
                                         </div>
                                         
