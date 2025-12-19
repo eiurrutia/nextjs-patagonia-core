@@ -500,6 +500,12 @@ export default function ProductForm({
         const imageUrl = generatePatagoniaImageUrl(formData.product_style, formData.product_color);
         console.log('🖼️ Loading image for explicit color:', formData.product_color, imageUrl);
         if (imageUrl) {
+          // Check if it's the same URL - if so, image is already loaded
+          if (imageUrl === matchedImageUrl) {
+            console.log('🖼️ Same image URL, skipping reload');
+            setImageLoading(false);
+            return;
+          }
           setAvailableColorsForImage([formData.product_color]);
           setCurrentColorIndex(0);
           setImageLoading(true);
@@ -967,6 +973,7 @@ export default function ProductForm({
                   </div>
                 )}
                 <Image
+                  key={matchedImageUrl}
                   src={matchedImageUrl}
                   alt="Vista previa del producto"
                   fill
