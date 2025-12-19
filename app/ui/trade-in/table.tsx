@@ -308,7 +308,7 @@ export default async function TradeInTable({
                       {(record.status === 'solicitud_recibida' || 
                         record.status === 'entregado_cliente') && (
                         <Link href={`/trade-in/store/reception/${encodeURIComponent(record.id)}`}>
-                          <BuildingStorefrontIcon className="h-5 w-5 text-green-500 hover:text-green-600" title="Recibir en tienda" />
+                          <BuildingStorefrontIcon className="h-5 w-5 text-blue-500 hover:text-blue-600" title="Recibir en tienda" />
                         </Link>
                       )}
                     </div>

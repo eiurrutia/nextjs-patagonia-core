@@ -1,8 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { UserIcon, EnvelopeIcon, PhoneIcon, HomeIcon, PencilIcon, MapPinIcon, TruckIcon, HashtagIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { UserIcon, EnvelopeIcon, PhoneIcon, HomeIcon, PencilIcon, MapPinIcon, TruckIcon, HashtagIcon, EyeIcon, BuildingStorefrontIcon } from '@heroicons/react/24/outline';
 import { CardSkeleton } from '@/app/ui/skeletons';
 import Image from 'next/image';
+import Link from 'next/link';
 import { conditionQuestions, getConditionOptionLabel } from '@/app/lib/trade-in/condition-images';
 import { getStateDisplayColors } from '@/app/lib/trade-in/product-condition-evaluator';
 
@@ -92,9 +93,22 @@ export default function TradeInDetail({ id }: { id: string }) {
         <div className="space-y-6">
             {/* Request Header */}
             <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                <div className="flex items-center space-x-3 mb-2">
-                    {fieldIcons.requestNumber}
-                    <h1 className="text-2xl font-bold text-blue-700">{record.request_number}</h1>
+                <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-3">
+                        {fieldIcons.requestNumber}
+                        <h1 className="text-2xl font-bold text-blue-700">{record.request_number}</h1>
+                    </div>
+                    {/* Store Reception Button - Only for solicitud_recibida or entregado_cliente */}
+                    {(record.status === 'solicitud_recibida' || record.status === 'entregado_cliente') && (
+                        <Link 
+                            href={`/trade-in/store/reception/${encodeURIComponent(id)}`}
+                            className="flex items-center gap-2 px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors"
+                            title="Recibir en tienda"
+                        >
+                            <BuildingStorefrontIcon className="h-5 w-5" />
+                            <span className="text-sm font-medium">Recibir en tienda</span>
+                        </Link>
+                    )}
                 </div>
                 <p className="text-sm text-gray-600">Solicitud Trade-in • {(() => {
                     if (!record.created_at) return 'N/A';
