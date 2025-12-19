@@ -13,6 +13,9 @@ const withPWA = require('next-pwa')({
 });
 
 module.exports = withPWA({
+  // Exclude snowflake-sdk from bundling (has native binaries)
+  serverExternalPackages: ['snowflake-sdk'],
+  
   // Tu configuración existente de Next.js
   webpack: (config, { isServer }) => {
     if (!isServer) {
