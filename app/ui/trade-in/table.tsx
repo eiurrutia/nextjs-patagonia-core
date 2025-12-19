@@ -2,7 +2,75 @@ import { fetchTradeInRequests } from '@/app/lib/trade-in/sql-data';
 import { getStores } from '@/app/lib/stores/sql-data';
 import { BuildingStorefrontIcon } from '@heroicons/react/24/solid';
 import { TagIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { 
+  CheckCircleIcon, 
+  InboxArrowDownIcon, 
+  ReceiptRefundIcon,
+  DocumentCheckIcon
+} from '@heroicons/react/24/solid';
+import { BuildingStorefrontIcon as BuildingStorefrontSolidIcon } from '@heroicons/react/24/solid';
 import Link from 'next/link';
+
+// Status types matching status-display.tsx
+type TradeInStatus = 
+  | 'solicitud_recibida'
+  | 'entregado_cliente'
+  | 'recepcionado_tienda'
+  | 'factura_enviada'
+  | 'credito_entregado';
+
+type DeliveryMethod = 'shipping' | 'pickup' | 'store';
+
+// Status flow for shipping/pickup
+const shippingPickupFlow: TradeInStatus[] = [
+  'solicitud_recibida',
+  'entregado_cliente',
+  'recepcionado_tienda',
+  'factura_enviada',
+  'credito_entregado'
+];
+
+// Status flow for store deliveries
+const storeFlow: TradeInStatus[] = [
+  'solicitud_recibida',
+  'recepcionado_tienda',
+  'factura_enviada',
+  'credito_entregado'
+];
+
+// Status configurations
+const statusConfigs: Record<TradeInStatus, { label: string; color: string }> = {
+  solicitud_recibida: { label: 'Solicitud recibida', color: 'text-blue-500' },
+  entregado_cliente: { label: 'Entregado por cliente', color: 'text-indigo-500' },
+  recepcionado_tienda: { label: 'Recepcionado en tienda', color: 'text-green-500' },
+  factura_enviada: { label: 'Factura enviada', color: 'text-purple-500' },
+  credito_entregado: { label: 'Crédito entregado', color: 'text-yellow-500' }
+};
+
+// Get icon for each status
+const getStatusIcon = (status: TradeInStatus, isActive: boolean, size: string = 'h-5 w-5') => {
+  const colorClass = isActive ? statusConfigs[status].color : 'text-gray-300';
+  
+  switch (status) {
+    case 'solicitud_recibida':
+      return <CheckCircleIcon className={`${size} ${colorClass}`} />;
+    case 'entregado_cliente':
+      return <InboxArrowDownIcon className={`${size} ${colorClass}`} />;
+    case 'recepcionado_tienda':
+      return <BuildingStorefrontSolidIcon className={`${size} ${colorClass}`} />;
+    case 'factura_enviada':
+      return <DocumentCheckIcon className={`${size} ${colorClass}`} />;
+    case 'credito_entregado':
+      return <ReceiptRefundIcon className={`${size} ${colorClass}`} />;
+    default:
+      return <CheckCircleIcon className={`${size} ${colorClass}`} />;
+  }
+};
+
+// Get status flow based on delivery method
+const getStatusFlow = (deliveryMethod: DeliveryMethod): TradeInStatus[] => {
+  return deliveryMethod === 'store' ? storeFlow : shippingPickupFlow;
+};
 
 const formatDate = (dateInput: string | Date | null) => {
   if (!dateInput) return 'N/A';
@@ -93,24 +161,45 @@ export default async function TradeInTable({
     );
   };
   
-  // Función para mostrar el estado de manera más amigable
-  const getStatusText = (status: string) => {
-    const statusLabels: Record<string, { label: string; color: string }> = {
-      'solicitud_recibida': { label: 'Solicitud recibida', color: 'bg-blue-100 text-blue-800' },
-      'etiqueta_enviada': { label: 'Etiqueta enviada', color: 'bg-indigo-100 text-indigo-800' },
-      'recepcionado_tienda': { label: 'En tienda', color: 'bg-green-100 text-green-800' },
-      'credito_entregado': { label: 'Crédito entregado', color: 'bg-yellow-100 text-yellow-800' },
-      'factura_enviada': { label: 'Factura enviada', color: 'bg-purple-100 text-purple-800' },
-      'enviado_vestua': { label: 'Enviado a Vestua', color: 'bg-gray-100 text-gray-800' },
-      'pending': { label: 'Pendiente', color: 'bg-gray-100 text-gray-800' }
-    };
-    
-    const statusInfo = statusLabels[status] || { label: status, color: 'bg-gray-100 text-gray-800' };
+  // Función para mostrar los estados como íconos en fila horizontal
+  const getStatusIcons = (record: any) => {
+    const currentStatus = record.status as TradeInStatus;
+    const deliveryMethod = record.delivery_method as DeliveryMethod;
+    const statusFlow = getStatusFlow(deliveryMethod);
+    const currentIndex = statusFlow.indexOf(currentStatus);
     
     return (
-      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusInfo.color}`}>
-        {statusInfo.label}
-      </span>
+      <div className="flex items-center justify-center">
+        {statusFlow.map((status, index) => {
+          const isActive = index <= currentIndex;
+          const config = statusConfigs[status];
+          
+          return (
+            <div key={status} className="flex items-center">
+              {/* Status icon with tooltip */}
+              <div 
+                className="relative group cursor-pointer"
+                title={config.label}
+              >
+                {getStatusIcon(status, isActive)}
+                {/* Tooltip on hover */}
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                  {config.label}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                </div>
+              </div>
+              {/* Connector line between icons */}
+              {index < statusFlow.length - 1 && (
+                <div 
+                  className={`w-3 h-0.5 ${
+                    index < currentIndex ? 'bg-sky-500/50' : 'bg-gray-300'
+                  }`}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
     );
   };
 
@@ -167,7 +256,7 @@ export default async function TradeInTable({
                     </div>
                   </td>
                   <td className="px-3 py-3 text-center">
-                    {getStatusText(record.status)}
+                    {getStatusIcons(record)}
                   </td>
                   <td className="px-3 py-3">
                     <div className="flex items-center gap-2">
@@ -175,7 +264,7 @@ export default async function TradeInTable({
                         <EyeIcon className="h-5 w-5 text-blue-500 hover:text-blue-600" title="Ver detalle" />
                       </Link>
                       {(record.status === 'solicitud_recibida' || 
-                        (record.status === 'etiqueta_enviada' && record.delivery_method === 'shipping')) && (
+                        record.status === 'entregado_cliente') && (
                         <Link href={`/trade-in/store/reception/${encodeURIComponent(record.id)}`}>
                           <BuildingStorefrontIcon className="h-5 w-5 text-green-500 hover:text-green-600" title="Recibir en tienda" />
                         </Link>

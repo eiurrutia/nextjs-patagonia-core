@@ -33,11 +33,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Validar que el estado sea válido
     const validStatuses = [
       'solicitud_recibida',
-      'etiqueta_enviada', 
+      'entregado_cliente',
       'recepcionado_tienda',
-      'credito_entregado',
       'factura_enviada',
-      'enviado_vestua'
+      'credito_entregado'
     ];
 
     if (!validStatuses.includes(status)) {

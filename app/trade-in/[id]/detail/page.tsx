@@ -4,19 +4,9 @@ import Breadcrumbs from '@/app/ui/customers/breadcrumbs';
 import TradeInDetail from '@/app/ui/trade-in/detail';
 import TradeInComments from '@/app/ui/trade-in/comments';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
-import StatusDisplay from '@/app/ui/trade-in/status-display';
+import StatusDisplay, { TradeInStatus, DeliveryMethod } from '@/app/ui/trade-in/status-display';
 import InvoiceAction from '@/app/ui/trade-in/invoice-action';
 import { CardSkeleton } from '@/app/ui/skeletons';
-
-type TradeInStatus = 
-    | 'solicitud_recibida'      
-    | 'etiqueta_enviada'        
-    | 'recepcionado_tienda'     
-    | 'credito_entregado'       
-    | 'factura_enviada'         
-    | 'enviado_vestua';         
-
-type DeliveryMethod = 'shipping' | 'pickup' | 'store';
 
 interface TradeInData {
     status: TradeInStatus;

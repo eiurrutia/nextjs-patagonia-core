@@ -7,17 +7,17 @@ import {
     ArrowDownIcon, 
     BuildingStorefrontIcon,
     DocumentCheckIcon,
-    CubeIcon
+    CubeIcon,
+    InboxArrowDownIcon
 } from '@heroicons/react/24/solid';
 
 // Definir todos los estados posibles
 type TradeInStatus = 
     | 'solicitud_recibida'      // Solicitud recibida
-    | 'etiqueta_enviada'        // Etiqueta enviada 
+    | 'entregado_cliente'       // Entregado por cliente (nuevo)
     | 'recepcionado_tienda'     // Recepcionado en tienda
-    | 'credito_entregado'       // Crédito entregado
     | 'factura_enviada'         // Factura enviada
-    | 'enviado_vestua';         // Enviado a Vestua
+    | 'credito_entregado';      // Crédito entregado
 
 type DeliveryMethod = 'shipping' | 'pickup' | 'store';
 
@@ -35,10 +35,10 @@ const statusConfigs: Record<TradeInStatus, StatusConfig> = {
         icon: <CheckCircleIcon className="h-8 w-8" />,
         color: 'text-blue-500'
     },
-    etiqueta_enviada: {
-        key: 'etiqueta_enviada',
-        label: 'Etiqueta enviada',
-        icon: <TruckIcon className="h-8 w-8" />,
+    entregado_cliente: {
+        key: 'entregado_cliente',
+        label: 'Entregado por cliente',
+        icon: <InboxArrowDownIcon className="h-8 w-8" />,
         color: 'text-indigo-500'
     },
     recepcionado_tienda: {
@@ -47,44 +47,50 @@ const statusConfigs: Record<TradeInStatus, StatusConfig> = {
         icon: <BuildingStorefrontIcon className="h-8 w-8" />,
         color: 'text-green-500'
     },
-    credito_entregado: {
-        key: 'credito_entregado',
-        label: 'Crédito entregado',
-        icon: <ReceiptRefundIcon className="h-8 w-8" />,
-        color: 'text-yellow-500'
-    },
     factura_enviada: {
         key: 'factura_enviada',
         label: 'Factura enviada',
         icon: <DocumentCheckIcon className="h-8 w-8" />,
         color: 'text-purple-500'
     },
-    enviado_vestua: {
-        key: 'enviado_vestua',
-        label: 'Enviado a Vestua',
-        icon: <CubeIcon className="h-8 w-8" />,
-        color: 'text-gray-600'
+    credito_entregado: {
+        key: 'credito_entregado',
+        label: 'Crédito entregado',
+        icon: <ReceiptRefundIcon className="h-8 w-8" />,
+        color: 'text-yellow-500'
     }
 };
 
-// Status flow unified
-const allFlow: TradeInStatus[] = [
+// Status flow for shipping/pickup (Envíos por Chilexpress/Blue Express o Retiros a domicilio)
+const shippingPickupFlow: TradeInStatus[] = [
     'solicitud_recibida',
-    'etiqueta_enviada', 
+    'entregado_cliente',
     'recepcionado_tienda',
-    'credito_entregado',
     'factura_enviada',
-    'enviado_vestua'
+    'credito_entregado'
 ];
 
-// Status flow for store deliveries
+// Status flow for store deliveries (Entrega en tienda)
 const storeFlow: TradeInStatus[] = [
     'solicitud_recibida',
     'recepcionado_tienda',
-    'credito_entregado',
     'factura_enviada',
-    'enviado_vestua'
+    'credito_entregado'
 ];
+
+// Helper function to get status flow based on delivery method
+export const getStatusFlow = (deliveryMethod: DeliveryMethod): TradeInStatus[] => {
+    return deliveryMethod === 'store' ? storeFlow : shippingPickupFlow;
+};
+
+// Helper function to get status config
+export const getStatusConfig = (status: TradeInStatus): StatusConfig | undefined => {
+    return statusConfigs[status];
+};
+
+// Export status configs for use in other components
+export { statusConfigs, shippingPickupFlow, storeFlow };
+export type { TradeInStatus, DeliveryMethod, StatusConfig };
 
 interface StatusDisplayProps {
     currentStatus: TradeInStatus;
@@ -102,7 +108,7 @@ export default function StatusDisplay({
     const [isUpdating, setIsUpdating] = useState(false);
     
     // Determinar qué flujo usar según el método de entrega
-    const statusFlow = deliveryMethod === 'store' ? storeFlow : allFlow;
+    const statusFlow = getStatusFlow(deliveryMethod);
     
     // Encontrar el índice del estado actual
     const currentIndex = statusFlow.indexOf(currentStatus);
@@ -166,7 +172,7 @@ export default function StatusDisplay({
                         </div>
                         {index < statusFlow.length - 1 && (
                             <ArrowDownIcon className={`h-6 w-6 ${
-                                index < currentIndex ? 'text-green-400' : 'text-gray-300'
+                                index < currentIndex ? 'text-sky-500/50' : 'text-gray-300'
                             }`} />
                         )}
                     </div>
