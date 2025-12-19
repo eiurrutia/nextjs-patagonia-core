@@ -199,6 +199,7 @@ const TradeInFormPage = () => {
   
   // Create ref for products section
   const productsRef = useRef<HTMLDivElement>(null);
+  const productFormRef = useRef<HTMLDivElement>(null);
 
   // Estado para los datos del formulario y errores
   const [formData, setFormData] = useState<FormData>({
@@ -402,6 +403,16 @@ const TradeInFormPage = () => {
     );
     setShowProductForm(false);
     setEditingProduct(null);
+    
+    // Scroll to products table after updating product
+    setTimeout(() => {
+      if (productsRef.current) {
+        productsRef.current.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }
+    }, 400);
   };
 
   const handleEditProduct = (productId: string) => {
@@ -409,6 +420,18 @@ const TradeInFormPage = () => {
     if (product) {
       setEditingProduct(product);
       setShowProductForm(true);
+      
+      // Scroll to product style input field after form renders
+      setTimeout(() => {
+        const styleInput = document.getElementById('product_style');
+        if (styleInput) {
+          styleInput.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+          styleInput.focus();
+        }
+      }, 200);
     }
   };
 
@@ -788,7 +811,7 @@ const TradeInFormPage = () => {
 
             {/* Product Form */}
             {showProductForm && (
-              <div className="mb-6">
+              <div ref={productFormRef} className="mb-6">
                 <ProductForm
                   onAddProduct={handleAddProduct}
                   onUpdateProduct={handleUpdateProduct}
