@@ -241,6 +241,18 @@ export default function TradeInDetail({ id }: { id: string }) {
                                                         {product.confirmed_calculated_state || product.calculated_state}
                                                     </span>
                                                 )}
+                                                {/* Credit Estimated - Moved here */}
+                                                {product.credit_estimated && (
+                                                    <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800">
+                                                        💰 ${new Intl.NumberFormat('es-CL').format(product.credit_estimated)}
+                                                    </span>
+                                                )}
+                                                {/* Credit Confirmed */}
+                                                {product.credit_confirmed && (
+                                                    <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
+                                                        ✅ ${new Intl.NumberFormat('es-CL').format(product.credit_confirmed)}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                         
@@ -254,122 +266,66 @@ export default function TradeInDetail({ id }: { id: string }) {
                                                 </div>
                                             )}
                                             
-                                            {/* Detailed conditions grid (only if usage_signs is 'yes') */}
+                                            {/* Detailed conditions - simplified inline format (only if usage_signs is 'yes') */}
                                             {(product.confirmed_usage_signs || product.usage_signs) === 'yes' && (
-                                                <div className="grid grid-cols-2 gap-2 mt-2">
-                                                    {/* Pilling Level - Use confirmed value if available */}
+                                                <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-xs">
+                                                    {/* Pilling Level */}
                                                     {(product.confirmed_pilling_level || product.pilling_level) && (
-                                                        <div className="flex items-center p-2 rounded-lg border border-gray-200 text-xs">
-                                                            <div className="flex items-center space-x-2">
-                                                                {getConditionDetails('pilling_level', product.confirmed_pilling_level || product.pilling_level).imageUrl && (
-                                                                    <div className="w-6 h-6 relative flex-shrink-0">
-                                                                        <Image
-                                                                            src={getConditionDetails('pilling_level', product.confirmed_pilling_level || product.pilling_level).imageUrl}
-                                                                            alt={`Pilling ${product.confirmed_pilling_level || product.pilling_level}`}
-                                                                            fill
-                                                                            className="object-cover rounded"
-                                                                        />
-                                                                    </div>
-                                                                )}
-                                                                <div>
-                                                                    <div className="font-medium text-gray-700">Pilling</div>
-                                                                    <div className={`inline-block px-2 py-0.5 rounded ${
-                                                                        (product.confirmed_pilling_level || product.pilling_level) === 'no_presenta' ? 'bg-green-100 text-green-700' :
-                                                                        (product.confirmed_pilling_level || product.pilling_level) === 'moderate' ? 'bg-yellow-100 text-yellow-700' :
-                                                                        (product.confirmed_pilling_level || product.pilling_level) === 'high' ? 'bg-red-100 text-red-700' :
-                                                                        'bg-gray-100 text-gray-700'
-                                                                    }`}>
-                                                                        {getConditionDetails('pilling_level', product.confirmed_pilling_level || product.pilling_level).label}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
+                                                        <div className="flex items-center">
+                                                            <span className="text-gray-600 w-24">Pilling:</span>
+                                                            <span className={`px-2 py-0.5 rounded ${
+                                                                (product.confirmed_pilling_level || product.pilling_level) === 'no_presenta' ? 'bg-green-100 text-green-700' :
+                                                                (product.confirmed_pilling_level || product.pilling_level) === 'moderate' ? 'bg-yellow-100 text-yellow-700' :
+                                                                (product.confirmed_pilling_level || product.pilling_level) === 'high' ? 'bg-red-100 text-red-700' :
+                                                                'bg-gray-100 text-gray-700'
+                                                            }`}>
+                                                                {getConditionDetails('pilling_level', product.confirmed_pilling_level || product.pilling_level).label}
+                                                            </span>
                                                         </div>
                                                     )}
 
-                                                    {/* Tears and Holes - Use confirmed value if available */}
-                                                    {(product.confirmed_tears_holes_level || product.tears_holes_level) && (
-                                                        <div className="flex items-center p-2 rounded-lg border border-gray-200 text-xs">
-                                                            <div className="flex items-center space-x-2">
-                                                                {getConditionDetails('tears_holes_level', product.confirmed_tears_holes_level || product.tears_holes_level).imageUrl && (
-                                                                    <div className="w-6 h-6 relative flex-shrink-0">
-                                                                        <Image
-                                                                            src={getConditionDetails('tears_holes_level', product.confirmed_tears_holes_level || product.tears_holes_level).imageUrl}
-                                                                            alt={`Rasgaduras ${product.confirmed_tears_holes_level || product.tears_holes_level}`}
-                                                                            fill
-                                                                            className="object-cover rounded"
-                                                                        />
-                                                                    </div>
-                                                                )}
-                                                                <div>
-                                                                    <div className="font-medium text-gray-700">Rasgaduras</div>
-                                                                    <div className={`inline-block px-2 py-0.5 rounded ${
-                                                                        (product.confirmed_tears_holes_level || product.tears_holes_level) === 'no_presenta' ? 'bg-green-100 text-green-700' :
-                                                                        (product.confirmed_tears_holes_level || product.tears_holes_level) === 'moderate' ? 'bg-yellow-100 text-yellow-700' :
-                                                                        (product.confirmed_tears_holes_level || product.tears_holes_level) === 'high' ? 'bg-red-100 text-red-700' :
-                                                                        'bg-gray-100 text-gray-700'
-                                                                    }`}>
-                                                                        {getConditionDetails('tears_holes_level', product.confirmed_tears_holes_level || product.tears_holes_level).label}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Repairs - Use confirmed value if available */}
+                                                    {/* Reparaciones */}
                                                     {(product.confirmed_repairs_level || product.repairs_level) && (
-                                                        <div className="flex items-center p-2 rounded-lg border border-gray-200 text-xs">
-                                                            <div className="flex items-center space-x-2">
-                                                                {getConditionDetails('repairs_level', product.confirmed_repairs_level || product.repairs_level).imageUrl && (
-                                                                    <div className="w-6 h-6 relative flex-shrink-0">
-                                                                        <Image
-                                                                            src={getConditionDetails('repairs_level', product.confirmed_repairs_level || product.repairs_level).imageUrl}
-                                                                            alt={`Reparaciones ${product.confirmed_repairs_level || product.repairs_level}`}
-                                                                            fill
-                                                                            className="object-cover rounded"
-                                                                        />
-                                                                    </div>
-                                                                )}
-                                                                <div>
-                                                                    <div className="font-medium text-gray-700">Reparaciones</div>
-                                                                    <div className={`inline-block px-2 py-0.5 rounded ${
-                                                                        (product.confirmed_repairs_level || product.repairs_level) === 'no_presenta' ? 'bg-green-100 text-green-700' :
-                                                                        (product.confirmed_repairs_level || product.repairs_level) === 'moderate' ? 'bg-yellow-100 text-yellow-700' :
-                                                                        (product.confirmed_repairs_level || product.repairs_level) === 'high' ? 'bg-red-100 text-red-700' :
-                                                                        'bg-gray-100 text-gray-700'
-                                                                    }`}>
-                                                                        {getConditionDetails('repairs_level', product.confirmed_repairs_level || product.repairs_level).label}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
+                                                        <div className="flex items-center">
+                                                            <span className="text-gray-600 w-24">Reparaciones:</span>
+                                                            <span className={`px-2 py-0.5 rounded ${
+                                                                (product.confirmed_repairs_level || product.repairs_level) === 'no_presenta' ? 'bg-green-100 text-green-700' :
+                                                                (product.confirmed_repairs_level || product.repairs_level) === 'moderate' ? 'bg-yellow-100 text-yellow-700' :
+                                                                (product.confirmed_repairs_level || product.repairs_level) === 'high' ? 'bg-red-100 text-red-700' :
+                                                                'bg-gray-100 text-gray-700'
+                                                            }`}>
+                                                                {getConditionDetails('repairs_level', product.confirmed_repairs_level || product.repairs_level).label}
+                                                            </span>
                                                         </div>
                                                     )}
 
-                                                    {/* Stains - Use confirmed value if available */}
+                                                    {/* Rasgaduras */}
+                                                    {(product.confirmed_tears_holes_level || product.tears_holes_level) && (
+                                                        <div className="flex items-center">
+                                                            <span className="text-gray-600 w-24">Rasgaduras:</span>
+                                                            <span className={`px-2 py-0.5 rounded ${
+                                                                (product.confirmed_tears_holes_level || product.tears_holes_level) === 'no_presenta' ? 'bg-green-100 text-green-700' :
+                                                                (product.confirmed_tears_holes_level || product.tears_holes_level) === 'moderate' ? 'bg-yellow-100 text-yellow-700' :
+                                                                (product.confirmed_tears_holes_level || product.tears_holes_level) === 'high' ? 'bg-red-100 text-red-700' :
+                                                                'bg-gray-100 text-gray-700'
+                                                            }`}>
+                                                                {getConditionDetails('tears_holes_level', product.confirmed_tears_holes_level || product.tears_holes_level).label}
+                                                            </span>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Manchas */}
                                                     {(product.confirmed_stains_level || product.stains_level) && (
-                                                        <div className="flex items-center p-2 rounded-lg border border-gray-200 text-xs">
-                                                            <div className="flex items-center space-x-2">
-                                                                {getConditionDetails('stains_level', product.confirmed_stains_level || product.stains_level).imageUrl && (
-                                                                    <div className="w-6 h-6 relative flex-shrink-0">
-                                                                        <Image
-                                                                            src={getConditionDetails('stains_level', product.confirmed_stains_level || product.stains_level).imageUrl}
-                                                                            alt={`Manchas ${product.confirmed_stains_level || product.stains_level}`}
-                                                                            fill
-                                                                            className="object-cover rounded"
-                                                                        />
-                                                                    </div>
-                                                                )}
-                                                                <div>
-                                                                    <div className="font-medium text-gray-700">Manchas</div>
-                                                                    <div className={`inline-block px-2 py-0.5 rounded ${
-                                                                        (product.confirmed_stains_level || product.stains_level) === 'no_presenta' ? 'bg-green-100 text-green-700' :
-                                                                        (product.confirmed_stains_level || product.stains_level) === 'moderate' ? 'bg-yellow-100 text-yellow-700' :
-                                                                        (product.confirmed_stains_level || product.stains_level) === 'high' ? 'bg-red-100 text-red-700' :
-                                                                        'bg-gray-100 text-gray-700'
-                                                                    }`}>
-                                                                        {getConditionDetails('stains_level', product.confirmed_stains_level || product.stains_level).label}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
+                                                        <div className="flex items-center">
+                                                            <span className="text-gray-600 w-24">Manchas:</span>
+                                                            <span className={`px-2 py-0.5 rounded ${
+                                                                (product.confirmed_stains_level || product.stains_level) === 'no_presenta' ? 'bg-green-100 text-green-700' :
+                                                                (product.confirmed_stains_level || product.stains_level) === 'moderate' ? 'bg-yellow-100 text-yellow-700' :
+                                                                (product.confirmed_stains_level || product.stains_level) === 'high' ? 'bg-red-100 text-red-700' :
+                                                                'bg-gray-100 text-gray-700'
+                                                            }`}>
+                                                                {getConditionDetails('stains_level', product.confirmed_stains_level || product.stains_level).label}
+                                                            </span>
                                                         </div>
                                                     )}
                                                 </div>
@@ -407,24 +363,6 @@ export default function TradeInDetail({ id }: { id: string }) {
                                                 </div>
                                             )}
                                         </div>
-
-                                        {/* Credit Estimated */}
-                                        {product.credit_estimated && (
-                                            <div className="mt-3">
-                                                <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-black-800">
-                                                    💰 Crédito Estimado: ${new Intl.NumberFormat('es-CL').format(product.credit_estimated)}
-                                                </span>
-                                            </div>
-                                        )}
-
-                                        {/* Credit Confirmed - Only show if verification has been done */}
-                                        {product.credit_confirmed && (
-                                            <div className="mt-2">
-                                                <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
-                                                    ✅ Crédito Confirmado: ${new Intl.NumberFormat('es-CL').format(product.credit_confirmed)}
-                                                </span>
-                                            </div>
-                                        )}
 
                                         {/* Product Images - Moved below credit */}
                                         {product.product_images && product.product_images.length > 0 && (
