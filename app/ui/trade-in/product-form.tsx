@@ -109,6 +109,9 @@ export default function ProductForm({
   const [showStyleDropdown, setShowStyleDropdown] = useState(false);
   const [showColorDropdown, setShowColorDropdown] = useState(false);
   const [showSizeDropdown, setShowSizeDropdown] = useState(false);
+  
+  // Modal state for label example images
+  const [labelImageModal, setLabelImageModal] = useState<string | null>(null);
 
   // Helper function to get size description for special baby/toddler sizes
   const getSizeDescription = (size: string): string => {
@@ -807,19 +810,82 @@ export default function ProductForm({
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           ¿Dónde encuentro mi número de estilo?
         </h3>
-        <div className="flex justify-start mb-4">
-          <Image 
-            src="https://form-builder-by-hulkapps.s3.amazonaws.com/uploads/patagoniachile.myshopify.com/backend_image/Frame_20__1_.png" 
-            alt="Ubicación del número de estilo en las etiquetas"
-            width={400} 
-            height={200}
-            className="object-contain rounded-lg"
-          />
+        <div className="grid grid-cols-2 gap-2 mb-4 h-96">
+          {/* Left column: 2 stacked square images */}
+          <div className="flex flex-col gap-2 h-full">
+            {/* Example 1 */}
+            <div 
+              className="relative flex-1 cursor-pointer overflow-hidden rounded-lg border border-gray-200 hover:border-blue-400 hover:shadow-md transition-all"
+              onClick={() => setLabelImageModal('https://9m64zfqkzfk3ohy7.public.blob.vercel-storage.com/trade-in-images/labels-examples/example1.png')}
+            >
+              <Image 
+                src="https://9m64zfqkzfk3ohy7.public.blob.vercel-storage.com/trade-in-images/labels-examples/example1.png"
+                alt="Ejemplo de etiqueta 1"
+                fill
+                sizes="(max-width: 768px) 50vw, 200px"
+                className="object-cover object-top"
+              />
+            </div>
+            {/* Example 2 */}
+            <div 
+              className="relative flex-1 cursor-pointer overflow-hidden rounded-lg border border-gray-200 hover:border-blue-400 hover:shadow-md transition-all"
+              onClick={() => setLabelImageModal('https://9m64zfqkzfk3ohy7.public.blob.vercel-storage.com/trade-in-images/labels-examples/example2.png')}
+            >
+              <Image 
+                src="https://9m64zfqkzfk3ohy7.public.blob.vercel-storage.com/trade-in-images/labels-examples/example2.png"
+                alt="Ejemplo de etiqueta 2"
+                fill
+                sizes="(max-width: 768px) 50vw, 200px"
+                className="object-cover"
+              />
+            </div>
+          </div>
+          {/* Right column: 1 tall image */}
+          <div 
+            className="relative cursor-pointer overflow-hidden rounded-lg border border-gray-200 hover:border-blue-400 hover:shadow-md transition-all"
+            onClick={() => setLabelImageModal('https://9m64zfqkzfk3ohy7.public.blob.vercel-storage.com/trade-in-images/labels-examples/example3.png')}
+          >
+            <Image 
+              src="https://9m64zfqkzfk3ohy7.public.blob.vercel-storage.com/trade-in-images/labels-examples/example3.png"
+              alt="Ejemplo de etiqueta 3"
+              fill
+              sizes="(max-width: 768px) 50vw, 200px"
+              className="object-cover object-top"
+            />
+          </div>
         </div>
         <p className="text-sm text-gray-600">
           Busca en las etiquetas internas de tu producto el número de 4 o 5 dígitos.
         </p>
       </div>
+
+      {/* Modal for label example images */}
+      {labelImageModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+          onClick={() => setLabelImageModal(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] w-full">
+            <button
+              onClick={() => setLabelImageModal(null)}
+              className="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors"
+            >
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <div className="relative w-full h-[80vh]">
+              <Image
+                src={labelImageModal}
+                alt="Ejemplo de etiqueta ampliado"
+                fill
+                sizes="100vw"
+                className="object-contain rounded-lg"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Product Information */}
