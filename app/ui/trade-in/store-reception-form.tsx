@@ -78,6 +78,8 @@ export default function StoreReceptionForm({
   const [productRepairs, setProductRepairs] = useState<ProductRepairs[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveModalState, setSaveModalState] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+  const [saveError, setSaveError] = useState<string>('');
   
   // Store original values when products are loaded
   const [originalProductValues, setOriginalProductValues] = useState<Record<string, Record<string, string>>>({});
@@ -533,6 +535,8 @@ export default function StoreReceptionForm({
   const handleSaveVerification = async () => {
     setIsSaving(true);
     setSaveSuccess(false);
+    setSaveModalState('saving');
+    setSaveError('');
 
     try {
       const response = await fetch(`/api/trade-in/store-verification/${tradeInId}`, {
@@ -555,15 +559,19 @@ export default function StoreReceptionForm({
 
       if (result.success) {
         setSaveSuccess(true);
-        // Opcional: resetear modificaciones ya que se guardaron
-        // setModifiedConditions([]);
-        setTimeout(() => setSaveSuccess(false), 3000);
+        setSaveModalState('success');
+        // Auto-cerrar el modal después de 2 segundos
+        setTimeout(() => {
+          setSaveModalState('idle');
+          setSaveSuccess(false);
+        }, 2000);
       } else {
         throw new Error(result.message || 'Error al guardar');
       }
     } catch (error) {
       console.error('Error saving verification:', error);
-      alert('Error al guardar la verificación. Por favor, inténtalo de nuevo.');
+      setSaveError(error instanceof Error ? error.message : 'Error al guardar la verificación');
+      setSaveModalState('error');
     } finally {
       setIsSaving(false);
     }
@@ -623,6 +631,54 @@ export default function StoreReceptionForm({
 
   return (
     <div className="space-y-8">
+      {/* Modal de guardado */}
+      {saveModalState !== 'idle' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4 transform transition-all">
+            {saveModalState === 'saving' && (
+              <div className="text-center">
+                <div className="mx-auto mb-4">
+                  <svg className="animate-spin h-12 w-12 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Guardando verificación...</h3>
+                <p className="text-sm text-gray-500">Por favor espera un momento</p>
+              </div>
+            )}
+            {saveModalState === 'success' && (
+              <div className="text-center">
+                <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                  <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">¡Guardado exitosamente!</h3>
+                <p className="text-sm text-gray-500">La verificación se ha guardado correctamente</p>
+              </div>
+            )}
+            {saveModalState === 'error' && (
+              <div className="text-center">
+                <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                  <svg className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Error al guardar</h3>
+                <p className="text-sm text-gray-500 mb-4">{saveError}</p>
+                <button
+                  onClick={() => setSaveModalState('idle')}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Cerrar
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Client Information Card */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
