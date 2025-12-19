@@ -73,13 +73,13 @@ export default function AdvancedFilters({ activeTab, stores }: AdvancedFiltersPr
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showDeliveryDropdown, setShowDeliveryDropdown] = useState(false);
   
-  // Count active filters
+  // Count active filters (only count filters relevant to current tab)
   const getActiveFilterCount = () => {
     let count = 0;
     if (requestNumber) count++;
     if (customer) count++;
     if (selectedStatuses.length > 0) count++;
-    if (selectedDeliveryMethods.length > 0) count++;
+    if (activeTab === 'requests' && selectedDeliveryMethods.length > 0) count++;
     if (selectedStore) count++;
     if (dateFrom || dateTo) count++;
     if (activeTab === 'products') {
@@ -201,6 +201,39 @@ export default function AdvancedFilters({ activeTab, stores }: AdvancedFiltersPr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestNumber, customer, selectedStatuses, selectedDeliveryMethods, selectedStore, dateFrom, dateTo, productStyle, productState]);
 
+  // Clear tab-specific filters when switching tabs
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams?.toString() || '');
+    let needsUpdate = false;
+    
+    if (activeTab === 'products') {
+      // Clear request-specific filters when switching to products
+      if (selectedDeliveryMethods.length > 0) {
+        setSelectedDeliveryMethods([]);
+        params.delete('deliveryMethod');
+        needsUpdate = true;
+      }
+    } else {
+      // Clear product-specific filters when switching to requests
+      if (productStyle) {
+        setProductStyle('');
+        params.delete('productStyle');
+        needsUpdate = true;
+      }
+      if (productState) {
+        setProductState('');
+        params.delete('productState');
+        needsUpdate = true;
+      }
+    }
+    
+    if (needsUpdate) {
+      params.set('page', '1');
+      replace(`${pathname}?${params.toString()}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -222,14 +255,14 @@ export default function AdvancedFilters({ activeTab, stores }: AdvancedFiltersPr
     <div className="bg-white rounded-lg border border-gray-200 mb-4">
       {/* Filter Header - Always visible */}
       <div 
-        className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50"
+        className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-gray-50"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-2">
-          <FunnelIcon className="h-5 w-5 text-gray-500" />
-          <span className="font-medium text-gray-700">Filtros</span>
+          <FunnelIcon className="h-4 w-4 text-gray-500" />
+          <span className="font-medium text-gray-700 text-sm">Filtros</span>
           {activeFilterCount > 0 && (
-            <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+            <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
               {activeFilterCount}
             </span>
           )}
@@ -241,14 +274,14 @@ export default function AdvancedFilters({ activeTab, stores }: AdvancedFiltersPr
                 e.stopPropagation();
                 clearAllFilters();
               }}
-              className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+              className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
             >
-              <XMarkIcon className="h-4 w-4" />
+              <XMarkIcon className="h-3.5 w-3.5" />
               Limpiar
             </button>
           )}
           <ChevronDownIcon 
-            className={`h-5 w-5 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+            className={`h-4 w-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
           />
         </div>
       </div>
@@ -496,7 +529,7 @@ export default function AdvancedFilters({ activeTab, stores }: AdvancedFiltersPr
                     </span>
                   );
                 })}
-                {selectedDeliveryMethods.map(method => {
+                {activeTab === 'requests' && selectedDeliveryMethods.map(method => {
                   const methodLabel = DELIVERY_METHOD_OPTIONS.find(m => m.value === method)?.label || method;
                   return (
                     <span key={method} className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 rounded-md text-xs">

@@ -5,8 +5,6 @@ import UserInfoCard from '@/app/ui/user-info-card';
 import { lusitana } from '@/app/ui/fonts';
 import { Suspense } from 'react';
 import { InvoicesTableSkeleton } from '@/app/ui/skeletons';
-import Link from 'next/link';
-import { PlusIcon } from '@heroicons/react/24/solid';
 import { headers } from 'next/headers';
 import { getStores } from '@/app/lib/stores/sql-data';
 
@@ -67,27 +65,11 @@ export default async function Page({
   const stores = await getStores();
 
   return (
-    <div className="w-full p-20">
+    <div className="w-full px-6 py-4">
       {/* Header with user info */}
-      <div className="flex w-full items-start justify-between mb-6">
-        <div className="flex-1">
-          <h1 className={`${lusitana.className} text-2xl`}>Solicitudes Trade-In</h1>
-        </div>
-        <div className="flex-shrink-0 ml-4">
-          <UserInfoCard />
-        </div>
-      </div>
-      
-      {/* Action buttons */}
-      <div className="flex w-full items-center justify-end mb-6">
-        <div className="flex gap-3">
-          <Link href="/trade-in/new">
-            <button className="flex items-center gap-1 rounded-md bg-blue-500 px-3 py-2 text-white hover:bg-blue-600">
-              <PlusIcon className="h-5 w-5" />
-              <span>Nueva Solicitud</span>
-            </button>
-          </Link>
-        </div>
+      <div className="flex w-full items-center justify-between mb-4">
+        <h1 className={`${lusitana.className} text-2xl`}>Solicitudes Trade-In</h1>
+        <UserInfoCard />
       </div>
       
       <TradeInClientWrapper stores={stores}>
