@@ -21,6 +21,7 @@ interface StoreReceptionFormProps {
   initialData?: Partial<TradeInFormData>;
   initialProducts?: ProductFormData[];
   tradeInId?: string;
+  deliveryMethod?: string;
 }
 
 interface ModifiedCondition {
@@ -50,7 +51,8 @@ export default function StoreReceptionForm({
   isSubmitting = false,
   initialData,
   initialProducts = [],
-  tradeInId
+  tradeInId,
+  deliveryMethod: deliveryMethodProp
 }: StoreReceptionFormProps) {
   const [isEditingClient, setIsEditingClient] = useState(false);
   const [formData, setFormData] = useState<TradeInFormData>({
@@ -76,10 +78,15 @@ export default function StoreReceptionForm({
   // Store original values when products are loaded
   const [originalProductValues, setOriginalProductValues] = useState<Record<string, Record<string, string>>>({});
 
-  // Capture original values on mount
+  // Capture original values on mount and initialize product repairs with calculated levels
   useEffect(() => {
     const originals: Record<string, Record<string, string>> = {};
+    const initialRepairs: ProductRepairs[] = [];
+    const initialModifications: ModifiedCondition[] = [];
+    const updatedProducts: ProductFormData[] = [];
+
     initialProducts.forEach(product => {
+      // Store original values
       originals[product.id] = {
         pilling_level: (product as any).pilling_level,
         tears_holes_level: (product as any).tears_holes_level,
@@ -87,8 +94,44 @@ export default function StoreReceptionForm({
         stains_level: (product as any).stains_level,
         usage_signs: (product as any).usage_signs
       };
+
+      // Initialize empty repairs for each product
+      initialRepairs.push({
+        productId: product.id,
+        pilling_level_repairs: [],
+        tears_holes_repairs: [],
+        repairs_level_repairs: [],
+        stains_level_repairs: []
+      });
+
+      // Calculate initial levels (no_presenta since no repairs selected)
+      // and track modifications for questions that have repair selectors
+      const questionIds = ['pilling_level', 'tears_holes_level', 'repairs_level', 'stains_level'];
+      const productUpdates: any = { ...product };
+
+      questionIds.forEach(questionId => {
+        const originalValue = (product as any)[questionId];
+        const calculatedValue = 'no_presenta'; // Empty repairs = no_presenta
+
+        // If original value differs from calculated, mark as modified
+        if (originalValue && originalValue !== calculatedValue) {
+          initialModifications.push({
+            productId: product.id,
+            questionId,
+            originalValue,
+            newValue: calculatedValue
+          });
+          productUpdates[questionId] = calculatedValue;
+        }
+      });
+
+      updatedProducts.push(productUpdates as ProductFormData);
     });
+
     setOriginalProductValues(originals);
+    setProductRepairs(initialRepairs);
+    setModifiedConditions(initialModifications);
+    setProducts(updatedProducts);
   }, [initialProducts]);
 
   const [errors, setErrors] = useState({
@@ -171,9 +214,10 @@ export default function StoreReceptionForm({
       return;
     }
 
-    // Pass verification data along with form data
+    // Pass verification data along with form data, including the updated delivery method
     await onSubmit({ 
-      ...formData, 
+      ...formData,
+      deliveryMethod: deliveryMethodProp || initialData?.deliveryMethod || 'shipping',
       products,
       modifiedConditions,
       productRepairs
@@ -458,6 +502,21 @@ export default function StoreReceptionForm({
                 </div>
               </div>
 
+              {/* Address - Full width */}
+              <div className="mt-4">
+                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                  Dirección
+                </label>
+                <input
+                  type="text"
+                  id="address"
+                  value={formData.address}
+                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="Calle, número, depto/casa"
+                />
+              </div>
+
               <div className="flex justify-end space-x-2 pt-4 border-t border-gray-200">
                 <button
                   type="button"
@@ -542,6 +601,16 @@ export default function StoreReceptionForm({
           <p className="text-sm text-gray-600 mt-1">
             Revisa y confirma el estado de cada producto. Los cambios se marcarán visualmente.
           </p>
+          <div className="flex items-center gap-4 mt-3 text-xs">
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded bg-blue-500"></span>
+              <span className="text-gray-600">Marcado por el cliente</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded bg-orange-500"></span>
+              <span className="text-gray-600">Confirmado/modificado por tienda</span>
+            </div>
+          </div>
         </div>
 
         <div className="p-6 space-y-8">
