@@ -1,7 +1,20 @@
-import { fetchTradeInProducts } from '@/app/lib/trade-in/sql-data';
+import { fetchTradeInProductsWithFilters } from '@/app/lib/trade-in/sql-data';
 import { getStores } from '@/app/lib/stores/sql-data';
 import { TagIcon, EyeIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
+
+// Interface for filters
+interface TradeInFilters {
+  requestNumber?: string;
+  customer?: string;
+  status?: string[];
+  deliveryMethod?: string[];
+  store?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  productStyle?: string;
+  productState?: string;
+}
 
 const formatDate = (dateInput: string | Date | null) => {
   if (!dateInput) return 'N/A';
@@ -25,13 +38,13 @@ const formatDate = (dateInput: string | Date | null) => {
 };
 
 export default async function TradeInProductsListTable({
-  query,
+  filters,
   currentPage,
 }: {
-  query: string;
+  filters: TradeInFilters;
   currentPage: number;
 }) {
-  const products = await fetchTradeInProducts(query, currentPage);
+  const products = await fetchTradeInProductsWithFilters(filters, currentPage);
   const stores = await getStores();
   
   // Crear un mapa de códigos de tienda para obtener nombres

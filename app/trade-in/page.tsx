@@ -1,18 +1,31 @@
-import Search from '@/app/ui/search';
 import TradeInTable from '@/app/ui/trade-in/table';
 import TradeInProductsListTable from '@/app/ui/trade-in/products-list-table';
-import Tabs from '@/app/ui/trade-in/tabs';
+import TradeInClientWrapper from '@/app/ui/trade-in/trade-in-client-wrapper';
 import UserInfoCard from '@/app/ui/user-info-card';
 import { lusitana } from '@/app/ui/fonts';
 import { Suspense } from 'react';
 import { InvoicesTableSkeleton } from '@/app/ui/skeletons';
 import Link from 'next/link';
-import { PlusIcon, BuildingStorefrontIcon } from '@heroicons/react/24/solid';
+import { PlusIcon } from '@heroicons/react/24/solid';
 import { headers } from 'next/headers';
+import { getStores } from '@/app/lib/stores/sql-data';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+// Define filter types
+interface TradeInFilters {
+  requestNumber?: string;
+  customer?: string;
+  status?: string[];
+  deliveryMethod?: string[];
+  store?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  productStyle?: string;
+  productState?: string;
+}
 
 export default async function Page({
   searchParams,
@@ -20,14 +33,38 @@ export default async function Page({
   searchParams?: {
     query?: string;
     page?: string;
+    requestNumber?: string;
+    customer?: string;
+    status?: string;
+    deliveryMethod?: string;
+    store?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    productStyle?: string;
+    productState?: string;
   };
 }) {
   // Force fresh data by accessing headers
   const headersList = headers();
   const timestamp = Date.now();
   
-  const query = searchParams?.query || '';
   const currentPage = Number(searchParams?.page) || 1;
+  
+  // Parse filters from searchParams
+  const filters: TradeInFilters = {
+    requestNumber: searchParams?.requestNumber || undefined,
+    customer: searchParams?.customer || undefined,
+    status: searchParams?.status?.split(',').filter(Boolean) || undefined,
+    deliveryMethod: searchParams?.deliveryMethod?.split(',').filter(Boolean) || undefined,
+    store: searchParams?.store || undefined,
+    dateFrom: searchParams?.dateFrom || undefined,
+    dateTo: searchParams?.dateTo || undefined,
+    productStyle: searchParams?.productStyle || undefined,
+    productState: searchParams?.productState || undefined,
+  };
+  
+  // Get stores for filter dropdown
+  const stores = await getStores();
 
   return (
     <div className="w-full p-20">
@@ -53,28 +90,21 @@ export default async function Page({
         </div>
       </div>
       
-      <div className="mt-4 flex items-center justify-between gap-2 md:mt-8">
-        <Search placeholder="Buscar registros de Trade-In..." />
-      </div>
-      
-      <Tabs 
-        tabLabels={['Solicitudes', 'Productos']}
-        tabIcons={['clipboard', 'tag']}
-      >
+      <TradeInClientWrapper stores={stores}>
         {/* Tab 1: Solicitudes */}
         <div>
-          <Suspense key={query + currentPage + timestamp + 'requests'} fallback={<InvoicesTableSkeleton />}>
-            <TradeInTable query={query} currentPage={currentPage} />
+          <Suspense key={JSON.stringify(filters) + currentPage + timestamp + 'requests'} fallback={<InvoicesTableSkeleton />}>
+            <TradeInTable filters={filters} currentPage={currentPage} />
           </Suspense>
         </div>
         
         {/* Tab 2: Productos */}
         <div>
-          <Suspense key={query + currentPage + timestamp + 'products'} fallback={<InvoicesTableSkeleton />}>
-            <TradeInProductsListTable query={query} currentPage={currentPage} />
+          <Suspense key={JSON.stringify(filters) + currentPage + timestamp + 'products'} fallback={<InvoicesTableSkeleton />}>
+            <TradeInProductsListTable filters={filters} currentPage={currentPage} />
           </Suspense>
         </div>
-      </Tabs>
+      </TradeInClientWrapper>
     </div>
   );
 }

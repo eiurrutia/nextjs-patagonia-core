@@ -1,16 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ClipboardDocumentListIcon, TagIcon } from '@heroicons/react/24/outline';
 
 interface TabsProps {
   children: React.ReactNode[];
   tabLabels: string[];
   tabIcons?: ('clipboard' | 'tag')[];
+  onTabChange?: (index: number) => void;
+  defaultTab?: number;
 }
 
-export default function Tabs({ children, tabLabels, tabIcons }: TabsProps) {
-  const [activeTab, setActiveTab] = useState(0);
+export default function Tabs({ children, tabLabels, tabIcons, onTabChange, defaultTab = 0 }: TabsProps) {
+  const [activeTab, setActiveTab] = useState(defaultTab);
+
+  const handleTabChange = (index: number) => {
+    setActiveTab(index);
+    onTabChange?.(index);
+  };
 
   const getIcon = (iconName: string) => {
     switch (iconName) {
@@ -33,7 +40,7 @@ export default function Tabs({ children, tabLabels, tabIcons }: TabsProps) {
             return (
               <button
                 key={index}
-                onClick={() => setActiveTab(index)}
+                onClick={() => handleTabChange(index)}
                 className={`
                   group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm
                   ${activeTab === index

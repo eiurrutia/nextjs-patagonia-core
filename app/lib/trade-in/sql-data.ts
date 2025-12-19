@@ -181,46 +181,120 @@ export async function createTradeInRequest(data: CreateTradeInRequestData): Prom
   }
 }
 
+// Interface for advanced filters
+export interface TradeInFilters {
+  requestNumber?: string;
+  customer?: string;
+  status?: string[];
+  deliveryMethod?: string[];
+  store?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  productStyle?: string;
+  productState?: string;
+}
+
 /**
- * Fetch trade-in requests with pagination and search
+ * Fetch trade-in requests with pagination and advanced filters
  */
-export async function fetchTradeInRequests(query: string, currentPage: number): Promise<(TradeInRequest & { productCount: number })[]> {
+export async function fetchTradeInRequestsWithFilters(
+  filters: TradeInFilters, 
+  currentPage: number
+): Promise<(TradeInRequest & { productCount: number })[]> {
   noStore(); // Disable caching for this function
   
   const pageSize = 20;
   const offset = (currentPage - 1) * pageSize;
   
   try {
-    const searchQuery = `%${query.toLowerCase()}%`;
+    // Build WHERE conditions dynamically
+    const conditions: string[] = ['1=1']; // Start with always true
+    const params: any[] = [];
+    let paramIndex = 1;
     
-    // Add a timestamp comment to ensure query is always fresh
-    const timestamp = new Date().getTime();
+    // Request number filter
+    if (filters.requestNumber) {
+      conditions.push(`LOWER(tr.request_number) LIKE $${paramIndex}`);
+      params.push(`%${filters.requestNumber.toLowerCase()}%`);
+      paramIndex++;
+    }
     
-    const result = await sql`
+    // Customer filter (searches in name, email, rut)
+    if (filters.customer) {
+      const customerSearch = `%${filters.customer.toLowerCase()}%`;
+      conditions.push(`(
+        LOWER(tr.first_name) LIKE $${paramIndex} OR 
+        LOWER(tr.last_name) LIKE $${paramIndex} OR 
+        LOWER(tr.email) LIKE $${paramIndex} OR 
+        LOWER(tr.rut) LIKE $${paramIndex}
+      )`);
+      params.push(customerSearch);
+      paramIndex++;
+    }
+    
+    // Status filter (multiple)
+    if (filters.status && filters.status.length > 0) {
+      const statusPlaceholders = filters.status.map((_, i) => `$${paramIndex + i}`).join(', ');
+      conditions.push(`tr.status IN (${statusPlaceholders})`);
+      params.push(...filters.status);
+      paramIndex += filters.status.length;
+    }
+    
+    // Delivery method filter (multiple)
+    if (filters.deliveryMethod && filters.deliveryMethod.length > 0) {
+      const methodPlaceholders = filters.deliveryMethod.map((_, i) => `$${paramIndex + i}`).join(', ');
+      conditions.push(`tr.delivery_method IN (${methodPlaceholders})`);
+      params.push(...filters.deliveryMethod);
+      paramIndex += filters.deliveryMethod.length;
+    }
+    
+    // Store filter
+    if (filters.store) {
+      conditions.push(`tr.received_store_code = $${paramIndex}`);
+      params.push(filters.store);
+      paramIndex++;
+    }
+    
+    // Date from filter
+    if (filters.dateFrom) {
+      conditions.push(`tr.created_at >= $${paramIndex}::timestamp`);
+      params.push(filters.dateFrom);
+      paramIndex++;
+    }
+    
+    // Date to filter
+    if (filters.dateTo) {
+      conditions.push(`tr.created_at < ($${paramIndex}::timestamp + interval '1 day')`);
+      params.push(filters.dateTo);
+      paramIndex++;
+    }
+    
+    const whereClause = conditions.join(' AND ');
+    
+    // Add pagination params
+    params.push(pageSize);
+    params.push(offset);
+    
+    const queryText = `
       SELECT 
         tr.id, tr.request_number, tr.first_name, tr.last_name, tr.rut, tr.email, 
         tr.phone, tr.region, tr.comuna, tr.delivery_method, tr.address, 
         tr.status, tr.client_comment, tr.received_store_code,
         tr.created_at AT TIME ZONE 'UTC' as created_at,
         tr.updated_at AT TIME ZONE 'UTC' as updated_at,
-        COUNT(tp.id) as product_count,
-        ${timestamp} as query_timestamp
+        COUNT(tp.id) as product_count
       FROM trade_in_requests tr
       LEFT JOIN trade_in_products tp ON tr.id = tp.request_id
-      WHERE 
-        LOWER(tr.first_name) LIKE ${searchQuery} OR 
-        LOWER(tr.last_name) LIKE ${searchQuery} OR 
-        LOWER(tr.rut) LIKE ${searchQuery} OR
-        LOWER(tr.email) LIKE ${searchQuery} OR 
-        LOWER(tr.phone) LIKE ${searchQuery} OR
-        LOWER(tr.request_number) LIKE ${searchQuery}
+      WHERE ${whereClause}
       GROUP BY tr.id, tr.request_number, tr.first_name, tr.last_name, tr.rut, tr.email, 
                tr.phone, tr.region, tr.comuna, tr.delivery_method, tr.address, 
                tr.status, tr.client_comment, tr.received_store_code, tr.created_at, tr.updated_at
       ORDER BY tr.created_at DESC
-      LIMIT ${pageSize}
-      OFFSET ${offset}
+      LIMIT $${paramIndex}
+      OFFSET $${paramIndex + 1}
     `;
+    
+    const result = await sql.query(queryText, params);
     
     return result.rows.map(row => ({
       ...row,
@@ -228,9 +302,20 @@ export async function fetchTradeInRequests(query: string, currentPage: number): 
     })) as (TradeInRequest & { productCount: number })[];
     
   } catch (error) {
-    console.error('Error fetching trade-in requests:', error);
+    console.error('Error fetching trade-in requests with filters:', error);
     throw error;
   }
+}
+
+/**
+ * Fetch trade-in requests with pagination and search (legacy - kept for compatibility)
+ */
+export async function fetchTradeInRequests(query: string, currentPage: number): Promise<(TradeInRequest & { productCount: number })[]> {
+  // If query is provided, use legacy search
+  if (query) {
+    return fetchTradeInRequestsWithFilters({ customer: query }, currentPage);
+  }
+  return fetchTradeInRequestsWithFilters({}, currentPage);
 }
 
 /**
@@ -601,21 +686,93 @@ export async function getTradeInProductById(productId: number): Promise<any | nu
 }
 
 /**
- * Fetch all trade-in products with request information
+ * Fetch all trade-in products with request information and advanced filters
  */
-export async function fetchTradeInProducts(query: string, currentPage: number): Promise<any[]> {
+export async function fetchTradeInProductsWithFilters(
+  filters: TradeInFilters, 
+  currentPage: number
+): Promise<any[]> {
   noStore(); // Disable caching for this function
   
   const pageSize = 20;
   const offset = (currentPage - 1) * pageSize;
   
   try {
-    const searchQuery = `%${query.toLowerCase()}%`;
+    // Build WHERE conditions dynamically
+    const conditions: string[] = ["tp.product_status != 'Pendiente'"]; // Base condition
+    const params: any[] = [];
+    let paramIndex = 1;
     
-    // Add a timestamp comment to ensure query is always fresh
-    const timestamp = new Date().getTime();
+    // Request number filter
+    if (filters.requestNumber) {
+      conditions.push(`LOWER(tr.request_number) LIKE $${paramIndex}`);
+      params.push(`%${filters.requestNumber.toLowerCase()}%`);
+      paramIndex++;
+    }
     
-    const result = await sql`
+    // Customer filter (searches in name, email, rut)
+    if (filters.customer) {
+      const customerSearch = `%${filters.customer.toLowerCase()}%`;
+      conditions.push(`(
+        LOWER(tr.first_name) LIKE $${paramIndex} OR 
+        LOWER(tr.last_name) LIKE $${paramIndex} OR 
+        LOWER(tr.email) LIKE $${paramIndex} OR 
+        LOWER(tr.rut) LIKE $${paramIndex}
+      )`);
+      params.push(customerSearch);
+      paramIndex++;
+    }
+    
+    // Status filter (for products, this is product_status)
+    if (filters.status && filters.status.length > 0) {
+      const statusPlaceholders = filters.status.map((_, i) => `$${paramIndex + i}`).join(', ');
+      conditions.push(`tp.product_status IN (${statusPlaceholders})`);
+      params.push(...filters.status);
+      paramIndex += filters.status.length;
+    }
+    
+    // Store filter (where product was received)
+    if (filters.store) {
+      conditions.push(`tp.received_store_code = $${paramIndex}`);
+      params.push(filters.store);
+      paramIndex++;
+    }
+    
+    // Date from filter
+    if (filters.dateFrom) {
+      conditions.push(`tp.created_at >= $${paramIndex}::timestamp`);
+      params.push(filters.dateFrom);
+      paramIndex++;
+    }
+    
+    // Date to filter
+    if (filters.dateTo) {
+      conditions.push(`tp.created_at < ($${paramIndex}::timestamp + interval '1 day')`);
+      params.push(filters.dateTo);
+      paramIndex++;
+    }
+    
+    // Product style filter
+    if (filters.productStyle) {
+      conditions.push(`LOWER(tp.product_style) LIKE $${paramIndex}`);
+      params.push(`%${filters.productStyle.toLowerCase()}%`);
+      paramIndex++;
+    }
+    
+    // Product state filter (calculated or confirmed)
+    if (filters.productState) {
+      conditions.push(`(tp.confirmed_calculated_state = $${paramIndex} OR tp.calculated_state = $${paramIndex})`);
+      params.push(filters.productState);
+      paramIndex++;
+    }
+    
+    const whereClause = conditions.join(' AND ');
+    
+    // Add pagination params
+    params.push(pageSize);
+    params.push(offset);
+    
+    const queryText = `
       SELECT 
         tp.id,
         tp.request_id,
@@ -649,35 +806,34 @@ export async function fetchTradeInProducts(query: string, currentPage: number): 
         tr.last_name,
         tr.email,
         tr.phone,
-        tr.status as request_status,
-        ${timestamp} as query_timestamp
+        tr.status as request_status
       FROM trade_in_products tp
       INNER JOIN trade_in_requests tr ON tp.request_id = tr.id
-      WHERE 
-        tp.product_status != 'Pendiente'
-        AND (
-          LOWER(tp.product_style) LIKE ${searchQuery} OR 
-          LOWER(tp.product_size) LIKE ${searchQuery} OR 
-          LOWER(tp.calculated_state) LIKE ${searchQuery} OR
-          LOWER(tp.confirmed_calculated_state) LIKE ${searchQuery} OR
-          LOWER(tp.confirmed_sku) LIKE ${searchQuery} OR
-          LOWER(tp.product_status) LIKE ${searchQuery} OR
-          LOWER(tr.request_number) LIKE ${searchQuery} OR
-          LOWER(tr.first_name) LIKE ${searchQuery} OR 
-          LOWER(tr.last_name) LIKE ${searchQuery} OR
-          LOWER(tr.email) LIKE ${searchQuery}
-        )
+      WHERE ${whereClause}
       ORDER BY tp.created_at DESC
-      LIMIT ${pageSize}
-      OFFSET ${offset}
+      LIMIT $${paramIndex}
+      OFFSET $${paramIndex + 1}
     `;
+    
+    const result = await sql.query(queryText, params);
     
     return result.rows;
     
   } catch (error) {
-    console.error('Error fetching trade-in products:', error);
+    console.error('Error fetching trade-in products with filters:', error);
     throw error;
   }
+}
+
+/**
+ * Fetch all trade-in products with request information (legacy - kept for compatibility)
+ */
+export async function fetchTradeInProducts(query: string, currentPage: number): Promise<any[]> {
+  // If query is provided, use it as customer search
+  if (query) {
+    return fetchTradeInProductsWithFilters({ customer: query }, currentPage);
+  }
+  return fetchTradeInProductsWithFilters({}, currentPage);
 }
 
 /**
