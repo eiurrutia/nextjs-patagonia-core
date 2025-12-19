@@ -93,6 +93,33 @@ const formatDate = (dateInput: string | Date | null) => {
   }).format(utcDate);
 };
 
+// Format phone number for display
+const formatPhoneDisplay = (phone: string | null): string => {
+  if (!phone) return 'N/A';
+  
+  // Remove all non-digit characters except +
+  const cleaned = phone.replace(/[^\d+]/g, '');
+  
+  // Chilean format: +56 9 XXXX XXXX
+  if (cleaned.startsWith('+569') && cleaned.length === 12) {
+    return `+56 9 ${cleaned.slice(4, 8)} ${cleaned.slice(8)}`;
+  }
+  
+  // Chilean format without +: 569XXXXXXXX
+  if (cleaned.startsWith('569') && cleaned.length === 11) {
+    return `+56 9 ${cleaned.slice(3, 7)} ${cleaned.slice(7)}`;
+  }
+  
+  // Other international formats: try to add spaces
+  if (cleaned.startsWith('+') && cleaned.length > 8) {
+    // Generic international: +XX XXXX XXXX
+    return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 7)} ${cleaned.slice(7)}`;
+  }
+  
+  // Return as-is if no pattern matches
+  return phone;
+};
+
 export default async function TradeInTable({
   query,
   currentPage,
@@ -240,7 +267,9 @@ export default async function TradeInTable({
                       <div className="text-gray-500">{record.email}</div>
                     </div>
                   </td>
-                  <td className="px-3 py-3">{record.phone}</td>
+                  <td className="px-3 py-3">
+                    <span className="text-xs text-gray-700">{formatPhoneDisplay(record.phone)}</span>
+                  </td>
                   <td className="px-3 py-3">
                     <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
                       {record.productCount}
