@@ -4,7 +4,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { lusitana } from '@/app/ui/fonts';
 import { Button } from '@/app/ui/button';
-import { CheckCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, ArrowLeftIcon, PencilIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import StoreReceptionForm from '@/app/ui/trade-in/store-reception-form';
 import StoreSelect from '@/app/ui/stores/store-select';
 import { TradeInFormData } from '@/app/lib/trade-in/form-types';
@@ -40,6 +40,24 @@ export default function StoreReceptionPage() {
   const [tradeInRequest, setTradeInRequest] = useState<TradeInRequest | null>(null);
   const [stores, setStores] = useState<any[]>([]);
   const [selectedStore, setSelectedStore] = useState<string>('');
+  const [deliveryMethod, setDeliveryMethod] = useState<string>('');
+  const [isEditingDeliveryMethod, setIsEditingDeliveryMethod] = useState(false);
+
+  // Delivery method labels
+  const deliveryMethodLabels: Record<string, { title: string; description: string }> = {
+    shipping: {
+      title: 'Envíos por Chilexpress o Blue Express',
+      description: 'Se envía etiqueta de despacho al cliente para enviar el producto.'
+    },
+    pickup: {
+      title: 'Retiros a domicilio',
+      description: 'Se coordina retiro del producto en el domicilio del cliente.'
+    },
+    store: {
+      title: 'Entrega en tienda',
+      description: 'El cliente lleva el producto directamente a una tienda.'
+    }
+  };
 
   const tradeInId = params?.id as string;
 
@@ -98,6 +116,13 @@ export default function StoreReceptionPage() {
     }
   }, [error]);
 
+  // Initialize delivery method from trade-in request
+  useEffect(() => {
+    if (tradeInRequest?.deliveryMethod) {
+      setDeliveryMethod(tradeInRequest.deliveryMethod);
+    }
+  }, [tradeInRequest]);
+
   const handleSubmit = async (data: TradeInFormData & { 
     products: ProductFormData[];
     modifiedConditions?: any[];
@@ -138,7 +163,7 @@ export default function StoreReceptionPage() {
         address: data.address || tradeInRequest?.address,
         houseDetails: data.houseDetails || tradeInRequest?.houseDetails,
         client_comment: data.client_comment,
-        deliveryMethod: tradeInRequest?.deliveryMethod || 'shipping', // Keep original delivery method
+        deliveryMethod: data.deliveryMethod || tradeInRequest?.deliveryMethod || 'shipping', // Use updated delivery method
         products: data.products,
         status: 'recepcionado_tienda', // Mark as received in store
         receivedInStore: true,
@@ -259,6 +284,118 @@ export default function StoreReceptionPage() {
           </div>
         )}
 
+        {/* Delivery Method Card */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">Método de Entrega</h2>
+            <button
+              type="button"
+              onClick={() => setIsEditingDeliveryMethod(!isEditingDeliveryMethod)}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full"
+              title={isEditingDeliveryMethod ? "Cancelar edición" : "Editar método de entrega"}
+            >
+              {isEditingDeliveryMethod ? (
+                <XMarkIcon className="h-5 w-5" />
+              ) : (
+                <PencilIcon className="h-5 w-5" />
+              )}
+            </button>
+          </div>
+
+          <div className="p-6">
+            {isEditingDeliveryMethod ? (
+              <div className="space-y-3">
+                <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input
+                    type="radio"
+                    name="deliveryMethod"
+                    value="shipping"
+                    checked={deliveryMethod === 'shipping'}
+                    onChange={(e) => setDeliveryMethod(e.target.value)}
+                    className="mt-0.5"
+                  />
+                  <div>
+                    <span className="font-medium">Envíos por Chilexpress o Blue Express</span>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Se envía etiqueta de despacho al cliente para enviar el producto.
+                    </p>
+                  </div>
+                </label>
+                <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input
+                    type="radio"
+                    name="deliveryMethod"
+                    value="pickup"
+                    checked={deliveryMethod === 'pickup'}
+                    onChange={(e) => setDeliveryMethod(e.target.value)}
+                    className="mt-0.5"
+                  />
+                  <div>
+                    <span className="font-medium">Retiros a domicilio</span>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Se coordina retiro del producto en el domicilio del cliente.
+                    </p>
+                  </div>
+                </label>
+                <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input
+                    type="radio"
+                    name="deliveryMethod"
+                    value="store"
+                    checked={deliveryMethod === 'store'}
+                    onChange={(e) => setDeliveryMethod(e.target.value)}
+                    className="mt-0.5"
+                  />
+                  <div>
+                    <span className="font-medium">Entrega en tienda</span>
+                    <p className="text-sm text-gray-500 mt-1">
+                      El cliente lleva el producto directamente a una tienda.
+                    </p>
+                  </div>
+                </label>
+                <div className="flex justify-end pt-4 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingDeliveryMethod(false)}
+                    className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    <CheckIcon className="h-4 w-4 inline mr-1" />
+                    Guardar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  {deliveryMethod === 'shipping' && (
+                    <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                  )}
+                  {deliveryMethod === 'pickup' && (
+                    <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                  )}
+                  {deliveryMethod === 'store' && (
+                    <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  )}
+                </div>
+                <div>
+                  <span className="font-medium text-gray-900">
+                    {deliveryMethodLabels[deliveryMethod]?.title || 'No especificado'}
+                  </span>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {deliveryMethodLabels[deliveryMethod]?.description || ''}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Store Selection for Admin Users */}
         {session?.user?.role === 'admin' && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
@@ -292,6 +429,7 @@ export default function StoreReceptionPage() {
           initialData={initialData}
           initialProducts={tradeInRequest?.products || []}
           tradeInId={tradeInId}
+          deliveryMethod={deliveryMethod}
         />
       </div>
     </div>
