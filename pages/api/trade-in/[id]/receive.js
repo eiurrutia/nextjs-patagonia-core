@@ -94,37 +94,71 @@ function calculateProcess(confirmedCalculatedState, confirmedValues) {
   }
 }
 
+// Helper to format readable values
+function formatReadableValue(fieldName, value) {
+  // Map for usage_signs (yes/no)
+  if (fieldName === 'usage_signs') {
+    if (value === 'yes' || value === true) return 'Sí';
+    if (value === 'no' || value === false) return 'No';
+    return value;
+  }
+  
+  // Map for levels
+  const levelLabels = {
+    'no_presenta': 'No Presenta',
+    'none': 'No Presenta',
+    'low': 'Bajo',
+    'moderate': 'Moderado',
+    'high': 'Alto'
+  };
+  
+  return levelLabels[value] || value;
+}
+
 // Aux function to generate change comment
 function generateChangeComment(modifiedConditions, products) {
+  const conditionLabels = {
+    'usage_signs': 'Señales de uso',
+    'pilling_level': 'Nivel de pilling',
+    'tears_holes_level': 'Nivel de rasgaduras y hoyos',
+    'repairs_level': 'Nivel de reparaciones',
+    'stains_level': 'Nivel de manchas',
+    'meets_minimum_requirements': 'Cumple requisitos mínimos'
+  };
+
   const changes = modifiedConditions.map(mod => {
     const product = products.find(p => p.id == mod.productId);
-    const productName = product ? `${product.product_style} (Talla: ${product.product_size})` : `Producto ${mod.productId}`;
-    
-    const conditionLabels = {
-      'usage_signs': 'Señales de uso',
-      'pilling_level': 'Nivel de pilling',
-      'tears_holes_level': 'Roturas/agujeros',
-      'repairs_level': 'Reparaciones',
-      'stains_level': 'Manchas',
-      'meets_minimum_requirements': 'Cumple requisitos mínimos'
-    };
-    
+    const productStyle = product?.product_style || `Producto ${mod.productId}`;
     const conditionLabel = conditionLabels[mod.questionId] || mod.questionId;
-    return `* ${productName}: ${conditionLabel} cambiado de "${mod.originalValue}" a "${mod.newValue}"`;
+    const originalFormatted = formatReadableValue(mod.questionId, mod.originalValue);
+    const newFormatted = formatReadableValue(mod.questionId, mod.newValue);
+    
+    return `${productStyle} - ${conditionLabel}: ${originalFormatted} → ${newFormatted}`;
   });
   
-  return `Verificación en tienda realizada. Cambios:\n${changes.join('\n')}`;
+  return `Verificación en tienda realizada. Cambios (${modifiedConditions.length}):\n${changes.join('\n')}`;
 }
 
 // Aux function to generate state change comment
-function generateStateChangeComment(stateChanges, products) {
-  const changes = stateChanges.map(change => {
+function generateStateChangeComment(stateChanges, products, creditChanges = []) {
+  const lines = [];
+  
+  // Add state changes
+  stateChanges.forEach(change => {
     const product = products.find(p => p.id == change.productId);
-    const productName = product ? `${product.product_style} (Talla: ${product.product_size})` : `Producto ${change.productId}`;
-    return `* ${productName}: Estado cambiado de "${change.originalState}" a "${change.confirmedState}"`;
+    const productStyle = product?.product_style || `Producto ${change.productId}`;
+    lines.push(`${productStyle} - Estado: ${change.originalState} → ${change.confirmedState}`);
+  });
+
+  // Add credit changes if provided
+  creditChanges.forEach(change => {
+    const originalCredit = change.originalCredit ? `$${Number(change.originalCredit).toLocaleString('es-CL')}` : 'Sin crédito';
+    const newCredit = change.newCredit ? `$${Number(change.newCredit).toLocaleString('es-CL')}` : 'Sin crédito';
+    lines.push(`${change.productStyle} - Crédito: ${originalCredit} → ${newCredit}`);
   });
   
-  return `Estados de productos actualizados tras verificación en tienda:\n${changes.join('\n')}`;
+  const totalChanges = stateChanges.length + creditChanges.length;
+  return `Estados de productos actualizados (${totalChanges}):\n${lines.join('\n')}`;
 }
 
 /**
@@ -191,6 +225,7 @@ export default async function handler(req, res) {
     try {
       // Arrays to track changes
       const stateChanges = [];
+      const creditChanges = [];
       
       // 1. Process verification of ALL products (not just modified ones)
       for (const product of existingProducts.rows) {
@@ -238,8 +273,20 @@ export default async function handler(req, res) {
         if (product.calculated_state && confirmedCalculatedState && product.calculated_state !== confirmedCalculatedState) {
           stateChanges.push({
             productId: product.id,
+            productStyle: product.product_style,
             originalState: product.calculated_state,
             confirmedState: confirmedCalculatedState
+          });
+        }
+
+        // Track credit change if different from original
+        const originalCredit = product.credit_estimated || product.credit_confirmed;
+        if (creditConfirmed !== originalCredit && (creditConfirmed || originalCredit)) {
+          creditChanges.push({
+            productId: product.id,
+            productStyle: product.product_style,
+            originalCredit: originalCredit,
+            newCredit: creditConfirmed
           });
         }
 
@@ -287,12 +334,13 @@ export default async function handler(req, res) {
         );
       }
 
-      // 3. Create log comment for state changes
-      if (stateChanges.length > 0) {
-        const stateCommentText = generateStateChangeComment(stateChanges, existingProducts.rows);
+      // 3. Create log comment for state changes and credit changes
+      if (stateChanges.length > 0 || creditChanges.length > 0) {
+        const stateCommentText = generateStateChangeComment(stateChanges, existingProducts.rows, creditChanges);
         const stateContextData = {
           state_changes: stateChanges,
-          products_affected: stateChanges.map(sc => sc.productId)
+          credit_changes: creditChanges,
+          products_affected: [...new Set([...stateChanges.map(sc => sc.productId), ...creditChanges.map(cc => cc.productId)])]
         };
 
         await createTradeInComment(
