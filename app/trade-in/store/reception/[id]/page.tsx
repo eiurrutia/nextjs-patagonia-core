@@ -27,6 +27,7 @@ interface TradeInRequest {
   deliveryMethod: string;
   status: string;
   products: ProductFormData[];
+  receivedStoreCode?: string;
 }
 
 export default function StoreReceptionPage() {
@@ -82,7 +83,8 @@ export default function StoreReceptionPage() {
           rut: data.rut,
           houseDetails: data.house_details,
           deliveryMethod: data.delivery_method,
-          clientComment: data.client_comment
+          clientComment: data.client_comment,
+          receivedStoreCode: data.received_store_code
         };
         setTradeInRequest(mappedData);
 
@@ -92,6 +94,10 @@ export default function StoreReceptionPage() {
           if (storesResponse.ok) {
             const storesResult = await storesResponse.json();
             setStores(storesResult.stores || []);
+          }
+          // Initialize selectedStore with saved value if exists
+          if (data.received_store_code) {
+            setSelectedStore(data.received_store_code);
           }
         } else if (session?.user?.role === 'store') {
           // For store users, set the selected store automatically
@@ -430,6 +436,12 @@ export default function StoreReceptionPage() {
           initialProducts={tradeInRequest?.products || []}
           tradeInId={tradeInId}
           deliveryMethod={deliveryMethod}
+          storeCode={session?.user?.role === 'admin' 
+            ? selectedStore 
+            : session?.user?.store_code || ''}
+          storeName={session?.user?.role === 'admin' 
+            ? stores.find((s: any) => s.code === selectedStore)?.name || ''
+            : session?.user?.store_name || ''}
         />
       </div>
     </div>

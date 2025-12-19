@@ -417,6 +417,40 @@ export async function updateTradeInRequestStatus(id: number, status: string, adm
 }
 
 /**
+ * Update trade-in request delivery method
+ */
+export async function updateTradeInDeliveryMethod(id: number, deliveryMethod: string): Promise<void> {
+  try {
+    await sql`
+      UPDATE trade_in_requests 
+      SET delivery_method = ${deliveryMethod}, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${id}
+    `;
+  } catch (error) {
+    console.error('Error updating trade-in delivery method:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update trade-in request verification store
+ * Usamos received_store_code para guardar la tienda que verifica/recepciona
+ */
+export async function updateTradeInVerificationStore(id: number, storeCode: string, storeName?: string): Promise<void> {
+  try {
+    await sql`
+      UPDATE trade_in_requests 
+      SET received_store_code = ${storeCode},
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${id}
+    `;
+  } catch (error) {
+    console.error('Error updating trade-in verification store:', error);
+    throw error;
+  }
+}
+
+/**
  * Get configuration value
  */
 export async function getConfigValue(key: string): Promise<string | null> {
@@ -445,6 +479,7 @@ export async function updateProductVerification(
     confirmed_calculated_state?: string;
     credit_confirmed?: number;
     process?: string;
+    pilling_level_repairs?: string;
     tears_holes_repairs?: string;
     repairs_level_repairs?: string;
     stains_level_repairs?: string;
@@ -485,6 +520,7 @@ export async function updateProductVerification(
         credit_confirmed = ${verificationData.credit_confirmed || null},
         process = ${verificationData.process || null},
         confirmed_sku = ${confirmedSku},
+        pilling_level_repairs = ${verificationData.pilling_level_repairs || null},
         tears_holes_repairs = ${verificationData.tears_holes_repairs || null},
         repairs_level_repairs = ${verificationData.repairs_level_repairs || null},
         stains_level_repairs = ${verificationData.stains_level_repairs || null},

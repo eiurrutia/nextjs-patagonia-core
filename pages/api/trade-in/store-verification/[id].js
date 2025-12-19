@@ -2,7 +2,8 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { 
   updateProductVerification, 
   createTradeInComment, 
-  updateTradeInStatus 
+  updateTradeInDeliveryMethod,
+  updateTradeInVerificationStore
 } from '@/app/lib/trade-in/sql-data';
 import { evaluateProductCondition } from '@/app/lib/trade-in/product-condition-evaluator';
 
@@ -18,8 +19,21 @@ export default async function handler(req, res) {
       products,
       modifiedConditions,
       productRepairs,
-      verifiedBy
+      verifiedBy,
+      deliveryMethod,
+      storeCode,
+      storeName
     } = req.body;
+
+    // 0. Update delivery method if provided
+    if (deliveryMethod) {
+      await updateTradeInDeliveryMethod(parseInt(id), deliveryMethod);
+    }
+
+    // 0.1 Update verification store if provided
+    if (storeCode) {
+      await updateTradeInVerificationStore(parseInt(id), storeCode, storeName);
+    }
 
     // 1. Update each product with its confirmed states and repairs
     for (const product of products) {
@@ -47,6 +61,7 @@ export default async function handler(req, res) {
       const confirmedCalculatedState = evaluateProductCondition(conditionResponses);
 
       const repairFields = {
+        pilling_level_repairs: productRepairData?.pilling_level_repairs?.join(';') || null,
         tears_holes_repairs: productRepairData?.tears_holes_repairs?.join(';') || null,
         repairs_level_repairs: productRepairData?.repairs_level_repairs?.join(';') || null,
         stains_level_repairs: productRepairData?.stains_level_repairs?.join(';') || null
@@ -80,8 +95,8 @@ export default async function handler(req, res) {
       );
     }
 
-    // 3. Update the status of the trade-in request if necessary
-    await updateTradeInStatus(parseInt(id), 'verificado_tienda');
+    // Note: We do NOT change the status here - just save verification data
+    // Status changes happen when confirming reception (Confirmar Recepción button)
 
     res.status(200).json({ 
       success: true, 

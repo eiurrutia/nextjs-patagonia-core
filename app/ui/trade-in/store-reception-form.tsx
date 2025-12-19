@@ -22,6 +22,8 @@ interface StoreReceptionFormProps {
   initialProducts?: ProductFormData[];
   tradeInId?: string;
   deliveryMethod?: string;
+  storeCode?: string;
+  storeName?: string;
 }
 
 interface ModifiedCondition {
@@ -41,7 +43,7 @@ interface RepairOption {
 interface ProductRepairs {
   productId: string;
   pilling_level_repairs: string[];
-  tears_holes_level_repairs: string[];
+  tears_holes_repairs: string[];
   repairs_level_repairs: string[];
   stains_level_repairs: string[];
 }
@@ -52,7 +54,9 @@ export default function StoreReceptionForm({
   initialData,
   initialProducts = [],
   tradeInId,
-  deliveryMethod: deliveryMethodProp
+  deliveryMethod: deliveryMethodProp,
+  storeCode,
+  storeName
 }: StoreReceptionFormProps) {
   const [isEditingClient, setIsEditingClient] = useState(false);
   const [formData, setFormData] = useState<TradeInFormData>({
@@ -78,7 +82,13 @@ export default function StoreReceptionForm({
   // Store original values when products are loaded
   const [originalProductValues, setOriginalProductValues] = useState<Record<string, Record<string, string>>>({});
 
-  // Capture original values on mount and initialize product repairs with calculated levels
+  // Helper to parse stored repairs (stored as semicolon-separated string)
+  const parseStoredRepairs = (repairsString: string | null | undefined): string[] => {
+    if (!repairsString) return [];
+    return repairsString.split(';').filter(r => r.trim() !== '');
+  };
+
+  // Capture original values on mount and initialize product repairs
   useEffect(() => {
     const originals: Record<string, Record<string, string>> = {};
     const initialRepairs: ProductRepairs[] = [];
@@ -86,44 +96,85 @@ export default function StoreReceptionForm({
     const updatedProducts: ProductFormData[] = [];
 
     initialProducts.forEach(product => {
-      // Store original values
+      const productAny = product as any;
+      
+      // Store original CLIENT values (not confirmed values)
       originals[product.id] = {
-        pilling_level: (product as any).pilling_level,
-        tears_holes_level: (product as any).tears_holes_level,
-        repairs_level: (product as any).repairs_level,
-        stains_level: (product as any).stains_level,
-        usage_signs: (product as any).usage_signs
+        pilling_level: productAny.pilling_level,
+        tears_holes_level: productAny.tears_holes_level,
+        repairs_level: productAny.repairs_level,
+        stains_level: productAny.stains_level,
+        usage_signs: productAny.usage_signs
       };
 
-      // Initialize empty repairs for each product
+      // Check if there are saved repairs from a previous verification
+      const hasSavedRepairs = productAny.pilling_level_repairs || 
+                             productAny.tears_holes_repairs || 
+                             productAny.repairs_level_repairs || 
+                             productAny.stains_level_repairs;
+
+      // Initialize repairs - load from DB if exists, otherwise empty
       initialRepairs.push({
         productId: product.id,
-        pilling_level_repairs: [],
-        tears_holes_level_repairs: [],
-        repairs_level_repairs: [],
-        stains_level_repairs: []
+        pilling_level_repairs: parseStoredRepairs(productAny.pilling_level_repairs),
+        tears_holes_repairs: parseStoredRepairs(productAny.tears_holes_repairs),
+        repairs_level_repairs: parseStoredRepairs(productAny.repairs_level_repairs),
+        stains_level_repairs: parseStoredRepairs(productAny.stains_level_repairs)
       });
 
-      // Calculate initial levels (no_presenta since no repairs selected)
-      // and track modifications for questions that have repair selectors
-      const questionIds = ['pilling_level', 'tears_holes_level', 'repairs_level', 'stains_level'];
       const productUpdates: any = { ...product };
+      const questionIds = ['pilling_level', 'tears_holes_level', 'repairs_level', 'stains_level'];
 
-      questionIds.forEach(questionId => {
-        const originalValue = (product as any)[questionId];
-        const calculatedValue = 'no_presenta'; // Empty repairs = no_presenta
-
-        // If original value differs from calculated, mark as modified
-        if (originalValue && originalValue !== calculatedValue) {
-          initialModifications.push({
-            productId: product.id,
-            questionId,
-            originalValue,
-            newValue: calculatedValue
-          });
-          productUpdates[questionId] = calculatedValue;
+      // If there are saved confirmed values, use those; otherwise calculate from repairs
+      if (hasSavedRepairs || productAny.confirmed_pilling_level) {
+        // Use confirmed values if they exist
+        questionIds.forEach(questionId => {
+          const confirmedKey = `confirmed_${questionId}`;
+          const confirmedValue = productAny[confirmedKey];
+          const originalValue = productAny[questionId];
+          
+          if (confirmedValue) {
+            productUpdates[questionId] = confirmedValue;
+            if (originalValue !== confirmedValue) {
+              initialModifications.push({
+                productId: product.id,
+                questionId,
+                originalValue,
+                newValue: confirmedValue
+              });
+            }
+          }
+        });
+        
+        // Also handle usage_signs
+        if (productAny.confirmed_usage_signs) {
+          productUpdates.usage_signs = productAny.confirmed_usage_signs;
+          if (productAny.usage_signs !== productAny.confirmed_usage_signs) {
+            initialModifications.push({
+              productId: product.id,
+              questionId: 'usage_signs',
+              originalValue: productAny.usage_signs,
+              newValue: productAny.confirmed_usage_signs
+            });
+          }
         }
-      });
+      } else {
+        // No saved verification - calculate initial levels (no_presenta since no repairs selected)
+        questionIds.forEach(questionId => {
+          const originalValue = productAny[questionId];
+          const calculatedValue = 'no_presenta';
+
+          if (originalValue && originalValue !== calculatedValue) {
+            initialModifications.push({
+              productId: product.id,
+              questionId,
+              originalValue,
+              newValue: calculatedValue
+            });
+            productUpdates[questionId] = calculatedValue;
+          }
+        });
+      }
 
       updatedProducts.push(productUpdates as ProductFormData);
     });
@@ -212,7 +263,7 @@ export default function StoreReceptionForm({
           return {
             ...pr,
             pilling_level_repairs: [],
-            tears_holes_level_repairs: [],
+            tears_holes_repairs: [],
             repairs_level_repairs: [],
             stains_level_repairs: []
           };
@@ -272,7 +323,7 @@ export default function StoreReceptionForm({
     
     return (
       repairs.pilling_level_repairs.length > 0 ||
-      repairs.tears_holes_level_repairs.length > 0 ||
+      repairs.tears_holes_repairs.length > 0 ||
       repairs.repairs_level_repairs.length > 0 ||
       repairs.stains_level_repairs.length > 0
     );
@@ -408,11 +459,19 @@ export default function StoreReceptionForm({
       setProductRepairs(prev => [...prev, {
         productId,
         pilling_level_repairs: [],
-        tears_holes_level_repairs: [],
+        tears_holes_repairs: [],
         repairs_level_repairs: [],
         stains_level_repairs: []
       }]);
     }
+  };
+
+  // Map questionId to repair key (special case for tears_holes_level)
+  const getRepairKeyForQuestion = (questionId: string): keyof ProductRepairs => {
+    if (questionId === 'tears_holes_level') {
+      return 'tears_holes_repairs';
+    }
+    return `${questionId}_repairs` as keyof ProductRepairs;
   };
 
   // Handle repair option toggle
@@ -424,7 +483,7 @@ export default function StoreReceptionForm({
     setProductRepairs(prev => {
       const updated = prev.map(pr => {
         if (pr.productId === productId) {
-          const repairKey = `${questionId}_repairs` as keyof ProductRepairs;
+          const repairKey = getRepairKeyForQuestion(questionId);
           const currentRepairs = (pr[repairKey] as string[]) || [];
           const isSelected = currentRepairs.includes(repairId);
           
@@ -444,7 +503,7 @@ export default function StoreReceptionForm({
       // Calculate new condition level based on updated repairs
       const productRepair = updated.find(pr => pr.productId === productId);
       if (productRepair) {
-        const repairKey = `${questionId}_repairs` as keyof ProductRepairs;
+        const repairKey = getRepairKeyForQuestion(questionId);
         const selectedRepairs = productRepair[repairKey] as string[];
         const repairOptions = getRepairOptionsForQuestion(questionId);
         const newLevel = calculateConditionLevel(selectedRepairs, repairOptions);
@@ -466,7 +525,7 @@ export default function StoreReceptionForm({
   const getProductRepairs = (productId: string, questionId: string): string[] => {
     const repairs = productRepairs.find(pr => pr.productId === productId);
     if (!repairs) return [];
-    const repairKey = `${questionId}_repairs` as keyof ProductRepairs;
+    const repairKey = getRepairKeyForQuestion(questionId);
     return repairs[repairKey] as string[] || [];
   };
 
@@ -485,7 +544,10 @@ export default function StoreReceptionForm({
           products,
           modifiedConditions,
           productRepairs,
-          verifiedBy: 'sistema_tienda' // TODO: obtener del contexto de sesión
+          verifiedBy: 'sistema_tienda', // TODO: obtener del contexto de sesión
+          deliveryMethod: deliveryMethodProp,
+          storeCode,
+          storeName
         }),
       });
 
@@ -1014,7 +1076,12 @@ export default function StoreReceptionForm({
         {/* Save Verification Button */}
         <Button
           onClick={handleSaveVerification}
-          disabled={isSaving || (modifiedConditions.length === 0 && productRepairs.length === 0)}
+          disabled={isSaving || (modifiedConditions.length === 0 && !productRepairs.some(pr => 
+            pr.pilling_level_repairs.length > 0 ||
+            pr.tears_holes_repairs.length > 0 ||
+            pr.repairs_level_repairs.length > 0 ||
+            pr.stains_level_repairs.length > 0
+          ))}
           className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white"
           type="button"
         >
