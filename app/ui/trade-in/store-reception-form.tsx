@@ -41,7 +41,7 @@ interface RepairOption {
 interface ProductRepairs {
   productId: string;
   pilling_level_repairs: string[];
-  tears_holes_repairs: string[];
+  tears_holes_level_repairs: string[];
   repairs_level_repairs: string[];
   stains_level_repairs: string[];
 }
@@ -99,7 +99,7 @@ export default function StoreReceptionForm({
       initialRepairs.push({
         productId: product.id,
         pilling_level_repairs: [],
-        tears_holes_repairs: [],
+        tears_holes_level_repairs: [],
         repairs_level_repairs: [],
         stains_level_repairs: []
       });
@@ -157,9 +157,14 @@ export default function StoreReceptionForm({
     }
   };
 
-  const handleConditionChange = (productId: string, questionId: string, newValue: string) => {
+  const handleConditionChange = (productId: string, questionId: string, newValue: string, skipUsageSignsSync: boolean = false) => {
     // Get the original value from our stored originals
     const originalValue = originalProductValues[productId]?.[questionId] || (products.find(p => p.id === productId) as any)?.[questionId];
+    
+    // If changing usage_signs to "no", clear all repairs for this product
+    if (questionId === 'usage_signs' && newValue === 'no') {
+      clearAllRepairsForProduct(productId);
+    }
     
     // Track the modification
     if (originalValue !== newValue) {
@@ -194,6 +199,154 @@ export default function StoreReceptionForm({
         return product;
       })
     );
+  };
+
+  // Clear all repairs for a product (when usage_signs = "no")
+  const clearAllRepairsForProduct = (productId: string) => {
+    const questionIds = ['pilling_level', 'tears_holes_level', 'repairs_level', 'stains_level'];
+    
+    // Clear all repairs
+    setProductRepairs(prev => 
+      prev.map(pr => {
+        if (pr.productId === productId) {
+          return {
+            ...pr,
+            pilling_level_repairs: [],
+            tears_holes_level_repairs: [],
+            repairs_level_repairs: [],
+            stains_level_repairs: []
+          };
+        }
+        return pr;
+      })
+    );
+
+    // Set all condition levels to no_presenta and track modifications
+    questionIds.forEach(questionId => {
+      const originalValue = originalProductValues[productId]?.[questionId];
+      const newValue = 'no_presenta';
+      
+      // Track modification if different from original
+      if (originalValue && originalValue !== newValue) {
+        setModifiedConditions(prev => {
+          const existing = prev.find(m => m.productId === productId && m.questionId === questionId);
+          if (existing) {
+            return prev.map(m => 
+              m.productId === productId && m.questionId === questionId 
+                ? { ...m, newValue }
+                : m
+            );
+          } else {
+            return [...prev, { productId, questionId, originalValue, newValue }];
+          }
+        });
+      } else {
+        // Remove from modified if back to original
+        setModifiedConditions(prev => 
+          prev.filter(m => !(m.productId === productId && m.questionId === questionId))
+        );
+      }
+    });
+
+    // Update all product conditions to no_presenta
+    setProducts(prev => 
+      prev.map(product => {
+        if (product.id === productId) {
+          return {
+            ...product,
+            pilling_level: 'no_presenta',
+            tears_holes_level: 'no_presenta',
+            repairs_level: 'no_presenta',
+            stains_level: 'no_presenta'
+          };
+        }
+        return product;
+      })
+    );
+  };
+
+  // Check if any repairs are selected for a product
+  const hasAnyRepairsSelectedForProduct = (productId: string, repairsToCheck: ProductRepairs[]): boolean => {
+    const repairs = repairsToCheck.find(pr => pr.productId === productId);
+    if (!repairs) return false;
+    
+    return (
+      repairs.pilling_level_repairs.length > 0 ||
+      repairs.tears_holes_level_repairs.length > 0 ||
+      repairs.repairs_level_repairs.length > 0 ||
+      repairs.stains_level_repairs.length > 0
+    );
+  };
+
+  // Function to update usage_signs based on repairs - called after repair changes
+  const updateUsageSignsBasedOnRepairs = (productId: string, updatedRepairs: ProductRepairs[]) => {
+    const hasRepairs = hasAnyRepairsSelectedForProduct(productId, updatedRepairs);
+    
+    // Get current usage_signs from products state
+    setProducts(prevProducts => {
+      const product = prevProducts.find(p => p.id === productId);
+      const currentUsageSigns = (product as any)?.usage_signs;
+      
+      if (hasRepairs && currentUsageSigns === 'no') {
+        // If repairs selected but usage_signs is "no", change to "yes"
+        const originalValue = originalProductValues[productId]?.usage_signs;
+        const newValue = 'yes';
+        
+        // Track modification
+        if (originalValue !== newValue) {
+          setModifiedConditions(prev => {
+            const existing = prev.find(m => m.productId === productId && m.questionId === 'usage_signs');
+            if (existing) {
+              return prev.map(m => 
+                m.productId === productId && m.questionId === 'usage_signs' 
+                  ? { ...m, newValue }
+                  : m
+              );
+            } else {
+              return [...prev, { productId, questionId: 'usage_signs', originalValue: originalValue || 'no', newValue }];
+            }
+          });
+        } else {
+          setModifiedConditions(prev => 
+            prev.filter(m => !(m.productId === productId && m.questionId === 'usage_signs'))
+          );
+        }
+        
+        return prevProducts.map(p => 
+          p.id === productId ? { ...p, usage_signs: 'yes' } : p
+        );
+      } else if (!hasRepairs && currentUsageSigns === 'yes') {
+        // If no repairs and usage_signs is "yes", change to "no"
+        const originalValue = originalProductValues[productId]?.usage_signs;
+        const newValue = 'no';
+        
+        // Track modification
+        if (originalValue !== newValue) {
+          setModifiedConditions(prev => {
+            const existing = prev.find(m => m.productId === productId && m.questionId === 'usage_signs');
+            if (existing) {
+              return prev.map(m => 
+                m.productId === productId && m.questionId === 'usage_signs' 
+                  ? { ...m, newValue }
+                  : m
+              );
+            } else {
+              return [...prev, { productId, questionId: 'usage_signs', originalValue: originalValue || 'yes', newValue }];
+            }
+          });
+        } else {
+          setModifiedConditions(prev => 
+            prev.filter(m => !(m.productId === productId && m.questionId === 'usage_signs'))
+          );
+        }
+        
+        return prevProducts.map(p => 
+          p.id === productId ? { ...p, usage_signs: 'no' } : p
+        );
+      }
+      
+      return prevProducts;
+    });
   };
 
   const validateForm = (): boolean => {
@@ -255,7 +408,7 @@ export default function StoreReceptionForm({
       setProductRepairs(prev => [...prev, {
         productId,
         pilling_level_repairs: [],
-        tears_holes_repairs: [],
+        tears_holes_level_repairs: [],
         repairs_level_repairs: [],
         stains_level_repairs: []
       }]);
@@ -265,6 +418,8 @@ export default function StoreReceptionForm({
   // Handle repair option toggle
   const handleRepairToggle = (productId: string, questionId: string, repairId: string) => {
     initializeProductRepairs(productId);
+    
+    let updatedRepairsRef: ProductRepairs[] = [];
     
     setProductRepairs(prev => {
       const updated = prev.map(pr => {
@@ -283,6 +438,9 @@ export default function StoreReceptionForm({
         return pr;
       });
       
+      // Store reference to updated repairs
+      updatedRepairsRef = updated;
+      
       // Calculate new condition level based on updated repairs
       const productRepair = updated.find(pr => pr.productId === productId);
       if (productRepair) {
@@ -292,11 +450,16 @@ export default function StoreReceptionForm({
         const newLevel = calculateConditionLevel(selectedRepairs, repairOptions);
         
         // Update the product condition automatically
-        handleConditionChange(productId, questionId, newLevel);
+        handleConditionChange(productId, questionId, newLevel, true);
       }
       
       return updated;
     });
+    
+    // Sync usage_signs after state update using setTimeout to ensure state is updated
+    setTimeout(() => {
+      updateUsageSignsBasedOnRepairs(productId, updatedRepairsRef);
+    }, 0);
   };
 
   // Get repairs for a product and question
