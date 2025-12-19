@@ -89,6 +89,7 @@ export default function ProductForm({
 }: ProductFormProps) {
   const [formData, setFormData] = useState<ProductFormState>(initialFormState);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const [usageSignsError, setUsageSignsError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [matchedImageUrl, setMatchedImageUrl] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
@@ -456,6 +457,11 @@ export default function ProductForm({
   };
 
   const handleConditionChange = (questionId: string, value: string) => {
+    // Clear the usage signs validation error when user changes any condition
+    if (['pilling_level', 'stains_level', 'tears_holes_level', 'repairs_level'].includes(questionId)) {
+      setUsageSignsError(null);
+    }
+    
     if (questionId === 'meets_minimum_requirements') {
       handleInputChange('meets_minimum_requirements', value === 'true');
     } else {
@@ -646,6 +652,7 @@ export default function ProductForm({
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, boolean> = {};
+    let usageSignsValidationError: string | null = null;
 
     // Required fields
     if (!formData.product_style.trim()) newErrors.product_style = true;
@@ -662,15 +669,29 @@ export default function ProductForm({
     if (!formData.tears_holes_level) newErrors.tears_holes_level = true;
     if (!formData.repairs_level) newErrors.repairs_level = true;
 
+    // If usage_signs is 'yes', at least one condition must NOT be 'no_presenta'
+    if (formData.usage_signs === 'yes') {
+      const allConditionsNone = 
+        formData.pilling_level === 'no_presenta' &&
+        formData.stains_level === 'no_presenta' &&
+        formData.tears_holes_level === 'no_presenta' &&
+        formData.repairs_level === 'no_presenta';
+      
+      if (allConditionsNone) {
+        usageSignsValidationError = 'Debe seleccionar cuáles son las señales de uso que presenta su producto';
+      }
+    }
+
     setErrors(newErrors);
+    setUsageSignsError(usageSignsValidationError);
     
-    // Scroll to first error if validation fails
+    // Scroll to first error if validation fails (but not for usage signs error alone)
     const errorFields = Object.keys(newErrors);
     if (errorFields.length > 0) {
       setTimeout(() => scrollToFirstError(errorFields), 100);
     }
     
-    return errorFields.length === 0;
+    return errorFields.length === 0 && !usageSignsValidationError;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1201,6 +1222,9 @@ export default function ProductForm({
             onChange={handleConditionChange}
             errors={errors}
           />
+          {usageSignsError && (
+            <p className="text-red-500 text-sm mt-2 font-medium">{usageSignsError}</p>
+          )}
         </div>
 
         {/* Credit Information - Simple Display */}
