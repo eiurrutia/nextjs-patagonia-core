@@ -68,7 +68,7 @@
     "prettier-plugin-tailwindcss": "0.5.4"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": "20.x"
   },
   "resolutions": {
     "cookie": "0.7.0"
